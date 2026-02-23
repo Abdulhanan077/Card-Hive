@@ -3,9 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import fs from "fs";
+import { put } from "@vercel/blob";
 
 export async function POST(req: Request) {
     try {
@@ -57,19 +55,13 @@ export async function POST(req: Request) {
         const imageUrls: string[] = [];
 
         if (images.length > 0) {
-            const uploadDir = path.join(process.cwd(), "public/uploads");
-            if (!fs.existsSync(uploadDir)) {
-                await mkdir(uploadDir, { recursive: true });
-            }
-
             for (const image of images) {
                 if (image.size > 0) {
-                    const bytes = await image.arrayBuffer();
-                    const buffer = Buffer.from(bytes);
                     const uniqueName = `${Date.now()}-${image.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-                    const filePath = path.join(uploadDir, uniqueName);
-                    await writeFile(filePath, buffer);
-                    imageUrls.push(`/uploads/${uniqueName}`);
+                    const blob = await put(uniqueName, image, {
+                        access: "public",
+                    });
+                    imageUrls.push(blob.url);
                 }
             }
         }
