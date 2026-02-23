@@ -1,0 +1,137 @@
+.container {
+    max-width: 1000px;
+}
+
+.header {
+    margin-bottom: 2.5rem;
+}
+
+.formGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.formSection h3 {
+    font-size: 1.125rem;
+    color: var(--primary);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-light);
+    display: inline-block;
+}
+
+.grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.grid3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.divider {
+    border: none;
+    border-top: 1px dashed var(--border);
+    margin: 1rem 0;
+}
+
+.helpText {
+    font-size: 0.8rem;
+    color: var(--foreground);
+    opacity: 0.6;
+    margin-top: 0.35rem;
+}
+
+.errorMessage {
+    background-color: #fef2f2;
+    color: var(--danger);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 2rem;
+    border: 1px solid #fecaca;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.fileUpload {
+    position: relative;
+    border: 2px dashed var(--border-focus);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    background-color: var(--surface-hover);
+    transition: var(--transition);
+}
+
+.fileUpload:hover {
+    border-color: var(--primary);
+    background-color: var(--primary-light);
+}
+
+.fileInput {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.fileLabel {
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.consentBox {
+    background-color: var(--surface-hover);
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.checkbox {
+    margin-top: 0.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    accent-color: var(--primary);
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.submitBtn {
+    font-size: 1.125rem;
+    padding: 1rem 2rem;
+}
+
+@media (max-width: 768px) {
+
+    .grid2,
+    .grid3 {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}

@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  username      String   @unique
+  email         String   @unique
+  phoneNumber   String
+  role          String   @default("USER") // USER or ADMIN
+  status        String   @default("ACTIVE") // ACTIVE or BLOCKED
+  password      String
+  
+  // Referral System Fields
+  referralCode  String?  @unique
+  referredBy    Int?
+  referrer      User?    @relation("Referrals", fields: [referredBy], references: [id])
+  referrals     User[]   @relation("Referrals")
+  rewardBalance Float    @default(0.0)
+  completedTradesCount Int @default(0)
+  
+  trades        Trade[]
+  messages      Message[] @relation("UserMessages")
+  redemptions   RewardRedemption[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Trade {
+  id                Int       @id @default(autoincrement())
+  tradeId           String    @unique // e.g., GC-2026-0001
+  userId            Int
+  user              User      @relation(fields: [userId], references: [id])
+  fullName          String?
+  payoutNetwork     String    // MTN, Telecel
+  payoutPhoneNumber String
+  cardBrand         String
+  cardCountry       String
+  cardType          String    // Physical, E-code
+  faceValue         Float
+  currency          String
+  calculatedPayout  Float?    // The expected payout when submitted based on the active rate
+  cardCode          String    // Raw code, accessible only to admin
+  serialNumber      String?
+  cardCodeHash      String    // SHA-256 hash for duplicate detection
+  status            String    @default("PENDING") // PENDING, UNDER_REVIEW, PAID, REJECTED, COMPLETED
+  imageUrls         String    @default("[]") // JSON string of upload paths
+  paymentReference  String?
+  paidAt            DateTime?
+  adminNotes        String?
+  messages          Message[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Settings {
+  id                      Int      @id @default(autoincrement())
+  siteName                String   @default("Omor Biggy Gift Card Trading Center")
+  contactEmail            String   @default("support@omorbiggy.com")
+  whatsappNumber          String   @default("")
+  landingPageIntroText    String   @default("Sell your gift cards for instant cash payouts via MTN & Telecel.")
+  faqContent              String   @default("[]") // JSON string of FAQs
+  referralBonusPercentage Float    @default(1.5) // Percentage of the referred user's first trade
+  rewardPointsToGhs       Float    @default(100.0) // How much 100 Reward Points is worth in GHS
+}
+
+model CardRate {
+  id          Int      @id @default(autoincrement())
+  cardBrand   String   // e.g., Apple/iTunes
+  cardCountry String   // e.g., US
+  rate        Float    // e.g., 10.5 (GHS per USD)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([cardBrand, cardCountry])
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  tradeId   Int
+  trade     Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  senderId  Int
+  sender    User     @relation("UserMessages", fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model RewardRedemption {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  pointsRedeemed Float
+  status        String   @default("PENDING") // PENDING, PAID, REJECTED
+  payoutMethod  String?  // e.g., "Add to next trade payout", "Mobile Money"
+  payoutDetails String?  // Optional info if Mobile Money was chosen
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

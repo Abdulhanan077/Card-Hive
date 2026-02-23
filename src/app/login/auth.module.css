@@ -1,0 +1,98 @@
+.authContainer {
+    min-height: calc(100vh - 8rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: var(--surface-hover);
+}
+
+.authCard {
+    width: 100%;
+    max-width: 450px;
+    padding: 3rem 2rem;
+    animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.authHeader {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.iconWrapper {
+    font-size: 2.5rem;
+    display: inline-block;
+    padding: 1rem;
+    background-color: var(--primary-light);
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.authHeader h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.authHeader p {
+    opacity: 0.7;
+    font-size: 0.95rem;
+}
+
+.form {
+    margin-bottom: 2rem;
+}
+
+.submitBtn {
+    margin-top: 1rem;
+    padding: 0.875rem;
+}
+
+.errorMessage {
+    background-color: #fef2f2;
+    color: var(--danger);
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    text-align: center;
+    border: 1px solid #fecaca;
+}
+
+.authFooter {
+    text-align: center;
+    font-size: 0.875rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+}
+
+.link {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .authContainer {
+        padding: 1rem;
+    }
+
+    .authCard {
+        padding: 2rem 1.5rem;
+    }
+}

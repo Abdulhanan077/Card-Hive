@@ -1,0 +1,278 @@
+.main {
+  min-height: calc(100vh - 4rem);
+}
+
+.hero {
+  padding: 6rem 0;
+  background: linear-gradient(135deg, var(--primary-light) 0%, transparent 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.heroContainer {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+}
+
+.heroContent {
+  flex: 1;
+  z-index: 10;
+}
+
+.title {
+  font-size: 4rem;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(to right, var(--primary), #8b5cf6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: slideUp 0.8s ease-out;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  margin-bottom: 2.5rem;
+  max-width: 500px;
+  line-height: 1.6;
+  opacity: 0.8;
+  animation: slideUp 0.8s ease-out 0.1s backwards;
+}
+
+.heroActions {
+  display: flex;
+  gap: 1rem;
+  animation: slideUp 0.8s ease-out 0.2s backwards;
+}
+
+.heroVisual {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  animation: float 6s ease-in-out infinite;
+}
+
+.floatingCard {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.25);
+}
+
+@media (prefers-color-scheme: dark) {
+  .floatingCard {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  font-weight: 700;
+}
+
+.cardValue {
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cardCode {
+  background: var(--surface-hover);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  font-family: monospace;
+  font-size: 1.125rem;
+  text-align: center;
+  letter-spacing: 0.1em;
+}
+
+/* Sections */
+.section {
+  padding: 5rem 0;
+}
+
+.bgLight {
+  background-color: var(--surface);
+}
+
+.sectionHeader {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 4rem;
+}
+
+.sectionHeader h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.stepNumber {
+  width: 3rem;
+  height: 3rem;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.stepsGrid .card {
+  border: none;
+  background-color: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.stepsGrid h3 {
+  margin-bottom: 1rem;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+}
+
+.feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.featureIcon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background-color: var(--primary-light);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-20px) rotate(2deg);
+  }
+
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+/* Responsive */
+/* Responsive */
+@media (max-width: 768px) {
+  .hero {
+    padding: 3rem 0;
+  }
+
+  .heroContainer {
+    flex-direction: column;
+    text-align: center;
+    gap: 2.5rem;
+  }
+
+  .title {
+    font-size: 2.25rem;
+  }
+
+  .subtitle {
+    margin: 0 auto 2rem;
+    font-size: 1rem;
+    padding: 0 1rem;
+  }
+
+  .heroActions {
+    justify-content: center;
+    flex-direction: column;
+    padding: 0 1.5rem;
+  }
+
+  .heroActions .btn {
+    width: 100%;
+  }
+
+  .floatingCard {
+    max-width: 100%;
+    margin: 0 1rem;
+    padding: 1.5rem;
+  }
+
+  .cardValue {
+    font-size: 1.25rem;
+  }
+
+  .cardCode {
+    font-size: 1rem;
+    padding: 0.75rem;
+  }
+
+  .section {
+    padding: 3.5rem 0;
+  }
+
+  .sectionHeader {
+    margin-bottom: 2.5rem;
+    padding: 0 1rem;
+  }
+
+  .sectionHeader h2 {
+    font-size: 2rem;
+  }
+
+  .stepsGrid,
+  .featuresGrid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding: 0 1rem;
+  }
+
+  .stepNumber {
+    margin: 0 auto 1.5rem;
+  }
+}
