@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addOrUpdateRateAction, deleteRateAction, bulkAddOrUpdateRatesAction } from "@/app/actions/rates";
+import { addOrUpdateRateAction, deleteRateAction, bulkAddOrUpdateRatesAction, deleteAllRatesAction } from "@/app/actions/rates";
 
 type Rate = {
     id: number;
@@ -110,6 +110,21 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
         } catch (error) {
             console.error(error);
             alert("Failed to delete rate.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteAll = async () => {
+        if (!confirm("Are you sure you want to completely remove ALL active rates? This action cannot be undone.")) return;
+
+        setLoading(true);
+        try {
+            await deleteAllRatesAction();
+            window.location.reload();
+        } catch (error) {
+            console.error(error);
+            alert("Failed to delete all rates.");
         } finally {
             setLoading(false);
         }
@@ -355,7 +370,18 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
 
             {/* Current Rates Table */}
             <div className="card" style={{ height: "calc(100% - 2rem)", maxHeight: "800px", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-                <h3 style={{ marginBottom: "1.5rem", position: "sticky", top: 0, backgroundColor: "var(--background)", zIndex: 10, paddingBottom: "1rem" }}>Active Rates</h3>
+                <div style={{ position: "sticky", top: 0, backgroundColor: "var(--background)", zIndex: 10, paddingBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+                    <h3 style={{ margin: 0 }}>Active Rates</h3>
+                    {rates.length > 0 && (
+                        <button
+                            onClick={handleDeleteAll}
+                            disabled={loading}
+                            style={{ backgroundColor: "var(--danger)", color: "white", border: "none", padding: "0.5rem 1rem", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "0.85rem", fontWeight: "bold", marginLeft: "auto" }}
+                        >
+                            Remove All Rates
+                        </button>
+                    )}
+                </div>
                 {rates.length === 0 ? (
                     <p style={{ opacity: 0.6 }}>No custom rates have been configured yet.</p>
                 ) : (

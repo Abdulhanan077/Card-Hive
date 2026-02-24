@@ -53,3 +53,9 @@ export async function bulkAddOrUpdateRatesAction(brands: string[], cardCountry: 
     revalidatePath("/admin/rates");
     revalidatePath("/user/sell");
 }
+
+export async function deleteAllRatesAction() {
+    await prisma.cardRate.deleteMany();
+    revalidatePath("/admin/rates");
+    revalidatePath("/user/sell");
+}

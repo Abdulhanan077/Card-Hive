@@ -9,6 +9,7 @@ export default function SellGiftCardPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [files, setFiles] = useState<File[]>([]);
+    const [filePreviews, setFilePreviews] = useState<string[]>([]);
 
     // Rate Calculator State
     const [rates, setRates] = useState<{ cardBrand: string, cardCountry: string, rate: number }[]>([]);
@@ -23,6 +24,11 @@ export default function SellGiftCardPage() {
             if (data.rates) setRates(data.rates);
         }).catch(err => console.error("Failed to load rates:", err));
     }, []);
+
+    // Cleanup object URLs for previews
+    useEffect(() => {
+        return () => filePreviews.forEach(URL.revokeObjectURL);
+    }, [filePreviews]);
 
     // Get Unique Brands configured by Admin
     const availableBrands = Array.from(new Set(rates.map(r => r.cardBrand)));
@@ -59,7 +65,12 @@ export default function SellGiftCardPage() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            setFiles(Array.from(e.target.files));
+            const selectedFiles = Array.from(e.target.files);
+            setFiles(selectedFiles);
+
+            // Generate previews for the images
+            const previews = selectedFiles.map(file => URL.createObjectURL(file));
+            setFilePreviews(previews);
         }
     };
 
@@ -242,9 +253,19 @@ export default function SellGiftCardPage() {
                             <div className={styles.fileUpload}>
                                 <input type="file" multiple accept="image/*" onChange={handleFileChange} className={styles.fileInput} />
                                 <div className={styles.fileLabel}>
-                                    <span style={{ fontSize: '2rem' }}>📸</span>
-                                    <p>Click to browse or drag and drop images here.</p>
-                                    <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>{files.length > 0 ? `${files.length} file(s) selected` : 'Front, back, and receipt required for physical cards.'}</p>
+                                    {filePreviews.length > 0 ? (
+                                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                            {filePreviews.map((preview, index) => (
+                                                <img key={index} src={preview} alt={`preview ${index}`} style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span style={{ fontSize: '2rem' }}>📸</span>
+                                            <p>Click to browse or drag and drop images here.</p>
+                                            <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>Front, back, and receipt required for physical cards.</p>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
