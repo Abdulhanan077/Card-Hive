@@ -5,7 +5,12 @@ import styles from "./page.module.css";
 import { prisma } from "@/lib/prisma";
 
 export default async function Home() {
-  const settings = await prisma.settings.findFirst();
+  let settings = null;
+  try {
+    settings = await prisma.settings.findFirst();
+  } catch (error) {
+    console.warn("Could not connect to database for settings during build.");
+  }
 
   return (
     <>
