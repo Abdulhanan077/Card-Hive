@@ -20,6 +20,11 @@ export default function ImageGrid({ initialImages }: { initialImages: BlobImage[
     const totalBytes = images.reduce((acc, img) => acc + img.size, 0);
     const totalMb = (totalBytes / (1024 * 1024)).toFixed(2);
 
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    const isDeletable = (img: BlobImage) => new Date(img.uploadedAt) <= threeDaysAgo;
+
     const toggleSelection = (url: string) => {
         const newSet = new Set(selectedUrls);
         if (newSet.has(url)) {
@@ -31,17 +36,18 @@ export default function ImageGrid({ initialImages }: { initialImages: BlobImage[
     };
 
     const selectAll = () => {
-        if (selectedUrls.size === images.length) {
+        const deletableImages = images.filter(isDeletable);
+        if (selectedUrls.size === deletableImages.length && deletableImages.length > 0) {
             setSelectedUrls(new Set());
         } else {
-            setSelectedUrls(new Set(images.map(img => img.url)));
+            setSelectedUrls(new Set(deletableImages.map(img => img.url)));
         }
     };
 
     const handleDelete = async () => {
         if (selectedUrls.size === 0) return;
 
-        const confirmDelete = window.confirm(`Are you sure you want to permanently delete ${selectedUrls.size} images? This action cannot be undone and may break existing Trade History views that reference these images.`);
+        const confirmDelete = window.confirm(`Are you sure you want to permanently delete ${selectedUrls.size} images? This action cannot be undone.`);
         if (!confirmDelete) return;
 
         setIsDeleting(true);
@@ -53,7 +59,9 @@ export default function ImageGrid({ initialImages }: { initialImages: BlobImage[
                 setImages(images.filter(img => !selectedUrls.has(img.url)));
                 setSelectedUrls(new Set());
             } else {
-                alert("Failed to delete some images.");
+                alert(res.error || "Failed to delete some images. Ensure they are older than 3 days.");
+                // Deselect everything that failed
+                setSelectedUrls(new Set());
             }
         } catch (error) {
             alert("An error occurred while deleting images.");
@@ -68,7 +76,7 @@ export default function ImageGrid({ initialImages }: { initialImages: BlobImage[
             {/* Storage Stats Banner */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--surface)", padding: "1.5rem", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
                 <div>
-                    <h2 style={{ fontSize: "1.25rem", marginBottom: "0.25rem" }}>Vercel Blob Storage</h2>
+                    <h2 style={{ fontSize: "1.25rem", marginBottom: "0.25rem" }}>All Images</h2>
                     <p style={{ color: "gray", fontSize: "0.9rem", margin: 0 }}>
                         {images.length} images stored ({totalMb} MB total)
                     </p>
@@ -79,9 +87,9 @@ export default function ImageGrid({ initialImages }: { initialImages: BlobImage[
                         onClick={selectAll}
                         className="btn"
                         style={{ border: "1px solid var(--border)", backgroundColor: "transparent" }}
-                        disabled={images.length === 0}
+                        disabled={images.filter(isDeletable).length === 0}
                     >
-                        {selectedUrls.size === images.length && images.length > 0 ? "Deselect All" : "Select All"}
+                        {selectedUrls.size === images.filter(isDeletable).length && images.filter(isDeletable).length > 0 ? "Deselect Deletable" : "Select Deletable"}
                     </button>
 
                     <button
@@ -100,25 +108,30 @@ export default function ImageGrid({ initialImages }: { initialImages: BlobImage[
                 <div style={{ textAlign: "center", padding: "4rem", backgroundColor: "var(--surface)", borderRadius: "var(--radius-lg)", border: "1px dashed var(--border)" }}>
                     <div style={{ fontSize: "3rem", marginBottom: "1rem", color: "gray", opacity: 0.5 }}>📸</div>
                     <h3 style={{ fontSize: "1.25rem", color: "gray" }}>Storage is Empty</h3>
-                    <p style={{ color: "gray", fontSize: "0.9rem" }}>There are no images currently hosted on Vercel Blob.</p>
+                    <p style={{ color: "gray", fontSize: "0.9rem" }}>There are no images currently hosted.</p>
                 </div>
             ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
                     {images.map((img) => {
+                        const deletable = isDeletable(img);
                         const isSelected = selectedUrls.has(img.url);
                         return (
                             <div
                                 key={img.url}
-                                onClick={() => toggleSelection(img.url)}
+                                onClick={() => {
+                                    if (deletable) toggleSelection(img.url);
+                                }}
                                 style={{
                                     position: "relative",
                                     aspectRatio: "1",
                                     borderRadius: "var(--radius-md)",
                                     overflow: "hidden",
-                                    border: isSelected ? "3px solid var(--primary)" : "1px solid var(--border)",
-                                    cursor: "pointer",
-                                    transition: "all 0.1s ease"
+                                    border: isSelected ? "3px solid var(--danger)" : "1px solid var(--border)",
+                                    cursor: deletable ? "pointer" : "not-allowed",
+                                    transition: "all 0.1s ease",
+                                    opacity: deletable ? 1 : 0.6
                                 }}
+                                title={deletable ? "Click to select for deletion" : "Image is less than 3 days old and cannot be deleted yet"}
                             >
                                 <Image
                                     src={img.url}
@@ -138,7 +151,7 @@ export default function ImageGrid({ initialImages }: { initialImages: BlobImage[
 
                                 {/* Selection Checkbox Visual */}
                                 {isSelected && (
-                                    <div style={{ position: "absolute", top: "0.5rem", right: "0.5rem", backgroundColor: "var(--primary)", color: "white", width: "24px", height: "24px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>
+                                    <div style={{ position: "absolute", top: "0.5rem", right: "0.5rem", backgroundColor: "var(--danger)", color: "white", width: "24px", height: "24px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>
                                         ✓
                                     </div>
                                 )}
