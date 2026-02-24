@@ -7,12 +7,16 @@ export default async function AdminSettingsPage() {
     async function saveSettings(formData: FormData) {
         "use server";
 
-        const data: any = {
-            siteName: formData.get("siteName") as string,
-            contactEmail: formData.get("contactEmail") as string,
-            whatsappNumber: formData.get("whatsappNumber") as string,
-            landingPageIntroText: formData.get("landingPageIntroText") as string,
-        };
+        const data: any = {};
+
+        const fields = ["siteName", "contactEmail", "whatsappNumber", "landingPageIntroText"];
+        fields.forEach(field => {
+            const val = formData.get(field);
+            if (val !== null) {
+                data[field] = val as string;
+            }
+        });
+
 
         const refBonusStr = formData.get("referralBonusPercentage") as string;
         if (refBonusStr) {
