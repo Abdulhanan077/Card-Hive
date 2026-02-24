@@ -26,6 +26,7 @@ function RegisterForm() {
             phoneNumber: { value: string };
             password: { value: string };
             confirmPassword: { value: string };
+            referralCode: { value: string };
         };
 
         if (target.password.value !== target.confirmPassword.value) {
@@ -43,7 +44,7 @@ function RegisterForm() {
                     email: target.email.value,
                     phoneNumber: target.phoneNumber.value,
                     password: target.password.value,
-                    ref: refCode,
+                    ref: target.referralCode.value || refCode,
                 }),
             });
 
@@ -180,6 +181,18 @@ function RegisterForm() {
                                     {showPassword ? "👁️‍🗨️" : "👁️"}
                                 </button>
                             </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="referralCode" className="form-label">Referral Code (Optional)</label>
+                            <input
+                                id="referralCode"
+                                name="referralCode"
+                                type="text"
+                                className="form-input"
+                                placeholder="Did someone invite you?"
+                                defaultValue={refCode || ""}
+                            />
                         </div>
 
                         <button
