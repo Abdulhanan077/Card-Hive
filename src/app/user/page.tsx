@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import { calculateVipTier, getNextVipTier } from "@/lib/vipTiers";
+import ReferralLinkCopy from "@/components/ReferralLinkCopy";
 
 export default async function UserDashboardHome() {
     const session = await getServerSession(authOptions);
@@ -24,8 +25,7 @@ export default async function UserDashboardHome() {
 
     // Fetch User Referral Details
     const userData = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { referralCode: true, rewardBalance: true, completedTradesCount: true }
+        where: { id: userId }
     });
 
     const currentTier = calculateVipTier(userData?.completedTradesCount || 0);
@@ -109,16 +109,7 @@ export default async function UserDashboardHome() {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Your Unique Referral Link</label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <input
-                                type="text"
-                                readOnly
-                                className="form-input"
-                                value={`http://localhost:3000/register?ref=${userData?.referralCode}`}
-                                style={{ margin: 0, flex: 1, backgroundColor: 'var(--bg-alt)', cursor: 'text' }}
-                            />
-                            {/* Assuming they can just select and copy for now, later we can add a clipboard component */}
-                        </div>
+                        <ReferralLinkCopy referralCode={userData?.referralCode || null} />
                     </div>
                 </div>
 

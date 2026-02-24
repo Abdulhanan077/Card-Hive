@@ -27,12 +27,14 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
     const [isCustomBrand, setIsCustomBrand] = useState(false);
     const [currency, setCurrency] = useState("USD");
     const [priceTag, setPriceTag] = useState("Any Amount");
+    const [isCustomPrice, setIsCustomPrice] = useState(false);
     const [rateMultiplier, setRateMultiplier] = useState("");
 
     // Bulk Form State
     const [bulkBrands, setBulkBrands] = useState<string[]>(POPULAR_BRANDS);
     const [bulkCurrency, setBulkCurrency] = useState("USD");
     const [bulkPriceTag, setBulkPriceTag] = useState("Any Amount");
+    const [isBulkCustomPrice, setIsBulkCustomPrice] = useState(false);
     const [bulkRateMultiplier, setBulkRateMultiplier] = useState("");
 
     const CURRENCIES = ["USD", "GBP", "EUR", "CAD", "AUD", "Global"];
@@ -92,6 +94,7 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
         setIsCustomBrand(!POPULAR_BRANDS.includes(rate.cardBrand));
         setCurrency(curr);
         setPriceTag(tag);
+        setIsCustomPrice(!PRICE_TAGS.includes(tag));
         setRateMultiplier(rate.rate.toString());
 
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -197,14 +200,36 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label className="form-label">Price Tag (Face Value)</label>
-                                <select
-                                    value={priceTag}
-                                    onChange={(e) => setPriceTag(e.target.value)}
-                                    className="form-select"
-                                    required
-                                >
-                                    {PRICE_TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <select
+                                        value={isCustomPrice ? "Other" : priceTag}
+                                        onChange={(e) => {
+                                            if (e.target.value === "Other") {
+                                                setIsCustomPrice(true);
+                                                setPriceTag("");
+                                            } else {
+                                                setIsCustomPrice(false);
+                                                setPriceTag(e.target.value);
+                                            }
+                                        }}
+                                        className="form-select"
+                                        required={!isCustomPrice}
+                                    >
+                                        {PRICE_TAGS.map(t => <option key={t} value={t}>{t}</option>)}
+                                        <option value="Other" style={{ fontWeight: "bold" }}>+ Enter Custom Amount</option>
+                                    </select>
+                                    {isCustomPrice && (
+                                        <input
+                                            type="text"
+                                            value={priceTag}
+                                            onChange={(e) => setPriceTag(e.target.value)}
+                                            className="form-input"
+                                            placeholder="e.g. 50, 100, 10-50"
+                                            required={isCustomPrice}
+                                            autoFocus
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -224,7 +249,7 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                             <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={loading}>
                                 {loading ? "Saving..." : "Save Rate Config"}
                             </button>
-                            <button type="button" className="btn btn-secondary" onClick={() => { setCardBrand(""); setIsCustomBrand(false); setCurrency("USD"); setPriceTag("Any Amount"); setRateMultiplier(""); }} disabled={loading}>
+                            <button type="button" className="btn btn-secondary" onClick={() => { setCardBrand(""); setIsCustomBrand(false); setCurrency("USD"); setPriceTag("Any Amount"); setIsCustomPrice(false); setRateMultiplier(""); }} disabled={loading}>
                                 Clear
                             </button>
                         </div>
@@ -250,14 +275,36 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label className="form-label">Price Tag (Face Value)</label>
-                                <select
-                                    value={bulkPriceTag}
-                                    onChange={(e) => setBulkPriceTag(e.target.value)}
-                                    className="form-select"
-                                    required
-                                >
-                                    {PRICE_TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <select
+                                        value={isBulkCustomPrice ? "Other" : bulkPriceTag}
+                                        onChange={(e) => {
+                                            if (e.target.value === "Other") {
+                                                setIsBulkCustomPrice(true);
+                                                setBulkPriceTag("");
+                                            } else {
+                                                setIsBulkCustomPrice(false);
+                                                setBulkPriceTag(e.target.value);
+                                            }
+                                        }}
+                                        className="form-select"
+                                        required={!isBulkCustomPrice}
+                                    >
+                                        {PRICE_TAGS.map(t => <option key={t} value={t}>{t}</option>)}
+                                        <option value="Other" style={{ fontWeight: "bold" }}>+ Enter Custom Amount</option>
+                                    </select>
+                                    {isBulkCustomPrice && (
+                                        <input
+                                            type="text"
+                                            value={bulkPriceTag}
+                                            onChange={(e) => setBulkPriceTag(e.target.value)}
+                                            className="form-input"
+                                            placeholder="e.g. 50, 100, 10-50"
+                                            required={isBulkCustomPrice}
+                                            autoFocus
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
 
