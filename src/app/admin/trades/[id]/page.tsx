@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import ChatBox from "@/app/components/ChatBox";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import CopyButton from "@/components/CopyButton";
 import { calculateVipTier } from "@/lib/vipTiers";
 
 export default async function TradeDetailView(props: { params: Promise<{ id: string }> }) {
@@ -101,8 +102,23 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                 {/* Left Column: Details & Controls */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", overflowY: "auto", paddingRight: "1rem" }}>
 
-                    {/* Controls */}
+                    {/* Controls & Payout Info */}
                     <div className="card" style={{ borderColor: 'var(--primary)', position: "sticky", top: 0, zIndex: 10 }}>
+                        <div style={{ marginBottom: "1.5rem", paddingBottom: "1.5rem", borderBottom: "1px solid var(--border)" }}>
+                            <h3 style={{ marginBottom: "1rem" }}>Submitter & Payout Info</h3>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                                <div><small>Username</small><div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>@{trade.user.username}</div></div>
+                                <div><small>Account Email</small><div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>{trade.user.email}</div></div>
+                                <div style={{ gridColumn: "1 / -1", backgroundColor: "var(--primary-light)", padding: "1rem", borderRadius: "var(--radius-md)", marginTop: "0.5rem" }}>
+                                    <small style={{ color: "var(--primary-hover)", fontWeight: 600, textTransform: "uppercase" }}>PAYOUT DESTINATION</small>
+                                    <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: "var(--foreground)", display: "flex", alignItems: "center" }}>
+                                        {trade.payoutNetwork} - {trade.payoutPhoneNumber}
+                                        <CopyButton textToCopy={`${trade.payoutNetwork} - ${trade.payoutPhoneNumber}`} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
                             <h3 style={{ margin: 0 }}>Status Controls</h3>
                             <span className={`badge badge-${trade.status.toLowerCase()}`} style={{ fontSize: "1rem", padding: "0.5rem 1rem" }}>
@@ -160,30 +176,25 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
 
                             <div style={{ gridColumn: "1 / -1", marginTop: "0.5rem", backgroundColor: "var(--surface-hover)", padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
                                 <small style={{ color: "var(--danger)", fontWeight: 700 }}>SECURE DATA (RAW CODE)</small>
-                                <div style={{ marginTop: "0.25rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                                    <div><strong>Code / PIN:</strong> <span style={{ fontFamily: "monospace", letterSpacing: "0.05em", fontSize: "1.1em" }}>{trade.cardCode}</span></div>
-                                    {trade.serialNumber && <div><strong>Serial Number:</strong> <span style={{ fontFamily: "monospace" }}>{trade.serialNumber}</span></div>}
+                                <div style={{ marginTop: "0.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                        <strong>Code / PIN:</strong>
+                                        <span style={{ fontFamily: "monospace", letterSpacing: "0.05em", fontSize: "1.1em", marginLeft: "0.5rem", fontWeight: "bold" }}>{trade.cardCode}</span>
+                                        <CopyButton textToCopy={trade.cardCode} />
+                                    </div>
+                                    {trade.serialNumber && (
+                                        <div style={{ display: "flex", alignItems: "center" }}>
+                                            <strong>Serial Number:</strong>
+                                            <span style={{ fontFamily: "monospace", marginLeft: "0.5rem", fontWeight: "bold" }}>{trade.serialNumber}</span>
+                                            <CopyButton textToCopy={trade.serialNumber} />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Submitter & Payout */}
-                    <div className="card">
-                        <h3 style={{ marginBottom: "1rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>
-                            Submitter & Payout Info
-                        </h3>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                            <div><small>Username</small><div>@{trade.user.username}</div></div>
-                            <div><small>Account Email</small><div>{trade.user.email}</div></div>
-                            <div style={{ gridColumn: "1 / -1", backgroundColor: "var(--primary-light)", padding: "1rem", borderRadius: "var(--radius-md)", marginTop: "0.5rem" }}>
-                                <small style={{ color: "var(--primary-hover)", fontWeight: 600 }}>PAYOUT DESTINATION</small>
-                                <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--foreground)" }}>
-                                    {trade.payoutNetwork} - {trade.payoutPhoneNumber}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
 
                     {/* Images */}
                     <div className="card">
