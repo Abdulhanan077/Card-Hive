@@ -3,7 +3,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
-import { put } from "@vercel/blob";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+
+const s3Client = new S3Client({
+    region: "auto",
+    endpoint: process.env.CLOUDFLARE_R2_ENDPOINT!,
+    credentials: {
+        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
+    },
+});
 
 export async function POST(req: Request) {
     try {
@@ -58,10 +67,21 @@ export async function POST(req: Request) {
             for (const image of images) {
                 if (image.size > 0) {
                     const uniqueName = `${Date.now()}-${image.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-                    const blob = await put(uniqueName, image, {
-                        access: "public",
+
+                    const buffer = Buffer.from(await image.arrayBuffer());
+
+                    const command = new PutObjectCommand({
+                        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
+                        Key: uniqueName,
+                        Body: buffer,
+                        ContentType: image.type,
                     });
-                    imageUrls.push(blob.url);
+
+                    await s3Client.send(command);
+
+                    // Reconstruct the public R2 domain URL
+                    const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${uniqueName}`;
+                    imageUrls.push(publicUrl);
                 }
             }
         }
