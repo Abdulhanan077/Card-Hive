@@ -212,7 +212,7 @@ export default async function UserDashboardHome() {
                         <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>Support</h3>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <a href={`https://wa.me/${settings?.whatsappNumber?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', textDecoration: 'none', color: 'inherit', transition: 'background-color 0.2s' }} className="hover-bg-light">
+                            <a href={`https://wa.me/${(settings?.whatsappNumber || "").replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', textDecoration: 'none', color: 'inherit', transition: 'background-color 0.2s' }} className="hover-bg-light">
                                 <div style={{ backgroundColor: '#dcfce7', color: '#16a34a', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
                                     <span>💬</span>
                                 </div>
@@ -222,7 +222,7 @@ export default async function UserDashboardHome() {
                                 </div>
                             </a>
 
-                            <a href={`mailto:${settings?.contactEmail}`} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', textDecoration: 'none', color: 'inherit', transition: 'background-color 0.2s' }} className="hover-bg-light">
+                            <a href={`mailto:${settings?.contactEmail || "support@omorbiggy.com"}`} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', textDecoration: 'none', color: 'inherit', transition: 'background-color 0.2s' }} className="hover-bg-light">
                                 <div style={{ backgroundColor: '#e0e7ff', color: '#4f46e5', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
                                     <span>✉️</span>
                                 </div>
