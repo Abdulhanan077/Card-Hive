@@ -4,6 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+    sendDuplicateCardAttemptEmail,
+    sendAdminDuplicateAlert,
+    sendTradeSubmittedEmail,
+    sendAdminNewTradeEmail
+} from "@/lib/email";
 
 const s3Client = new S3Client({
     region: "auto",
@@ -53,6 +59,19 @@ export async function POST(req: Request) {
         });
 
         if (duplicateTrade) {
+            // Find the user who attempted this
+            const attempter = await prisma.user.findUnique({ where: { id: parseInt(session.user.id) } });
+            if (attempter) {
+                if (attempter.emailNotificationsEnabled) {
+                    sendDuplicateCardAttemptEmail({ email: attempter.email, username: attempter.username }, { cardBrand, faceValue, currency });
+                }
+                sendAdminDuplicateAlert(
+                    { cardBrand, faceValue, currency },
+                    [duplicateTrade],
+                    { username: attempter.username, email: attempter.email }
+                );
+            }
+
             return NextResponse.json(
                 { message: "This card appears to have already been submitted. If you believe this is a mistake, please contact support." },
                 { status: 409 }
@@ -122,6 +141,14 @@ export async function POST(req: Request) {
                 adminNotes: notes, // Store initial notes logic if needed, or create separate field
             }
         });
+
+        const user = await prisma.user.findUnique({ where: { id: parseInt(session.user.id) } });
+        if (user) {
+            if (user.emailNotificationsEnabled) {
+                sendTradeSubmittedEmail({ email: user.email, username: user.username }, trade);
+            }
+            sendAdminNewTradeEmail(trade, { username: user.username, email: user.email, phoneNumber: user.phoneNumber });
+        }
 
         return NextResponse.json({ tradeId: trade.tradeId }, { status: 201 });
     } catch (error) {

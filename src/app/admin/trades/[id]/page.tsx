@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import CopyButton from "@/components/CopyButton";
 import { calculateVipTier } from "@/lib/vipTiers";
 import DownloadButton from "./DownloadButton";
+import { sendTradeStatusUpdateEmail, sendPaymentSentEmail } from "@/lib/email";
 
 export default async function TradeDetailView(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -60,10 +61,27 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
             data.paidAt = null;
         }
 
-        await prisma.trade.update({
+        const updatedTrade = await prisma.trade.update({
             where: { id: trade!.id },
-            data
+            data,
+            include: { user: true }
         });
+
+        if (updatedTrade.user.emailNotificationsEnabled && trade!.status !== status) {
+            sendTradeStatusUpdateEmail(
+                { email: updatedTrade.user.email, username: updatedTrade.user.username },
+                updatedTrade,
+                trade!.status,
+                status
+            );
+
+            if (status === "PAID") {
+                sendPaymentSentEmail(
+                    { email: updatedTrade.user.email, username: updatedTrade.user.username },
+                    updatedTrade
+                );
+            }
+        }
 
         revalidatePath(`/admin/trades/${params.id}`);
         revalidatePath(`/admin/trades`);

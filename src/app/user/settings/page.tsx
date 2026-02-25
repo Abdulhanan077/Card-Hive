@@ -18,7 +18,8 @@ export default async function UserSettingsPage() {
             email: true,
             createdAt: true,
             referralCode: true,
-            status: true
+            status: true,
+            emailNotificationsEnabled: true
         }
     });
 
@@ -45,7 +46,8 @@ export default async function UserSettingsPage() {
                     username: user.username,
                     email: user.email,
                     memberSince: memberSince,
-                    referralCode: user.referralCode || "N/A"
+                    referralCode: user.referralCode || "N/A",
+                    emailNotificationsEnabled: user.emailNotificationsEnabled
                 }}
             />
         </div>

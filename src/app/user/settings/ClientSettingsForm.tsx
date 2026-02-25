@@ -8,11 +8,15 @@ type SettingsUser = {
     email: string;
     memberSince: string;
     referralCode: string;
+    emailNotificationsEnabled: boolean;
 };
+
+import { updateEmailPreferences } from "@/app/actions/userSettings";
 
 export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
     const [loadingInfo, setLoadingInfo] = useState(false);
     const [loadingPassword, setLoadingPassword] = useState(false);
+    const [updatingPrefs, setUpdatingPrefs] = useState(false);
 
     // Form States
     const [fullName, setFullName] = useState(user.username);
@@ -20,6 +24,20 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
 
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
+
+    const [emailNotifications, setEmailNotifications] = useState(user.emailNotificationsEnabled);
+
+    const handleToggleEmailNotifications = async () => {
+        setUpdatingPrefs(true);
+        const newValue = !emailNotifications;
+        setEmailNotifications(newValue); // Optimistic UI
+        const res = await updateEmailPreferences(newValue);
+        if (!res.success) {
+            setEmailNotifications(!newValue); // Revert on failure
+            alert(res.error || "Failed to update preferences");
+        }
+        setUpdatingPrefs(false);
+    };
 
     const handleSaveInfo = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -189,6 +207,44 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                                 </button>
                             </div>
                         </form>
+                    </div>
+
+                    {/* Notification Preferences */}
+                    <div className="card" style={{ padding: '2rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span>🔔</span> Notification Preferences
+                        </h3>
+                        <p style={{ fontSize: '0.85rem', color: 'gray', marginBottom: '1.5rem' }}>
+                            Choose what kind of updates you receive from us.
+                        </p>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: 'var(--bg-alt)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                            <div>
+                                <h4 style={{ margin: 0, fontSize: '0.95rem' }}>Trade Updates</h4>
+                                <p style={{ margin: 0, fontSize: '0.8rem', color: 'gray', marginTop: '0.25rem' }}>Receive email notifications when your trade status changes or payment is sent.</p>
+                            </div>
+                            <label style={{ position: 'relative', display: 'inline-block', width: '50px', height: '26px' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={emailNotifications}
+                                    onChange={handleToggleEmailNotifications}
+                                    disabled={updatingPrefs}
+                                    style={{ opacity: 0, width: 0, height: 0 }}
+                                />
+                                <span style={{
+                                    position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0,
+                                    backgroundColor: emailNotifications ? '#10b981' : '#ccc',
+                                    transition: '.4s', borderRadius: '34px',
+                                    opacity: updatingPrefs ? 0.6 : 1
+                                }}>
+                                    <span style={{
+                                        position: 'absolute', content: '""', height: '18px', width: '18px',
+                                        left: emailNotifications ? '28px' : '4px', bottom: '4px',
+                                        backgroundColor: 'white', transition: '.4s', borderRadius: '50%'
+                                    }} />
+                                </span>
+                            </label>
+                        </div>
                     </div>
 
                 </div>

@@ -19,6 +19,7 @@ model User {
   role          String   @default("USER") // USER or ADMIN
   status        String   @default("ACTIVE") // ACTIVE or BLOCKED
   password      String
+  emailNotificationsEnabled Boolean @default(true)
   
   // Referral System Fields
   referralCode  String?  @unique

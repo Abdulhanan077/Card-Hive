@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
     try {
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
         const userCount = await prisma.user.count();
         const role = userCount === 0 ? "ADMIN" : "USER";
 
-        await prisma.user.create({
+        const newUser = await prisma.user.create({
             data: {
                 username,
                 email,
@@ -64,6 +65,10 @@ export async function POST(req: Request) {
                 ...(referredById && { referredBy: referredById })
             },
         });
+
+        if (newUser.emailNotificationsEnabled) {
+            sendWelcomeEmail({ email: newUser.email, username: newUser.username }); // Non-blocking
+        }
 
         return NextResponse.json(
             { message: "Registration successful" },
