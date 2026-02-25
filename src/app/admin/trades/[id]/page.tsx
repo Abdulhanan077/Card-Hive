@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import CopyButton from "@/components/CopyButton";
 import { calculateVipTier } from "@/lib/vipTiers";
+import DownloadButton from "./DownloadButton";
 
 export default async function TradeDetailView(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -204,12 +205,15 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                         {parsedImages.length === 0 ? (
                             <p style={{ opacity: 0.6 }}>No images uploaded.</p>
                         ) : (
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "0.5rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "1rem" }}>
                                 {parsedImages.map((src, idx) => (
-                                    <a key={idx} href={src} target="_blank" rel="noopener noreferrer" style={{ display: "block", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={src} alt={`Evidence ${idx + 1}`} style={{ width: "100%", height: "150px", objectFit: "cover" }} />
-                                    </a>
+                                    <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                        <a href={src} target="_blank" rel="noopener noreferrer" style={{ display: "block", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={src} alt={`Evidence ${idx + 1}`} style={{ width: "100%", height: "150px", objectFit: "cover" }} />
+                                        </a>
+                                        <DownloadButton src={src} fileName={`evidence-${trade.tradeId}-${idx + 1}.jpg`} />
+                                    </div>
                                 ))}
                             </div>
                         )}
