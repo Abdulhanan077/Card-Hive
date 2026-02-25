@@ -153,6 +153,28 @@ export async function sendDuplicateCardAttemptEmail(user: { email: string; usern
   return sendEmail({ to: user.email, subject: "Duplicate card submission detected", html });
 }
 
+export async function sendAdminNewUserEmail(user: { username: string; email: string; phoneNumber: string }) {
+  const adminEmail = process.env.EMAIL_ADMIN;
+  if (!adminEmail) return;
+
+  const html = `
+    <div style="${containerStyle}">
+      <h2>New User Registration 🎉</h2>
+      <p>A new user has just signed up on Card Hive.</p>
+      
+      <div style="${cardStyle}">
+        <h3>User Details</h3>
+        <strong>Username:</strong> ${user.username}<br/>
+        <strong>Email:</strong> ${user.email}<br/>
+        <strong>Phone:</strong> ${user.phoneNumber}<br/>
+        <strong>Registered At:</strong> ${new Date().toLocaleString()}
+      </div>
+      <a href="${getAppUrl()}/admin/users" style="${buttonStyle}">View Users in Admin Panel</a>
+    </div>
+  `;
+  return sendEmail({ to: adminEmail, subject: `New User Registration: @${user.username}`, html });
+}
+
 export async function sendAdminNewTradeEmail(trade: any, user: { username: string; email: string; phoneNumber: string }) {
   const adminEmail = process.env.EMAIL_ADMIN;
   if (!adminEmail) return;

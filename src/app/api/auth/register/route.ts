@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { sendWelcomeEmail } from "@/lib/email";
+import { sendWelcomeEmail, sendAdminNewUserEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
     try {
@@ -69,6 +69,7 @@ export async function POST(req: Request) {
         if (newUser.emailNotificationsEnabled) {
             sendWelcomeEmail({ email: newUser.email, username: newUser.username }); // Non-blocking
         }
+        sendAdminNewUserEmail(newUser); // Non-blocking admin alert
 
         return NextResponse.json(
             { message: "Registration successful" },
