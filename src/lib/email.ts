@@ -15,21 +15,23 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
   }
 
   try {
-    const { data, error } = await resend.emails.send({
+    const result = await resend.emails.send({
       from: process.env.EMAIL_FROM!,
       to,
       subject,
       html,
     });
 
-    if (error) {
-      console.error("Resend API error:", error);
+    if (result.error) {
+      console.error("Resend API error:", result.error);
       return;
     }
 
-    console.log("Email sent successfully:", data?.id);
-  } catch (error) {
-    console.error("Resend email error:", error);
+    if (result.data) {
+      console.log("Email sent successfully:", result.data.id);
+    }
+  } catch (err) {
+    console.error("Resend email exception:", err);
   }
 }
 
