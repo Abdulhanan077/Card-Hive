@@ -8,7 +8,13 @@ export default function DownloadButton({ src, fileName }: { src: string; fileNam
     const handleDownload = async () => {
         try {
             setIsDownloading(true);
-            const response = await fetch(src);
+            const proxyUrl = `/api/download?url=${encodeURIComponent(src)}&filename=${encodeURIComponent(fileName)}`;
+            const response = await fetch(proxyUrl);
+
+            if (!response.ok) {
+                throw new Error("Failed to download via proxy");
+            }
+
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
