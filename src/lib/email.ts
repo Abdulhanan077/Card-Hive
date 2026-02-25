@@ -1,7 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
-
 type SendEmailParams = {
   to: string;
   subject: string;
@@ -14,9 +12,11 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
     return;
   }
 
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
   try {
     const result = await resend.emails.send({
-      from: process.env.EMAIL_FROM!,
+      from: process.env.EMAIL_FROM,
       to,
       subject,
       html,
