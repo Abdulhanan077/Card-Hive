@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { sendWelcomeEmail, sendAdminNewUserEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
@@ -54,6 +55,9 @@ export async function POST(req: Request) {
         const userCount = await prisma.user.count();
         const role = userCount === 0 ? "ADMIN" : "USER";
 
+        // Generate a unique verification token
+        const verificationToken = crypto.randomUUID();
+
         const newUser = await prisma.user.create({
             data: {
                 username,
@@ -62,17 +66,20 @@ export async function POST(req: Request) {
                 password: hashedPassword,
                 role,
                 referralCode,
+                verificationToken,
                 ...(referredById && { referredBy: referredById })
             },
         });
 
         if (newUser.emailNotificationsEnabled) {
-            sendWelcomeEmail({ email: newUser.email, username: newUser.username }); // Non-blocking
+            import('@/lib/email').then(({ sendVerificationEmail }) => {
+                sendVerificationEmail({ email: newUser.email, username: newUser.username }, verificationToken); // Non-blocking
+            });
         }
         sendAdminNewUserEmail(newUser); // Non-blocking admin alert
 
         return NextResponse.json(
-            { message: "Registration successful" },
+            { message: "Registration successful. Please check your email to verify your account." },
             { status: 201 }
         );
     } catch (error) {

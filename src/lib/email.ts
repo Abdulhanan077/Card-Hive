@@ -58,6 +58,20 @@ export async function sendWelcomeEmail(user: { email: string; username: string }
   return sendEmail({ to: user.email, subject: "Welcome to Card Hive", html });
 }
 
+export async function sendVerificationEmail(user: { email: string; username: string }, token: string) {
+  const verifyUrl = `${getAppUrl()}/api/auth/verify-email?token=${token}`;
+  const html = `
+    <div style="${containerStyle}">
+      <h2>Verify your email address, ${user.username}!</h2>
+      <p>Thank you for registering at Card Hive. Please verify your email address to complete your registration and log in.</p>
+      <a href="${verifyUrl}" style="${buttonStyle}">Verify Email Address</a>
+      <p>If you did not register for an account, you can safely ignore this email.</p>
+      <p>Best regards,<br/>The Card Hive Team</p>
+    </div>
+  `;
+  return sendEmail({ to: user.email, subject: "Verify your email address - Card Hive", html });
+}
+
 export async function sendPasswordResetEmail(user: { email: string }, token: string) {
   const resetUrl = `${getAppUrl()}/reset-password?token=${token}`;
   const html = `

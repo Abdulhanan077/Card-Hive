@@ -20,6 +20,8 @@ model User {
   status        String   @default("ACTIVE") // ACTIVE or BLOCKED
   password      String
   emailNotificationsEnabled Boolean @default(true)
+  emailVerified DateTime?
+  verificationToken String? @unique
   
   // Referral System Fields
   referralCode  String?  @unique
