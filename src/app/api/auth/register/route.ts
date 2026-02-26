@@ -6,11 +6,37 @@ import { sendWelcomeEmail, sendAdminNewUserEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
     try {
-        const { username, email, phoneNumber, password, ref } = await req.json();
+        const { username, email, phoneNumber, password, ref, otp } = await req.json();
 
-        if (!username || !email || !phoneNumber || !password) {
+        if (!username || !email || !phoneNumber || !password || !otp) {
             return NextResponse.json(
-                { message: "All fields are required" },
+                { message: "All fields including OTP are required" },
+                { status: 400 }
+            );
+        }
+
+        // Verify the OTP
+        const otpRecord = await prisma.registrationOTP.findUnique({
+            where: { email },
+        });
+
+        if (!otpRecord) {
+            return NextResponse.json(
+                { message: "No verification code found. Please request a new one." },
+                { status: 400 }
+            );
+        }
+
+        if (otpRecord.otp !== otp) {
+            return NextResponse.json(
+                { message: "Invalid verification code." },
+                { status: 400 }
+            );
+        }
+
+        if (new Date() > otpRecord.expiresAt) {
+            return NextResponse.json(
+                { message: "Verification code has expired. Please request a new one." },
                 { status: 400 }
             );
         }
@@ -55,9 +81,6 @@ export async function POST(req: Request) {
         const userCount = await prisma.user.count();
         const role = userCount === 0 ? "ADMIN" : "USER";
 
-        // Generate a unique verification token
-        const verificationToken = crypto.randomUUID();
-
         const newUser = await prisma.user.create({
             data: {
                 username,
@@ -66,20 +89,23 @@ export async function POST(req: Request) {
                 password: hashedPassword,
                 role,
                 referralCode,
-                verificationToken,
+                emailVerified: new Date(),
                 ...(referredById && { referredBy: referredById })
             },
         });
 
+        // Delete the used OTP record
+        await prisma.registrationOTP.delete({
+            where: { email },
+        });
+
         if (newUser.emailNotificationsEnabled) {
-            import('@/lib/email').then(({ sendVerificationEmail }) => {
-                sendVerificationEmail({ email: newUser.email, username: newUser.username }, verificationToken); // Non-blocking
-            });
+            sendWelcomeEmail({ email: newUser.email, username: newUser.username }); // Non-blocking
         }
         sendAdminNewUserEmail(newUser); // Non-blocking admin alert
 
         return NextResponse.json(
-            { message: "Registration successful. Please check your email to verify your account." },
+            { message: "Registration successful. You can now log in." },
             { status: 201 }
         );
     } catch (error) {

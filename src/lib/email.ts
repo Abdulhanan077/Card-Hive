@@ -58,18 +58,19 @@ export async function sendWelcomeEmail(user: { email: string; username: string }
   return sendEmail({ to: user.email, subject: "Welcome to Card Hive", html });
 }
 
-export async function sendVerificationEmail(user: { email: string; username: string }, token: string) {
-  const verifyUrl = `${getAppUrl()}/api/auth/verify-email?token=${token}`;
+export async function sendOTPEmail(email: string, otp: string) {
   const html = `
     <div style="${containerStyle}">
-      <h2>Verify your email address, ${user.username}!</h2>
-      <p>Thank you for registering at Card Hive. Please verify your email address to complete your registration and log in.</p>
-      <a href="${verifyUrl}" style="${buttonStyle}">Verify Email Address</a>
-      <p>If you did not register for an account, you can safely ignore this email.</p>
+      <h2>Your Card Hive Verification Code</h2>
+      <p>Please use the following 6-digit code to complete your registration:</p>
+      <div style="${cardStyle}; text-align: center;">
+        <h1 style="letter-spacing: 5px; color: #0ea5e9; font-size: 32px; margin: 0;">${otp}</h1>
+      </div>
+      <p>This code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.</p>
       <p>Best regards,<br/>The Card Hive Team</p>
     </div>
   `;
-  return sendEmail({ to: user.email, subject: "Verify your email address - Card Hive", html });
+  return sendEmail({ to: email, subject: "Your Verification Code - Card Hive", html });
 }
 
 export async function sendPasswordResetEmail(user: { email: string }, token: string) {
