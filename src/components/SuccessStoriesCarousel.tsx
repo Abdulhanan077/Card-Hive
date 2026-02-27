@@ -68,6 +68,9 @@ export default function SuccessStoriesCarousel() {
                                 style={{ objectFit: 'cover' }}
                                 sizes="(max-width: 768px) 150px, 200px"
                             />
+                            <div className="story-time-badge">
+                                {getTimeAgo(story.createdAt)}
+                            </div>
                         </div>
                         {story.caption && (
                             <div className="story-caption">
