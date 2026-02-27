@@ -8,7 +8,23 @@ interface SuccessStory {
     imageUrl: string;
     caption: string | null;
     expiresAt: string;
+    createdAt: string;
 }
+
+const getTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInMs = now.getTime() - past.getTime();
+
+    const diffInMins = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+
+    if (diffInMins < 1) return "Just now";
+    if (diffInMins < 60) return `${diffInMins} ${diffInMins === 1 ? 'min' : 'mins'} ago`;
+    if (diffInHours < 24) return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
+
+    return "1 day ago"; // Stories expire in 24h anyway
+};
 
 export default function SuccessStoriesCarousel() {
     const [stories, setStories] = useState<SuccessStory[]>([]);
@@ -125,6 +141,19 @@ export default function SuccessStoriesCarousel() {
                     height: 180px;
                     background: #f3f4f6;
                     border-bottom: 1px solid var(--border);
+                }
+                .story-time-badge {
+                    position: absolute;
+                    bottom: 8px;
+                    left: 8px;
+                    background: rgba(0, 0, 0, 0.6);
+                    backdrop-filter: blur(4px);
+                    color: white;
+                    font-size: 0.65rem;
+                    font-weight: 600;
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                    z-index: 2;
                 }
                 .story-caption {
                     padding: 0.75rem;
