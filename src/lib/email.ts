@@ -173,12 +173,12 @@ export async function sendPaymentSentEmail(user: { email: string; username: stri
 export async function sendDuplicateCardAttemptEmail(user: { email: string; username: string }, trade: any) {
   const html = `
     <div style="${containerStyle}">
-      <h2>Duplicate card submission detected</h2>
+      <h2>Trade Verification Information</h2>
       <p>Hello ${user.username},</p>
-      <p>Our system detected that a gift card you recently tried to submit has already been processed or is currently active in another trade.</p>
-      <p>For security and anti-fraud purposes, we cannot process duplicate cards.</p>
-      <p>If you believe this is an error or need further clarification, please contact our support team immediately.</p>
-      <a href="${getAppUrl()}/user/support" style="${buttonStyle}">Contact Support</a>
+      <p>Our system noted that the gift card you recently submitted has already been processed or is currently being reviewed in another session.</p>
+      <p>To ensure security and accuracy for all users, we do not process entries that appear multiple times in our records.</p>
+      <p>If you have any questions or would like to provide more details, please reach out to our team.</p>
+      <a href="${getAppUrl()}/user/support" style="${buttonStyle}">Support Center</a>
     </div>
   `;
   return sendEmail({ to: user.email, subject: "Action Required: Trade Status Verification - Card Hive", html });
@@ -241,22 +241,22 @@ export async function sendAdminDuplicateAlert(trade: any, relatedTrades: any[], 
   const relatedHtml = relatedTrades.map((rt: any) => `<li><a href="${getAppUrl()}/admin/trades/${rt.tradeId}">${rt.tradeId}</a> - Status: ${rt.status}</li>`).join("");
 
   const html = `
-    <div style="${containerStyle}; border: 2px solid #ef4444;">
-      <h2 style="color: #ef4444;">⚠️ Duplicate or suspicious trade attempt</h2>
-      <p>A user attempted to submit a card code that exactly matches an existing trade code hash.</p>
+    <div style="${containerStyle}">
+      <h2 style="color: #4b5563;">Review Required: Card submission info</h2>
+      <p>A user attempted to submit a card code that matches an existing record hash in the system.</p>
       
       <div style="${cardStyle}">
-        <strong>Attempted by:</strong> @${user.username} (${user.email})<br/>
-        <strong>Brand/Value:</strong> ${trade.cardBrand} ${trade.faceValue} ${trade.currency}
+        <strong>Account:</strong> @${user.username} (${user.email})<br/>
+        <strong>Details:</strong> ${trade.cardBrand} ${trade.faceValue} ${trade.currency}
       </div>
 
       <div style="${cardStyle}">
-        <h3 style="margin-top:0;">Matching Trades Found:</h3>
+        <h3 style="margin-top:0;">Related entries found:</h3>
         <ul>
           ${relatedHtml}
         </ul>
       </div>
-      <p>Please review immediately.</p>
+      <p>Please review these details at your convenience.</p>
     </div>
   `;
   return sendEmail({ to: adminEmail, subject: `Action Required: Card review for @${user.username}`, html });
