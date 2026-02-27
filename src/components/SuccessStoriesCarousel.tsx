@@ -148,10 +148,10 @@ export default function SuccessStoriesCarousel() {
 
                 @media (max-width: 768px) {
                     .story-card {
-                        flex: 0 0 150px;
+                        flex: 0 0 220px;
                     }
                     .story-image-container {
-                        height: 100px;
+                        height: 160px;
                     }
                 }
             `}</style>

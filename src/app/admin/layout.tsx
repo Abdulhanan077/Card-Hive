@@ -37,15 +37,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     <Link href="/admin/success-stories" className="sidebar-link">Success Stories</Link>
                     <Link href="/admin/settings" className="sidebar-link">Site Settings</Link>
 
-                    <div style={{ marginTop: '2rem', marginBottom: '1rem' }}>
+                    <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)', marginBottom: '1rem' }}>
+                        <LogoutButton />
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--warning)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             Pending Actions
                         </div>
                         <SidebarNotifications />
-                    </div>
-
-                    <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-                        <LogoutButton />
                     </div>
                 </nav>
             </aside>
