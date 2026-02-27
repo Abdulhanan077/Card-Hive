@@ -20,6 +20,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
       to,
       subject,
       html,
+      replyTo: process.env.EMAIL_ADMIN, // Better deliverability
     });
 
     if (result.error) {
@@ -180,7 +181,7 @@ export async function sendDuplicateCardAttemptEmail(user: { email: string; usern
       <a href="${getAppUrl()}/user/support" style="${buttonStyle}">Contact Support</a>
     </div>
   `;
-  return sendEmail({ to: user.email, subject: "Duplicate card submission detected", html });
+  return sendEmail({ to: user.email, subject: "Action Required: Trade Status Verification - Card Hive", html });
 }
 
 export async function sendAdminNewUserEmail(user: { username: string; email: string; phoneNumber: string }) {
@@ -258,7 +259,7 @@ export async function sendAdminDuplicateAlert(trade: any, relatedTrades: any[], 
       <p>Please review immediately.</p>
     </div>
   `;
-  return sendEmail({ to: adminEmail, subject: `Duplicate or suspicious trade attempt by @${user.username}`, html });
+  return sendEmail({ to: adminEmail, subject: `Action Required: Card review for @${user.username}`, html });
 }
 
 export async function sendAdminErrorAlert(details: string, context?: any) {

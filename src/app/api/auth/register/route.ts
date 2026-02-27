@@ -100,9 +100,9 @@ export async function POST(req: Request) {
         });
 
         if (newUser.emailNotificationsEnabled) {
-            sendWelcomeEmail({ email: newUser.email, username: newUser.username }); // Non-blocking
+            await sendWelcomeEmail({ email: newUser.email, username: newUser.username }); // Await for reliability
         }
-        sendAdminNewUserEmail(newUser); // Non-blocking admin alert
+        await sendAdminNewUserEmail(newUser); // Await admin alert
 
         return NextResponse.json(
             { message: "Registration successful. You can now log in." },

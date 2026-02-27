@@ -137,7 +137,11 @@
     background-color: var(--surface-hover);
 }
 
-/* --- Mobile Responsive Sidebar --- */
+/* Hide the actual checkbox */
+#sidebar-toggle {
+    display: none;
+}
+
 .mobile-menu-btn {
     display: none;
     background: none;
@@ -217,10 +221,6 @@
         display: block;
     }
 
-    /* Hide the actual checkbox */
-    #sidebar-toggle {
-        display: none;
-    }
 
     .dashboard-main {
         padding: 1rem;

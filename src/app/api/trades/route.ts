@@ -63,9 +63,9 @@ export async function POST(req: Request) {
             const attempter = await prisma.user.findUnique({ where: { id: parseInt(session.user.id) } });
             if (attempter) {
                 if (attempter.emailNotificationsEnabled) {
-                    sendDuplicateCardAttemptEmail({ email: attempter.email, username: attempter.username }, { cardBrand, faceValue, currency });
+                    await sendDuplicateCardAttemptEmail({ email: attempter.email, username: attempter.username }, { cardBrand, faceValue, currency });
                 }
-                sendAdminDuplicateAlert(
+                await sendAdminDuplicateAlert(
                     { cardBrand, faceValue, currency },
                     [duplicateTrade],
                     { username: attempter.username, email: attempter.email }
@@ -145,9 +145,9 @@ export async function POST(req: Request) {
         const user = await prisma.user.findUnique({ where: { id: parseInt(session.user.id) } });
         if (user) {
             if (user.emailNotificationsEnabled) {
-                sendTradeSubmittedEmail({ email: user.email, username: user.username }, trade);
+                await sendTradeSubmittedEmail({ email: user.email, username: user.username }, trade);
             }
-            sendAdminNewTradeEmail(trade, { username: user.username, email: user.email, phoneNumber: user.phoneNumber });
+            await sendAdminNewTradeEmail(trade, { username: user.username, email: user.email, phoneNumber: user.phoneNumber });
         }
 
         return NextResponse.json({ tradeId: trade.tradeId }, { status: 201 });
