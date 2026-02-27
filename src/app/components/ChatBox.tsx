@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { postMessage, markMessageAsRead, triggerTypingIndicator } from "../actions/chat";
 import { pusherClient } from "@/lib/pusher";
+import { IoCheckmark, IoCheckmarkDone } from "react-icons/io5";
 
 interface Message {
     id: number;
@@ -37,6 +38,12 @@ export default function ChatBox({
         setMessages(initialMessages);
     }, [initialMessages]);
 
+    // Mark existing unread messages as read when joining
+    useEffect(() => {
+        const unreadFromOthers = messages.filter(m => !m.isRead && m.sender.id !== currentUserId);
+        unreadFromOthers.forEach(m => markMessageAsRead(m.id, tradeId));
+    }, [tradeId, currentUserId]); // Run once on mount or trade change
+
     useEffect(() => {
         const channel = pusherClient.subscribe(`trade-${tradeId}`);
 
@@ -67,7 +74,7 @@ export default function ChatBox({
         return () => {
             pusherClient.unsubscribe(`trade-${tradeId}`);
         };
-    }, [tradeId, currentUserId]);
+    }, [tradeId, currentUserId, currentUsername]);
 
     // Scroll to bottom on updates
     useEffect(() => {
@@ -132,16 +139,29 @@ export default function ChatBox({
                                     backgroundColor: isMe ? "var(--primary)" : "var(--surface-hover)",
                                     color: isMe ? "white" : "var(--foreground)",
                                     padding: "0.75rem 1rem",
+                                    paddingRight: isMe ? "2rem" : "1rem",
                                     borderRadius: "1rem",
                                     borderBottomRightRadius: isMe ? "0" : "1rem",
                                     borderBottomLeftRadius: !isMe ? "0" : "1rem",
                                     wordWrap: "break-word",
-                                    position: "relative"
+                                    position: "relative",
+                                    marginBottom: "0.2rem"
                                 }}>
                                     {msg.content}
-                                    {isMe && msg.isRead && (
-                                        <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.8)", position: "absolute", bottom: "-1.2rem", right: "0.2rem" }}>
-                                            Seen
+                                    {isMe && (
+                                        <span style={{
+                                            position: "absolute",
+                                            bottom: "0.4rem",
+                                            right: "0.5rem",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            height: "12px"
+                                        }}>
+                                            {msg.isRead ? (
+                                                <IoCheckmarkDone size={16} color="#4ade80" />
+                                            ) : (
+                                                <IoCheckmark size={16} color="rgba(255,255,255,0.6)" />
+                                            )}
                                         </span>
                                     )}
                                 </div>
@@ -150,8 +170,13 @@ export default function ChatBox({
                     })
                 )}
                 {typingUser && (
-                    <div style={{ fontSize: "0.85rem", opacity: 0.6, fontStyle: "italic", marginLeft: "0.5rem" }}>
-                        Typing...
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '0.5rem', opacity: 0.7, marginBottom: '0.5rem' }}>
+                        <div style={{ fontSize: "0.85rem", fontStyle: "italic" }}>
+                            {typingUser} is typing
+                        </div>
+                        <div className="typing-dots">
+                            <span></span><span></span><span></span>
+                        </div>
                     </div>
                 )}
                 <div ref={bottomRef} />
