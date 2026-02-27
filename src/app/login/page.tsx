@@ -32,11 +32,11 @@ export default function LoginPage() {
         });
 
         if (res?.error) {
-            setError("Invalid username or password");
+            setError(res.error);
             setLoading(false);
         } else {
             router.push("/user");
-            router.refresh(); // Crucial to update the session in header immediately
+            router.refresh();
         }
     };
 
@@ -99,6 +99,11 @@ export default function LoginPage() {
                                 >
                                     {showPassword ? "👁️‍🗨️" : "👁️"}
                                 </button>
+                            </div>
+                            <div style={{ textAlign: "right", marginTop: "0.5rem" }}>
+                                <Link href="/forgot-password" style={{ fontSize: "0.875rem", color: "var(--primary)", fontWeight: "500" }}>
+                                    Forgot Password?
+                                </Link>
                             </div>
                         </div>
 

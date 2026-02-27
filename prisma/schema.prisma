@@ -46,6 +46,14 @@ model RegistrationOTP {
   createdAt DateTime @default(now())
 }
 
+model PasswordResetOTP {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
 
 model Trade {
   id                Int       @id @default(autoincrement())

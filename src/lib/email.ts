@@ -73,6 +73,21 @@ export async function sendOTPEmail(email: string, otp: string) {
   return sendEmail({ to: email, subject: "Your Verification Code - Card Hive", html });
 }
 
+export async function sendPasswordResetOTPEmail(email: string, otp: string) {
+  const html = `
+    <div style="${containerStyle}">
+      <h2>Reset your Card Hive password</h2>
+      <p>Please use the following 6-digit code to reset your account password:</p>
+      <div style="${cardStyle}; text-align: center;">
+        <h1 style="letter-spacing: 5px; color: #2563eb; font-size: 32px; margin: 0;">${otp}</h1>
+      </div>
+      <p>This code will expire in 10 minutes. If you did not request a password reset, you can safely ignore this email.</p>
+      <p>Best regards,<br/>The Card Hive Team</p>
+    </div>
+  `;
+  return sendEmail({ to: email, subject: "Reset your Password - Card Hive", html });
+}
+
 export async function sendPasswordResetEmail(user: { email: string }, token: string) {
   const resetUrl = `${getAppUrl()}/reset-password?token=${token}`;
   const html = `

@@ -25,14 +25,14 @@ export const authOptions: NextAuthOptions = {
                 const user = await prisma.user.findFirst({
                     where: {
                         OR: [
-                            { username: credentials.username },
-                            { email: credentials.username },
+                            { username: { equals: credentials.username, mode: 'insensitive' } },
+                            { email: { equals: credentials.username, mode: 'insensitive' } },
                         ],
                     },
                 });
 
                 if (!user) {
-                    throw new Error("Invalid username or password");
+                    throw new Error("No account found with this username or email.");
                 }
 
                 if (user.status === "BLOCKED") {
@@ -49,16 +49,19 @@ export const authOptions: NextAuthOptions = {
                 );
 
                 if (!isPasswordValid) {
-                    return null;
+                    throw new Error("Incorrect password. Please try again.");
                 }
 
                 // Verify login portal segregation
-                // The frontend will pass "isAdminLogin": "true" for the admin portal.
                 const isAdminLogin = (credentials as any).isAdminLogin === "true";
-                // If it's an admin login portal, only allow admins
-                if (isAdminLogin && user.role !== "ADMIN") return null;
-                // If it's a standard login portal, only allow users
-                if (!isAdminLogin && user.role !== "USER") return null;
+
+                if (isAdminLogin && user.role !== "ADMIN") {
+                    throw new Error("This account does not have administrator privileges.");
+                }
+
+                if (!isAdminLogin && user.role !== "USER") {
+                    throw new Error("Administrators must log in via the Admin Portal.");
+                }
 
                 return {
                     id: user.id.toString(),

@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
         });
 
         if (res?.error) {
-            setError("Invalid credentials or you do not have permission to access the admin portal.");
+            setError(res.error);
             setLoading(false);
         } else {
             router.push("/admin");
