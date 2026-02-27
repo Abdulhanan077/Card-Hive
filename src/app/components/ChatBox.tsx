@@ -1,32 +1,78 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { postMessage } from "../actions/chat";
+import { postMessage, markMessageAsRead, triggerTypingIndicator } from "../actions/chat";
+import { pusherClient } from "@/lib/pusher";
+
+interface Message {
+    id: number;
+    content: string;
+    createdAt: Date;
+    isRead: boolean;
+    sender: { id: number; username: string; role: string };
+}
 
 export default function ChatBox({
     tradeId,
-    messages,
+    messages: initialMessages,
     currentUserId,
+    currentUsername,
     path
 }: {
     tradeId: number;
-    messages: {
-        id: number;
-        content: string;
-        createdAt: Date;
-        sender: { id: number; username: string; role: string };
-    }[];
+    messages: Message[];
     currentUserId: number;
+    currentUsername: string;
     path: string;
 }) {
+    const [messages, setMessages] = useState<Message[]>(initialMessages);
     const [content, setContent] = useState("");
     const [loading, setLoading] = useState(false);
+    const [typingUser, setTypingUser] = useState<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Scroll to bottom on exactly messages length change
+    // Update messages when initialMessages change (e.g. on navigation)
+    useEffect(() => {
+        setMessages(initialMessages);
+    }, [initialMessages]);
+
+    useEffect(() => {
+        const channel = pusherClient.subscribe(`trade-${tradeId}`);
+
+        channel.bind("new-message", (data: Message) => {
+            setMessages((prev) => {
+                if (prev.find(m => m.id === data.id)) return prev;
+                return [...prev, data];
+            });
+
+            // If the message is not from me, mark it as read immediately
+            if (data.sender.id !== currentUserId) {
+                markMessageAsRead(data.id, tradeId);
+            }
+        });
+
+        channel.bind("message-seen", (data: { messageId: number }) => {
+            setMessages((prev) => prev.map(m => m.id === data.messageId ? { ...m, isRead: true } : m));
+        });
+
+        channel.bind("typing", (data: { username: string }) => {
+            if (data.username !== currentUsername) {
+                setTypingUser(data.username);
+                if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = setTimeout(() => setTypingUser(null), 3000);
+            }
+        });
+
+        return () => {
+            pusherClient.unsubscribe(`trade-${tradeId}`);
+        };
+    }, [tradeId, currentUserId]);
+
+    // Scroll to bottom on updates
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages.length]);
+    }, [messages.length, typingUser]);
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,6 +87,14 @@ export default function ChatBox({
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setContent(e.target.value);
+        // Trigger typing indicator (throttled/debounced if needed, but simple for now)
+        // We need the current user's username here. For now, we'll use "Someone" or let it be.
+        // Usually, session is passed down. For simplicity, we trigger it.
+        triggerTypingIndicator(tradeId, currentUsername);
     };
 
     return (
@@ -81,13 +135,24 @@ export default function ChatBox({
                                     borderRadius: "1rem",
                                     borderBottomRightRadius: isMe ? "0" : "1rem",
                                     borderBottomLeftRadius: !isMe ? "0" : "1rem",
-                                    wordWrap: "break-word"
+                                    wordWrap: "break-word",
+                                    position: "relative"
                                 }}>
                                     {msg.content}
+                                    {isMe && msg.isRead && (
+                                        <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.8)", position: "absolute", bottom: "-1.2rem", right: "0.2rem" }}>
+                                            Seen
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         );
                     })
+                )}
+                {typingUser && (
+                    <div style={{ fontSize: "0.85rem", opacity: 0.6, fontStyle: "italic", marginLeft: "0.5rem" }}>
+                        Typing...
+                    </div>
                 )}
                 <div ref={bottomRef} />
             </div>
@@ -97,7 +162,7 @@ export default function ChatBox({
                 <input
                     type="text"
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    onChange={handleInputChange}
                     placeholder="Type your message..."
                     className="form-input"
                     style={{ flex: 1, marginBottom: 0 }}

@@ -109,8 +109,9 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
 
                     <ChatBox
                         tradeId={trade.id}
-                        messages={trade.messages}
+                        messages={trade.messages as any}
                         currentUserId={currentUserId}
+                        currentUsername={session.user.name || "User"}
                         path={`/user/trades/${trade.tradeId}`}
                     />
                 </div>

@@ -243,8 +243,9 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                     <h3 style={{ marginBottom: "1rem" }}>Conversation Thread</h3>
                     <ChatBox
                         tradeId={trade.id}
-                        messages={trade.messages}
+                        messages={trade.messages as any}
                         currentUserId={currentUserId}
+                        currentUsername="Admin"
                         path={`/admin/trades/${trade.tradeId}`}
                     />
                 </div>
