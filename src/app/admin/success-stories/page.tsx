@@ -17,8 +17,8 @@ export default function AdminSuccessStoriesPage() {
     const [stories, setStories] = useState<SuccessStory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
-    const [image, setImage] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [images, setImages] = useState<File[]>([]);
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [caption, setCaption] = useState("");
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -41,39 +41,57 @@ export default function AdminSuccessStoriesPage() {
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setImage(file);
-            setPreviewUrl(URL.createObjectURL(file));
+        if (e.target.files) {
+            const files = Array.from(e.target.files);
+            setImages(files);
+
+            // Cleanup old previews
+            previewUrls.forEach(url => URL.revokeObjectURL(url));
+
+            const newPreviews = files.map(file => URL.createObjectURL(file));
+            setPreviewUrls(newPreviews);
         }
     };
 
     const handleUpload = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!image) return;
+        if (images.length === 0) return;
 
         setIsUploading(true);
         setMessage(null);
 
         try {
-            const formData = new FormData();
-            formData.append("image", image);
-            formData.append("caption", caption);
+            let successCount = 0;
+            let errorOccurred = false;
 
-            const res = await fetch("/api/admin/success-stories", {
-                method: "POST",
-                body: formData,
-            });
+            for (const img of images) {
+                const formData = new FormData();
+                formData.append("image", img);
+                formData.append("caption", caption);
 
-            if (res.ok) {
-                setMessage({ type: 'success', text: "Success story uploaded! It will be visible for 24 hours." });
-                setImage(null);
-                setPreviewUrl(null);
+                const res = await fetch("/api/admin/success-stories", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (res.ok) {
+                    successCount++;
+                } else {
+                    errorOccurred = true;
+                }
+            }
+
+            if (successCount > 0) {
+                setMessage({
+                    type: errorOccurred ? 'error' : 'success',
+                    text: `Uploaded ${successCount} storeis! ${errorOccurred ? "Some failed." : "They will be visible for 24 hours."}`
+                });
+                setImages([]);
+                setPreviewUrls([]);
                 setCaption("");
                 fetchStories();
             } else {
-                const data = await res.json();
-                setMessage({ type: 'error', text: data.message || "Failed to upload" });
+                setMessage({ type: 'error', text: "Failed to upload any images." });
             }
         } catch (error) {
             setMessage({ type: 'error', text: "An error occurred during upload" });
@@ -118,18 +136,23 @@ export default function AdminSuccessStoriesPage() {
                     <h3 style={{ marginBottom: '1.5rem' }}>Upload New Proof</h3>
                     <form onSubmit={handleUpload}>
                         <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Select Screenshot</label>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Select Screenshot(s)</label>
                             <input
                                 type="file"
                                 accept="image/*"
+                                multiple
                                 onChange={handleImageChange}
                                 style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}
                             />
                         </div>
 
-                        {previewUrl && (
-                            <div style={{ marginBottom: '1.5rem', position: 'relative', width: '100%', height: '200px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                                <Image src={previewUrl} alt="Preview" fill style={{ objectFit: 'contain' }} />
+                        {previewUrls.length > 0 && (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                {previewUrls.map((url, idx) => (
+                                    <div key={idx} style={{ position: 'relative', width: '100%', height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                                        <Image src={url} alt={`Preview ${idx}`} fill style={{ objectFit: 'cover' }} />
+                                    </div>
+                                ))}
                             </div>
                         )}
 
@@ -147,10 +170,10 @@ export default function AdminSuccessStoriesPage() {
                         <button
                             type="submit"
                             className="btn btn-primary"
-                            disabled={!image || isUploading}
+                            disabled={images.length === 0 || isUploading}
                             style={{ width: '100%' }}
                         >
-                            {isUploading ? "Uploading..." : "Upload Success Story"}
+                            {isUploading ? "Uploading..." : `Upload ${images.length > 1 ? images.length + " Stories" : "Success Story"}`}
                         </button>
                     </form>
                 </div>

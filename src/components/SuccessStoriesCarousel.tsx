@@ -58,9 +58,6 @@ export default function SuccessStoriesCarousel() {
                                 {story.caption}
                             </div>
                         )}
-                        <div className="story-meta">
-                            Verified Instant Payout
-                        </div>
                     </div>
                 ))}
             </div>
@@ -112,7 +109,7 @@ export default function SuccessStoriesCarousel() {
                     border-radius: 10px;
                 }
                 .story-card {
-                    flex: 0 0 180px;
+                    flex: 0 0 240px;
                     background: var(--background);
                     border-radius: 12px;
                     border: 1px solid var(--border);
@@ -125,7 +122,7 @@ export default function SuccessStoriesCarousel() {
                 .story-image-container {
                     position: relative;
                     width: 100%;
-                    height: 120px;
+                    height: 180px;
                     background: #f3f4f6;
                     border-bottom: 1px solid var(--border);
                 }
