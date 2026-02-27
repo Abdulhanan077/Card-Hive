@@ -7,6 +7,9 @@ export default async function AdminRewardsQueue() {
         orderBy: { createdAt: "desc" }
     });
 
+    const settings = await prisma.settings.findFirst();
+    const rate = settings?.rewardPointsToGhs || 100.0;
+
     async function processRedemptionAction(formData: FormData) {
         "use server";
         const id = parseInt(formData.get("id") as string);
@@ -57,6 +60,7 @@ export default async function AdminRewardsQueue() {
                             <tr>
                                 <th>User</th>
                                 <th>Points Redeemed</th>
+                                <th>Payout Amount</th>
                                 <th>Payout Method</th>
                                 <th>Payout Details</th>
                                 <th>Status</th>
@@ -70,6 +74,11 @@ export default async function AdminRewardsQueue() {
                                     <td style={{ fontWeight: 600 }}>@{req.user.username}</td>
                                     <td>
                                         <span style={{ fontWeight: 600, color: 'var(--warning)' }}>{req.pointsRedeemed} pts</span>
+                                    </td>
+                                    <td>
+                                        <span style={{ fontWeight: 700, color: 'var(--success)' }}>
+                                            GHS {((req.pointsRedeemed / 100) * rate).toFixed(2)}
+                                        </span>
                                     </td>
                                     <td>{req.payoutMethod}</td>
                                     <td style={{ maxWidth: '200px', wordBreak: 'break-all' }}>{req.payoutDetails}</td>
