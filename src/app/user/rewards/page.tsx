@@ -12,7 +12,7 @@ export default async function UserRewardsPage() {
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { rewardBalance: true }
+        select: { rewardBalance: true, completedTradesCount: true }
     });
 
     const pendingRequests = await prisma.rewardRedemption.findMany({
@@ -36,11 +36,28 @@ export default async function UserRewardsPage() {
                     <div style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--warning)', marginTop: '1rem', marginBottom: '0.2rem' }}>
                         {user?.rewardBalance || 0} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>pts</span>
                     </div>
-                    <div style={{ fontSize: '1rem', color: 'var(--success)', fontWeight: 600, marginBottom: '2rem' }}>
+                    <div style={{ fontSize: '1rem', color: 'var(--success)', fontWeight: 600, marginBottom: '1.5rem' }}>
                         ≈ GHS {cediEquivalent}
                     </div>
 
-                    <ClientRedeemForm currentBalance={user?.rewardBalance || 0} />
+                    <div style={{ backgroundColor: 'var(--bg-alt)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            Withdrawal Requirements:
+                        </div>
+                        <ul style={{ paddingLeft: '1.2rem', marginBottom: 0 }}>
+                            <li style={{ color: (user?.rewardBalance || 0) >= 100 ? 'var(--success)' : 'var(--text-muted)' }}>
+                                Minimum 100 Reward Points
+                            </li>
+                            <li style={{ color: (user?.completedTradesCount || 0) >= 5 ? 'var(--success)' : 'var(--text-muted)' }}>
+                                At least 5 Successful Trades ({user?.completedTradesCount || 0}/5)
+                            </li>
+                        </ul>
+                    </div>
+
+                    <ClientRedeemForm
+                        currentBalance={user?.rewardBalance || 0}
+                        completedTradesCount={user?.completedTradesCount || 0}
+                    />
                 </div>
 
                 <div className="card">

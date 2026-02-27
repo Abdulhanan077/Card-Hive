@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { submitRewardRedemptionAction } from "@/app/actions/rewards";
 
-export default function ClientRedeemForm({ currentBalance }: { currentBalance: number }) {
+export default function ClientRedeemForm({ currentBalance, completedTradesCount }: { currentBalance: number, completedTradesCount: number }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
@@ -17,8 +17,20 @@ export default function ClientRedeemForm({ currentBalance }: { currentBalance: n
         const formData = new FormData(e.currentTarget);
         const points = parseFloat(formData.get("points") as string);
 
+        if (points < 100) {
+            setError("The minimum withdrawal amount is 100 points.");
+            setLoading(false);
+            return;
+        }
+
         if (points > currentBalance) {
             setError("You cannot redeem more points than your current balance.");
+            setLoading(false);
+            return;
+        }
+
+        if (completedTradesCount < 5) {
+            setError(`You need at least 5 completed trades to withdraw rewards. You currently have ${completedTradesCount}.`);
             setLoading(false);
             return;
         }

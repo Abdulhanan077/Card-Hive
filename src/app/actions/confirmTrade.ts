@@ -35,32 +35,24 @@ export async function confirmTradePayment(tradeId: string) {
 
     /* --- REWARD SYSTEM LOGIC TRIGGERED ON CONFIRMATION --- */
 
-    // 2. VIP Tier Points
+    // 2. VIP Tier Points & Trader Bonus
     const newCompletedCount = (trade.user as any).completedTradesCount + 1;
     const vipTier = calculateVipTier(newCompletedCount);
-    const earnedPoints = 1 * vipTier.multiplier;
+    const traderBonus = 2 * vipTier.multiplier; // Base 2 pts multiplied by VIP tier
 
     await prisma.user.update({
         where: { id: trade.userId },
         data: {
-            rewardBalance: { increment: earnedPoints },
+            rewardBalance: { increment: traderBonus },
             completedTradesCount: { increment: 1 }
         }
     });
 
-    // 3. Referral Bonus (First successful trade check)
-    const completedTradesCount = await prisma.trade.count({
-        where: { userId: trade.userId, status: "COMPLETED", id: { not: trade.id } }
-    });
-
-    if (completedTradesCount === 0 && (trade.user as any).referredBy) {
-        const settings = await prisma.settings.findFirst();
-        const percentage = settings?.referralBonusPercentage || 1.5;
-        const bonusPoints = (trade.calculatedPayout || trade.faceValue) * (percentage / 100);
-
+    // 3. Referrer Bonus (+2 points)
+    if ((trade.user as any).referredBy) {
         await prisma.user.update({
             where: { id: (trade.user as any).referredBy },
-            data: { rewardBalance: { increment: bonusPoints } }
+            data: { rewardBalance: { increment: 2 } }
         });
     }
 

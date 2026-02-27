@@ -18,10 +18,20 @@ export async function submitRewardRedemptionAction(formData: FormData) {
         throw new Error("Invalid points amount");
     }
 
-    // Verify user has enough points
+    // Verify withdrawal constraints
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.rewardBalance < pointsToRedeem) {
-        throw new Error("Insufficient reward balance");
+    if (!user) throw new Error("User not found");
+
+    if (pointsToRedeem < 100) {
+        throw new Error("Minimum withdrawal amount is 100 points.");
+    }
+
+    if (user.rewardBalance < pointsToRedeem) {
+        throw new Error("Insufficient reward balance.");
+    }
+
+    if (user.completedTradesCount < 5) {
+        throw new Error("You must complete at least 5 successful trades before withdrawing rewards.");
     }
 
     // Wrap in a transaction to deduct points and create request

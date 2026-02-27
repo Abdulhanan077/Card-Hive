@@ -81,17 +81,31 @@ export async function POST(req: Request) {
         const userCount = await prisma.user.count();
         const role = userCount === 0 ? "ADMIN" : "USER";
 
-        const newUser = await prisma.user.create({
-            data: {
-                username,
-                email,
-                phoneNumber,
-                password: hashedPassword,
-                role,
-                referralCode,
-                emailVerified: new Date(),
-                ...(referredById && { referredBy: referredById })
-            },
+        // Create user and update referrer in a transaction
+        const newUser = await prisma.$transaction(async (tx) => {
+            const user = await tx.user.create({
+                data: {
+                    username,
+                    email,
+                    phoneNumber,
+                    password: hashedPassword,
+                    role,
+                    referralCode,
+                    emailVerified: new Date(),
+                    rewardBalance: referredById ? 10 : 0, // Referee gets 10 pts if referred
+                    ...(referredById && { referredBy: referredById })
+                },
+            });
+
+            // Referrer gets 20 pts
+            if (referredById) {
+                await tx.user.update({
+                    where: { id: referredById },
+                    data: { rewardBalance: { increment: 20 } }
+                });
+            }
+
+            return user;
         });
 
         // Delete the used OTP record
