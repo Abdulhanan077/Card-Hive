@@ -22,7 +22,7 @@ export default function Footer() {
         <footer className="footer">
             <div className="container footer-container">
                 <div className="footer-brand">
-                    <img src="/logo.jpg" alt="Card Hive Logo" style={{ height: '50px', width: 'auto', display: 'block', marginBottom: '1rem' }} />
+                    <img src="/logo.png" alt="Card Hive Logo" style={{ height: '60px', width: 'auto', display: 'block', marginBottom: '1rem' }} />
                 </div>
                 <div style={{ flex: '1', minWidth: '200px' }}>
                     <h4 style={{ marginBottom: '1rem' }}>Quick Links</h4>
