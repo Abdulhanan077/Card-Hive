@@ -16,7 +16,7 @@ export default function Header() {
             <div className="container header-container">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                     <Link href="/" className="logo" onClick={closeMenu}>
-                        🛍️ Card Hive
+                        <img src="/logo.jpg" alt="Card Hive Logo" style={{ height: '40px', width: 'auto', display: 'block' }} />
                     </Link>
 
                     {/* Mobile Hamburger Button */}
