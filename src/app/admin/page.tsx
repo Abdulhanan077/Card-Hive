@@ -36,6 +36,20 @@ export default async function AdminDashboardHome() {
         const avgFaceValue = paidStats._avg.faceValue || 0;
         const avgPayout = paidStats._avg.calculatedPayout || 0;
 
+        // Fetch recent failed login attempts
+        const recentFailedLogins = await prisma.loginEvent.findMany({
+            where: { success: false },
+            orderBy: { createdAt: "desc" },
+            take: 3,
+            select: {
+                id: true,
+                emailOrUsername: true,
+                portal: true,
+                createdAt: true,
+                ipAddress: true
+            }
+        });
+
         // Prepare data for Recharts
         const statusChartData = [
             { name: 'Pending', value: pendingTrades, color: 'var(--warning)' },
@@ -161,6 +175,47 @@ export default async function AdminDashboardHome() {
                 </div>
 
                 <ClientMetricsCharts statusData={statusChartData} volumeData={volumeChartData} />
+
+                {recentFailedLogins.length > 0 && (
+                    <div style={{ marginTop: '4rem' }}>
+                        <div className="dashboard-header" style={{ marginBottom: '1.5rem' }}>
+                            <h2 style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                ⚠️ Recent Security Alerts
+                            </h2>
+                            <p className="dashboard-subtitle">Suspicious or failed login attempts detected.</p>
+                        </div>
+                        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                            <div className="table-container" style={{ margin: 0 }}>
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Attempted ID</th>
+                                            <th>Portal</th>
+                                            <th>IP Address</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {recentFailedLogins.map((alert: any) => (
+                                            <tr key={alert.id}>
+                                                <td style={{ fontSize: '0.85rem' }}>
+                                                    {new Date(alert.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                                </td>
+                                                <td style={{ fontWeight: 600, color: 'var(--danger)' }}>{alert.emailOrUsername}</td>
+                                                <td><span className="badge" style={{ fontSize: '0.7rem' }}>{alert.portal}</span></td>
+                                                <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{alert.ipAddress}</td>
+                                                <td>
+                                                    <Link href="/admin/logins" style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>View Full Logs</Link>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </>
         );
     } catch (error: any) {

@@ -5,6 +5,7 @@ import { prisma } from "./prisma";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { UAParser } from "ua-parser-js";
 import { headers } from "next/headers";
+import { LoginPortal } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
     // adapter: PrismaAdapter(prisma),
@@ -26,6 +27,27 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
+                const isAdminLogin = (credentials as any).isAdminLogin === "true";
+                const portal = isAdminLogin ? LoginPortal.ADMIN : LoginPortal.USER;
+
+                const headerList = await headers();
+                let ip = headerList.get("x-forwarded-for")?.split(',')[0] || headerList.get("x-real-ip") || "unknown";
+                if (ip === "::1" || ip === "127.0.0.1") ip = "127.0.0.1 (Localhost)";
+                const ua = headerList.get("user-agent") || "unknown";
+
+                const logLogin = async (success: boolean, userId?: number) => {
+                    await prisma.loginEvent.create({
+                        data: {
+                            emailOrUsername: credentials.username,
+                            portal,
+                            success,
+                            ipAddress: ip,
+                            userAgent: ua,
+                            userId,
+                        }
+                    }).catch((err: any) => console.error("Failed to log login event", err));
+                };
+
                 const user = await prisma.user.findFirst({
                     where: {
                         OR: [
@@ -36,14 +58,17 @@ export const authOptions: NextAuthOptions = {
                 });
 
                 if (!user) {
+                    await logLogin(false);
                     throw new Error("No account found with this username or email.");
                 }
 
                 if (user.status === "BLOCKED") {
+                    await logLogin(false, user.id);
                     throw new Error("Your account has been deactivated. Please contact support.");
                 }
 
                 if (!user.emailVerified) {
+                    await logLogin(false, user.id);
                     throw new Error("Please verify your email address before logging in.");
                 }
 
@@ -53,19 +78,21 @@ export const authOptions: NextAuthOptions = {
                 );
 
                 if (!isPasswordValid) {
+                    await logLogin(false, user.id);
                     throw new Error("Incorrect password. Please try again.");
                 }
 
-                // Verify login portal segregation
-                const isAdminLogin = (credentials as any).isAdminLogin === "true";
-
                 if (isAdminLogin && user.role !== "ADMIN") {
+                    await logLogin(false, user.id);
                     throw new Error("This account does not have administrator privileges.");
                 }
 
                 if (!isAdminLogin && user.role !== "USER") {
+                    await logLogin(false, user.id);
                     throw new Error("Administrators must log in via the Admin Portal.");
                 }
+
+                await logLogin(true, user.id);
 
                 return {
                     id: user.id.toString(),
@@ -101,7 +128,8 @@ export const authOptions: NextAuthOptions = {
         async signIn({ user }) {
             try {
                 const headerList = await headers();
-                const ip = headerList.get("x-forwarded-for") || "unknown";
+                let ip = headerList.get("x-forwarded-for")?.split(',')[0] || headerList.get("x-real-ip") || "unknown";
+                if (ip === "::1" || ip === "127.0.0.1") ip = "127.0.0.1 (Localhost)";
                 const uaDescription = headerList.get("user-agent") || "";
 
                 const parser = new UAParser(uaDescription);

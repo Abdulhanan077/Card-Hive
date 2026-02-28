@@ -100,6 +100,11 @@ export default function AdminLoginPage() {
                                     {showPassword ? "👁️‍🗨️" : "👁️"}
                                 </button>
                             </div>
+                            <div style={{ textAlign: "right", marginTop: "0.5rem" }}>
+                                <Link href="/forgot-password" style={{ fontSize: "0.875rem", color: "var(--danger)", fontWeight: "500" }}>
+                                    Forgot Password?
+                                </Link>
+                            </div>
                         </div>
 
                         <button

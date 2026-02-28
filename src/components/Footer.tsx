@@ -14,6 +14,16 @@ export default function Footer() {
                         <li><Link href="/">Home</Link></li>
                         <li><Link href="/login">Sign In</Link></li>
                         <li><Link href="/register">Create Account</Link></li>
+                        <li style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
+                            <a href="https://wa.me/233551131139" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem' }}>
+                                👨‍💻 Contact Developer
+                            </a>
+                            <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '2px' }}>
+                                <a href="mailto:abdulhananu077@gmail.com" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    abdulhananu077@gmail.com
+                                </a>
+                            </div>
+                        </li>
                     </ul>
                 </div>
                 <div style={{ flex: '1', minWidth: '200px' }}>
