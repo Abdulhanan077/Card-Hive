@@ -1,7 +1,23 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import "./footer.css";
 
 export default function Footer() {
+    const [settings, setSettings] = useState<any>(null);
+
+    useEffect(() => {
+        fetch("/api/settings")
+            .then(res => res.json())
+            .then(data => setSettings(data))
+            .catch(err => console.error("Failed to fetch footer settings", err));
+    }, []);
+
+    const whatsappLink = settings?.whatsappNumber
+        ? `https://wa.me/${settings.whatsappNumber.replace(/\D/g, '')}`
+        : "#";
+
     return (
         <footer className="footer">
             <div className="container footer-container">
@@ -30,14 +46,22 @@ export default function Footer() {
                     <h4 style={{ marginBottom: '1rem' }}>Support</h4>
                     <ul style={{ listStyle: 'none', padding: 0, opacity: 0.8, lineHeight: 1.8 }}>
                         <li>FAQ</li>
-                        <li>Contact Us</li>
+                        <li>
+                            <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                                Contact Us
+                            </a>
+                        </li>
                         <li>Terms of Service</li>
-                        <li style={{ marginTop: '0.5rem', opacity: 0.6 }}><Link href="/admin-login">Admin Portal</Link></li>
                     </ul>
                 </div>
             </div>
             <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center', opacity: 0.6, marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-                <p>&copy; {new Date().getFullYear()} Card Hive Trading Center. All rights reserved.</p>
+                <p>
+                    &copy; {new Date().getFullYear()} Card Hive Trading Center. All rights reserved. {" "}
+                    <Link href="/admin-login" style={{ textDecoration: 'none', color: 'inherit', fontStyle: 'italic', cursor: 'default' }}>
+                        .
+                    </Link>
+                </p>
             </div>
         </footer>
     );

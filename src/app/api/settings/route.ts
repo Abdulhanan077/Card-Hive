@@ -1,0 +1,20 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function GET() {
+    try {
+        const settings = await prisma.settings.findFirst({
+            select: {
+                contactEmail: true,
+                whatsappNumber: true,
+            }
+        });
+
+        return NextResponse.json(settings || {
+            contactEmail: "support@cardhive.com",
+            whatsappNumber: "233551131139" // Default fallback
+        }, { status: 200 });
+    } catch (error) {
+        return NextResponse.json({ message: "Failed to fetch settings" }, { status: 500 });
+    }
+}
