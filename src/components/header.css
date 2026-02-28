@@ -38,11 +38,11 @@
 }
 
 .logo-slogan {
-    font-size: 0.75rem;
-    color: var(--foreground);
-    opacity: 0.7;
-    font-weight: 500;
-    margin-top: -5px;
+    font-size: 0.9rem;
+    color: #2d005f;
+    /* Deep purple matched from logo */
+    font-weight: 700;
+    margin-top: -2px;
 }
 
 @media (max-width: 768px) {
@@ -51,7 +51,7 @@
     }
 
     .logo-slogan {
-        font-size: 0.65rem;
+        font-size: 0.7rem;
     }
 }
 

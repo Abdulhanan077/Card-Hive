@@ -17,7 +17,7 @@ export default function Header() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                     <Link href="/" className="logo-container" onClick={closeMenu}>
                         <img src="/logo.png" alt="Card Hive Logo" className="header-logo-img" />
-                        <span className="logo-slogan">Instant Cash for all Your Gift Cards</span>
+                        <span className="logo-slogan">Instant Cash for All Your Gift Cards</span>
                     </Link>
 
                     {/* Mobile Hamburger Button */}
