@@ -25,6 +25,21 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
         return notFound();
     }
 
+    // Mark admin messages as read when user views their trade
+    await prisma.message.updateMany({
+        where: {
+            tradeId: trade.id,
+            isRead: false,
+            sender: {
+                role: "ADMIN"
+            }
+        },
+        data: {
+            isRead: true,
+            readAt: new Date()
+        }
+    });
+
     // Security: Only the owner can view their own trade
     const currentUserId = parseInt(session.user.id);
     if (trade.userId !== currentUserId) {

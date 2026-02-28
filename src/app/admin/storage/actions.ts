@@ -24,17 +24,19 @@ export async function getStorageImages() {
     try {
         let allImages: any[] = [];
 
-        // 1. Fetch from Vercel
-        try {
-            const { blobs } = await listVercel();
-            const vercelImages = blobs.map((blob) => ({
-                url: blob.url,
-                pathname: blob.pathname,
-                size: blob.size,
-                uploadedAt: blob.uploadedAt.toISOString(),
-            }));
-            allImages = [...allImages, ...vercelImages];
-        } catch (e) { console.error("Error fetching Vercel Blobs", e) }
+        // 1. Fetch from Vercel (if token exists)
+        if (process.env.BLOB_READ_WRITE_TOKEN) {
+            try {
+                const { blobs } = await listVercel();
+                const vercelImages = blobs.map((blob) => ({
+                    url: blob.url,
+                    pathname: blob.pathname,
+                    size: blob.size,
+                    uploadedAt: blob.uploadedAt.toISOString(),
+                }));
+                allImages = [...allImages, ...vercelImages];
+            } catch (e) { console.error("Error fetching Vercel Blobs", e) }
+        }
 
         // 2. Fetch from Cloudflare R2
         try {

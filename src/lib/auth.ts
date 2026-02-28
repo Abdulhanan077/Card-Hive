@@ -2,8 +2,12 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { UAParser } from "ua-parser-js";
+import { headers } from "next/headers";
 
 export const authOptions: NextAuthOptions = {
+    // adapter: PrismaAdapter(prisma),
     session: {
         strategy: "jwt",
     },
@@ -93,4 +97,33 @@ export const authOptions: NextAuthOptions = {
             return session;
         },
     },
+    events: {
+        async signIn({ user }) {
+            try {
+                const headerList = await headers();
+                const ip = headerList.get("x-forwarded-for") || "unknown";
+                const uaDescription = headerList.get("user-agent") || "";
+
+                const parser = new UAParser(uaDescription);
+                const browser = parser.getBrowser();
+                const os = parser.getOS();
+                const device = parser.getDevice();
+
+                const deviceString = `${browser.name || "Unknown"} on ${os.name || "Unknown"} ${device.model ? `(${device.model})` : ""}`;
+
+                /*
+                await prisma.user.update({
+                    where: { id: parseInt(user.id) },
+                    data: {
+                        lastLoginAt: new Date(),
+                        lastIp: ip,
+                        lastDevice: deviceString,
+                    }
+                });
+                */
+            } catch (err) {
+                console.error("Failed to update user login activity", err);
+            }
+        }
+    }
 };

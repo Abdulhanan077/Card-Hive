@@ -23,8 +23,33 @@ export async function postMessage(tradeId: number, content: string, path: string
         }
     });
 
-    // Trigger Pusher event
+    // Trigger Pusher event for the specific trade chat
     await pusherServer.trigger(`trade-${tradeId}`, "new-message", newMessage);
+
+    // If sender is a USER, notify admins
+    if (newMessage.sender.role === "USER") {
+        try {
+            // Trigger a general admin notification event
+            await pusherServer.trigger("admin-notifications", "new-message-alert", {
+                tradeId: tradeId,
+                sender: newMessage.sender.username
+            });
+
+            // Send email to admin
+            // We need the tradeId string (GC-...) not the numeric ID
+            const trade = await prisma.trade.findUnique({
+                where: { id: tradeId },
+                select: { tradeId: true }
+            });
+
+            if (trade) {
+                const { sendAdminNewMessageEmail } = await import("@/lib/email");
+                await sendAdminNewMessageEmail(newMessage, trade.tradeId, newMessage.sender);
+            }
+        } catch (error) {
+            console.error("Failed to send admin notification", error);
+        }
+    }
 
     revalidatePath(path);
 }

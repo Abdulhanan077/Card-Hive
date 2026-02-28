@@ -78,7 +78,7 @@
 }
 
 .summary-card {
-    padding: 1.5rem;
+    padding: 1.25rem;
     background-color: var(--surface);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
@@ -237,5 +237,59 @@
 
     .table-container {
         border-radius: var(--radius-md);
+    }
+}
+
+/* Utility Classes */
+.desktop-only {
+    display: flex !important;
+}
+
+.mobile-only {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+
+    .mobile-only {
+        display: flex !important;
+    }
+}
+
+/* Notification Styles */
+.notification-bell-container {
+    position: relative;
+}
+
+.notification-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 320px;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 2000;
+    margin-top: 0.5rem;
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .notification-dropdown {
+        position: fixed;
+        top: 60px;
+        /* Fixed height for top bar */
+        left: 1rem;
+        right: 1rem;
+        width: calc(100vw - 2rem);
+        max-height: 70vh;
+    }
+
+    .admin-top-bar {
+        padding: 0.5rem 1rem !important;
     }
 }

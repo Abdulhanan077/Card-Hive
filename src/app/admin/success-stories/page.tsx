@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import SafeImage from "@/app/components/SafeImage";
 
 interface SuccessStory {
     id: number;
@@ -189,7 +190,12 @@ export default function AdminSuccessStoriesPage() {
                             {stories.map((story) => (
                                 <div key={story.id} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--background)' }}>
                                     <div style={{ position: 'relative', width: '100%', height: '150px' }}>
-                                        <Image src={story.imageUrl} alt="Success Proof" fill style={{ objectFit: 'cover' }} />
+                                        <SafeImage
+                                            src={story.imageUrl}
+                                            alt="Success Proof"
+                                            style={{ width: "100%", height: "150px", objectFit: "cover" }}
+                                            fallbackText="Story Image Expired"
+                                        />
                                     </div>
                                     <div style={{ padding: '1rem' }}>
                                         <p style={{ fontSize: '0.85rem', fontWeight: 500, marginBottom: '0.5rem', minHeight: '2.4rem' }}>

@@ -7,7 +7,16 @@ import { Prisma } from "@prisma/client";
 type TradeWithUserAndCount = Prisma.TradeGetPayload<{
     include: {
         user: { select: { username: true, email: true } },
-        _count: { select: { messages: true } }
+        _count: {
+            select: {
+                messages: {
+                    where: {
+                        isRead: false,
+                        sender: { role: "USER" }
+                    }
+                }
+            }
+        }
     }
 }>;
 
@@ -40,7 +49,14 @@ export default async function AdminTradesList(props: {
                 select: { username: true, email: true }
             },
             _count: {
-                select: { messages: true }
+                select: {
+                    messages: {
+                        where: {
+                            isRead: false,
+                            sender: { role: "USER" }
+                        }
+                    }
+                }
             }
         }
     });

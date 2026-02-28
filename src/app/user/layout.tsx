@@ -34,6 +34,7 @@ export default async function UserLayout({ children }: { children: React.ReactNo
                     </Link>
                     <Link href="/user/trades" className="sidebar-link">My Trades</Link>
                     <Link href="/user/settings" className="sidebar-link">Settings</Link>
+                    <Link href="/user/security" className="sidebar-link">Security & Sessions</Link>
 
                     <div style={{ marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
                         <LogoutButton />

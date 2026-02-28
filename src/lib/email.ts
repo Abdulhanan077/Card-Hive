@@ -279,3 +279,23 @@ export async function sendAdminErrorAlert(details: string, context?: any) {
   `;
   return sendEmail({ to: adminEmail, subject: "Card Hive Email/System Error", html });
 }
+
+export async function sendAdminNewMessageEmail(message: any, tradeId: string, sender: { username: string }) {
+  const adminEmail = process.env.EMAIL_ADMIN;
+  if (!adminEmail) return;
+
+  const html = `
+    <div style="${containerStyle}">
+      <h2>New Message Alert: Trade ${tradeId} 💬</h2>
+      <p><strong>@${sender.username}</strong> has sent a new message regarding trade <strong>${tradeId}</strong>.</p>
+      
+      <div style="${cardStyle}">
+        <p style="margin: 0; font-style: italic;">"${message.content}"</p>
+      </div>
+      
+      <p>Please respond at your earliest convenience.</p>
+      <a href="${getAppUrl()}/admin/trades/${tradeId}" style="${buttonStyle}">Open Chat in Admin Panel</a>
+    </div>
+  `;
+  return sendEmail({ to: adminEmail, subject: `New Message from @${sender.username} - Trade ${tradeId}`, html });
+}

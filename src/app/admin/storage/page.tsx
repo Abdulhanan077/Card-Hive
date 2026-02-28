@@ -11,7 +11,7 @@ export default async function AdminStoragePage() {
         <div style={{ maxWidth: "1200px", margin: "0 auto", paddingBottom: "2rem" }}>
             <div className="dashboard-header" style={{ marginBottom: "2rem" }}>
                 <h1 className="dashboard-title">Storage Management</h1>
-                <p className="dashboard-subtitle">View and manage uploaded images taking up Vercel Blob quota space.</p>
+                <p className="dashboard-subtitle">View and manage uploaded images taking up space across Vercel Blob and Cloudflare R2.</p>
             </div>
 
             <ImageGrid initialImages={sortedImages} />

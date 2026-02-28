@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { calculateVipTier } from "@/lib/vipTiers";
+import ResendAuthEmailButtons from "./ResendAuthEmailButtons";
 
 export default async function AdminUsersList(props: {
     searchParams: Promise<{ query?: string, sort?: string, target?: string }>
@@ -180,6 +181,8 @@ export default async function AdminUsersList(props: {
                                     <button type="submit" name="action" value="activate" className="btn btn-primary" style={{ flex: 1, backgroundColor: 'var(--success)', color: 'white' }}>Activate Account</button>
                                 )}
                             </form>
+
+                            <ResendAuthEmailButtons userId={targetUser.id} />
                         </div>
                     ) : (
                         <div style={{ padding: '2rem 1rem', textAlign: 'center', opacity: 0.6, fontSize: '0.9rem', borderTop: '1px solid var(--border)' }}>

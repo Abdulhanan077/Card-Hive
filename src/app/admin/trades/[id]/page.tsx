@@ -8,6 +8,8 @@ import CopyButton from "@/components/CopyButton";
 import { calculateVipTier } from "@/lib/vipTiers";
 import DownloadButton from "./DownloadButton";
 import { sendTradeStatusUpdateEmail, sendPaymentSentEmail } from "@/lib/email";
+import ResendEmailButtons from "./ResendEmailButtons";
+import SafeImage from "@/app/components/SafeImage";
 
 export default async function TradeDetailView(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -25,6 +27,21 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
     if (!trade) {
         return notFound();
     }
+
+    // Mark user messages as read when admin views the trade
+    await prisma.message.updateMany({
+        where: {
+            tradeId: trade.id,
+            isRead: false,
+            sender: {
+                role: "USER"
+            }
+        },
+        data: {
+            isRead: true,
+            readAt: new Date()
+        }
+    });
 
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return redirect("/login");
@@ -167,6 +184,8 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                             </div>
                             <button type="submit" className="btn btn-primary" style={{ padding: "0.5rem" }}>Update Trade</button>
                         </form>
+
+                        <ResendEmailButtons tradeId={trade.id} status={trade.status} />
                     </div>
 
                     {/* Card Info */}
@@ -227,8 +246,12 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                                 {parsedImages.map((src, idx) => (
                                     <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                         <a href={src} target="_blank" rel="noopener noreferrer" style={{ display: "block", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img src={src} alt={`Evidence ${idx + 1}`} style={{ width: "100%", height: "150px", objectFit: "cover" }} />
+                                            <SafeImage
+                                                src={src}
+                                                alt={`Evidence ${idx + 1}`}
+                                                style={{ width: "100%", height: "150px", objectFit: "cover" }}
+                                                fallbackText="Image 404/Expired"
+                                            />
                                         </a>
                                         <DownloadButton src={src} fileName={`evidence-${trade.tradeId}-${idx + 1}.jpg`} />
                                     </div>
