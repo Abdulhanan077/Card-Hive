@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./page.module.css";
 import { prisma } from "@/lib/prisma";
 
@@ -41,14 +42,13 @@ export default async function Home() {
             </div>
             <div className={styles.heroVisual}>
               <div className={styles.floatingCard}>
-                <div className={styles.cardHeader}>
-                  <span className={styles.cardBrand}>Amazon Gift Card</span>
-                  <span className={styles.cardValue}>$100</span>
-                </div>
-                <div className={styles.cardBody}>
-                  <div className={styles.cardCode}>**** **** **** 1234</div>
-                  <div className="badge badge-paid">Payout: MTN Mobile Money</div>
-                </div>
+                <Image
+                  src="/images/apple-card-v3.png"
+                  alt="Apple Gift Card"
+                  width={380}
+                  height={240}
+                  style={{ width: '100%', height: 'auto', borderRadius: '1rem' }}
+                />
               </div>
             </div>
           </div>
