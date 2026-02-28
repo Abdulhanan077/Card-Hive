@@ -12,23 +12,69 @@ export default function AdminRegisterPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [otpSent, setOtpSent] = useState(false);
+    const [otpLoading, setOtpLoading] = useState(false);
+    const [resendCountdown, setResendCountdown] = useState(0);
+
+    const handleSendOTP = async (formData: any) => {
+        const { username, email, secretPasscode } = formData;
+        if (!username || !email || !secretPasscode) {
+            setError("Username, email, and secret passcode are required to send code.");
+            return;
+        }
+
+        setOtpLoading(true);
+        setError("");
+        try {
+            const res = await fetch("/api/auth/send-admin-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, email, secretPasscode }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Failed to send code");
+
+            setOtpSent(true);
+            setResendCountdown(60);
+            const timer = setInterval(() => {
+                setResendCountdown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setOtpLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
         setError("");
 
-        const target = e.target as typeof e.target & {
-            username: { value: string };
-            email: { value: string };
-            phoneNumber: { value: string };
-            password: { value: string };
-            confirmPassword: { value: string };
-            secretPasscode: { value: string };
-        };
+        const formData = new FormData(e.currentTarget);
+        const username = formData.get("username") as string;
+        const email = formData.get("email") as string;
+        const phoneNumber = formData.get("phoneNumber") as string;
+        const password = formData.get("password") as string;
+        const confirmPassword = formData.get("confirmPassword") as string;
+        const secretPasscode = formData.get("secretPasscode") as string;
+        const otp = formData.get("otp") as string;
 
-        if (target.password.value !== target.confirmPassword.value) {
+        if (password !== confirmPassword) {
             setError("Passwords do not match");
+            setLoading(false);
+            return;
+        }
+
+        if (!otp) {
+            setError("Please enter the verification code sent to your email.");
             setLoading(false);
             return;
         }
@@ -38,11 +84,12 @@ export default function AdminRegisterPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    username: target.username.value,
-                    email: target.email.value,
-                    phoneNumber: target.phoneNumber.value,
-                    password: target.password.value,
-                    secretPasscode: target.secretPasscode.value
+                    username,
+                    email,
+                    phoneNumber,
+                    password,
+                    secretPasscode,
+                    otp
                 }),
             });
 
@@ -132,6 +179,43 @@ export default function AdminRegisterPage() {
                                 required
                                 placeholder="you@example.com"
                             />
+                        </div>
+
+                        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                            <div className="form-group" style={{ flex: 2, marginBottom: 0 }}>
+                                <label htmlFor="otp" className="form-label">Email Verification Code</label>
+                                <input
+                                    id="otp"
+                                    name="otp"
+                                    type="text"
+                                    className="form-input"
+                                    required={otpSent}
+                                    disabled={!otpSent}
+                                    placeholder={otpSent ? "Enter 6-digit code" : "Click send code first"}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                className="btn"
+                                style={{
+                                    flex: 1,
+                                    height: '42px',
+                                    padding: '0 1rem',
+                                    fontSize: '0.85rem',
+                                    backgroundColor: resendCountdown > 0 ? '#ccc' : 'var(--danger)',
+                                    color: 'white'
+                                }}
+                                disabled={otpLoading || resendCountdown > 0}
+                                onClick={(e) => {
+                                    const form = e.currentTarget.closest('form');
+                                    if (form) {
+                                        const formData = new FormData(form);
+                                        handleSendOTP(Object.fromEntries(formData));
+                                    }
+                                }}
+                            >
+                                {otpLoading ? "Sending..." : resendCountdown > 0 ? `Resend (${resendCountdown}s)` : otpSent ? "Resend Code" : "Send Code"}
+                            </button>
                         </div>
 
                         <div className="form-group">

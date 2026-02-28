@@ -4,14 +4,14 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
     try {
-        const { username, email, phoneNumber, password, secretPasscode } = await req.json();
+        const { username, email, phoneNumber, password, secretPasscode, otp } = await req.json();
 
         // Use environment variable for the admin creation secret, fallback to a secure default if not set
         const ADMIN_CREATION_SECRET = process.env.ADMIN_CREATION_SECRET || "CARD_HIVE_ADMIN_2026";
 
-        if (!username || !email || !phoneNumber || !password || !secretPasscode) {
+        if (!username || !email || !phoneNumber || !password || !secretPasscode || !otp) {
             return NextResponse.json(
-                { message: "All fields are required" },
+                { message: "All fields including verification code are required" },
                 { status: 400 }
             );
         }
@@ -20,6 +20,25 @@ export async function POST(req: Request) {
             return NextResponse.json(
                 { message: "Invalid secret passcode for creating an admin." },
                 { status: 403 }
+            );
+        }
+
+        // Verify the OTP
+        const otpRecord = await prisma.registrationOTP.findUnique({
+            where: { email },
+        });
+
+        if (!otpRecord || otpRecord.otp !== otp) {
+            return NextResponse.json(
+                { message: "Invalid verification code." },
+                { status: 400 }
+            );
+        }
+
+        if (new Date() > otpRecord.expiresAt) {
+            return NextResponse.json(
+                { message: "Verification code has expired." },
+                { status: 400 }
             );
         }
 
