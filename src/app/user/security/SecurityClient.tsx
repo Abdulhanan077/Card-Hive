@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { logoutSession, logoutOtherSessions } from "../../actions/security";
+import { useNotification } from "@/context/NotificationContext";
 
 interface Session {
     id: string;
@@ -20,6 +21,7 @@ export default function SecurityClient({
     sessions: Session[];
     currentToken: string
 }) {
+    const { showNotification } = useNotification();
     const [loading, setLoading] = useState<string | null>(null);
 
     const handleLogout = async (token: string) => {
@@ -27,8 +29,9 @@ export default function SecurityClient({
         setLoading(token);
         try {
             await logoutSession(token);
+            showNotification('SUCCESS', "Session logged out successfully.");
         } catch (err) {
-            alert("Failed to logout session");
+            showNotification('ERROR', "Failed to logout session.");
         } finally {
             setLoading(null);
         }
@@ -39,8 +42,9 @@ export default function SecurityClient({
         setLoading("all");
         try {
             await logoutOtherSessions();
+            showNotification('SUCCESS', "All other sessions have been logged out.");
         } catch (err) {
-            alert("Failed to logout other sessions");
+            showNotification('ERROR', "Failed to logout other sessions.");
         } finally {
             setLoading(null);
         }

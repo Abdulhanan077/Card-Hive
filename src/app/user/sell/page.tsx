@@ -209,6 +209,7 @@ export default function SellGiftCardPage() {
                                         <label className="form-label">Exchange</label>
                                         <select name="cryptoExchange" className="form-select" required value={cryptoExchange} onChange={(e) => setCryptoExchange(e.target.value)}>
                                             <option value="">Select Exchange...</option>
+                                            <option value="NOONES">NoOnes</option>
                                             <option value="BINANCE">Binance</option>
                                             <option value="OKX">OKX</option>
                                             <option value="BYBIT">Bybit</option>
@@ -228,9 +229,10 @@ export default function SellGiftCardPage() {
                                 <div className="form-group" style={{ marginTop: '1rem' }}>
                                     <label className="form-label">
                                         {cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Wallet Address' : (
-                                            cryptoExchange === 'BINANCE' ? 'Binance Email / Phone / UID' :
-                                                cryptoExchange === 'OKX' ? 'OKX UID or Email' :
-                                                    'Your Account ID / Email on this exchange'
+                                            cryptoExchange === 'NOONES' ? 'NoOnes Email / UID' :
+                                                cryptoExchange === 'BINANCE' ? 'Binance Email / Phone / UID' :
+                                                    cryptoExchange === 'OKX' ? 'OKX UID or Email' :
+                                                        'Your Account ID / Email on this exchange'
                                         )}
                                     </label>
                                     <input

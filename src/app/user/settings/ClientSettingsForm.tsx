@@ -12,8 +12,10 @@ type SettingsUser = {
 };
 
 import { updateEmailPreferences } from "@/app/actions/userSettings";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
+    const { showNotification } = useNotification();
     const [loadingInfo, setLoadingInfo] = useState(false);
     const [loadingPassword, setLoadingPassword] = useState(false);
     const [updatingPrefs, setUpdatingPrefs] = useState(false);
@@ -34,7 +36,9 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
         const res = await updateEmailPreferences(newValue);
         if (!res.success) {
             setEmailNotifications(!newValue); // Revert on failure
-            alert(res.error || "Failed to update preferences");
+            showNotification('ERROR', res.error || "Failed to update preferences");
+        } else {
+            showNotification('SUCCESS', `Email notifications ${newValue ? 'enabled' : 'disabled'}`);
         }
         setUpdatingPrefs(false);
     };
@@ -44,7 +48,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
         setLoadingInfo(true);
         // Simulate API delay for demo
         setTimeout(() => {
-            alert("Profile information updated successfully!");
+            showNotification('SUCCESS', "Profile information updated successfully!");
             setLoadingInfo(false);
         }, 1000);
     };
@@ -54,7 +58,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
         setLoadingPassword(true);
         // Simulate API delay for demo
         setTimeout(() => {
-            alert("Password updated successfully!");
+            showNotification('SUCCESS', "Password updated successfully!");
             setLoadingPassword(false);
             setCurrentPassword("");
             setNewPassword("");

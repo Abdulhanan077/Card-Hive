@@ -7,9 +7,11 @@ import Link from "next/link";
 import styles from "./auth.module.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function LoginPage() {
     const router = useRouter();
+    const { showNotification } = useNotification();
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -33,8 +35,10 @@ export default function LoginPage() {
 
         if (res?.error) {
             setError(res.error);
+            showNotification('ERROR', res.error === "CredentialsSignin" ? "Invalid username or password" : res.error);
             setLoading(false);
         } else {
+            showNotification('SUCCESS', "Logged in successfully!");
             router.push("/user");
             router.refresh();
         }

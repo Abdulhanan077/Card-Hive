@@ -231,7 +231,7 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                                                 name="cryptoTxNote"
                                                 className="form-input"
                                                 defaultValue={trade.cryptoTxNote || ""}
-                                                placeholder="e.g. Sent via Binance Pay"
+                                                placeholder="e.g. Sent via NoOnes Pay or Binance Pay"
                                                 style={{ padding: "0.4rem", fontSize: '0.85rem' }}
                                             />
                                         </div>
@@ -272,15 +272,15 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                             <div style={{ gridColumn: "1 / -1", marginTop: "0.5rem", backgroundColor: "var(--surface-hover)", padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
                                 <small style={{ color: "var(--danger)", fontWeight: 700 }}>SECURE DATA (RAW CODE)</small>
                                 <div style={{ marginTop: "0.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                    <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
                                         <strong>Code / PIN:</strong>
-                                        <span style={{ fontFamily: "monospace", letterSpacing: "0.05em", fontSize: "1.1em", marginLeft: "0.5rem", fontWeight: "bold" }}>{trade.cardCode}</span>
+                                        <span style={{ fontFamily: "monospace", letterSpacing: "0.05em", fontSize: "1.1em", fontWeight: "bold", wordBreak: "break-all" }}>{trade.cardCode}</span>
                                         <CopyButton textToCopy={trade.cardCode} />
                                     </div>
                                     {trade.serialNumber && (
-                                        <div style={{ display: "flex", alignItems: "center" }}>
+                                        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
                                             <strong>Serial Number:</strong>
-                                            <span style={{ fontFamily: "monospace", marginLeft: "0.5rem", fontWeight: "bold" }}>{trade.serialNumber}</span>
+                                            <span style={{ fontFamily: "monospace", fontWeight: "bold", wordBreak: "break-all" }}>{trade.serialNumber}</span>
                                             <CopyButton textToCopy={trade.serialNumber} />
                                         </div>
                                     )}

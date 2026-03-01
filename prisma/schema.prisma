@@ -224,6 +224,7 @@ enum CryptoNetwork {
 }
 
 enum CryptoExchange {
+  NOONES
   BINANCE
   OKX
   BYBIT

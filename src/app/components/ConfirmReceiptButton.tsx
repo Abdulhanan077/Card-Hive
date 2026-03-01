@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { confirmTradePayment } from "@/app/actions/confirmTrade";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function ConfirmReceiptButton({ tradeId }: { tradeId: string }) {
+    const { showNotification } = useNotification();
     const [isLoading, setIsLoading] = useState(false);
 
     const handleConfirm = async () => {
@@ -15,12 +17,14 @@ export default function ConfirmReceiptButton({ tradeId }: { tradeId: string }) {
         try {
             const result = await confirmTradePayment(tradeId);
             if (!result.success) {
-                alert(result.error || "Failed to confirm payment.");
+                showNotification('ERROR', result.error || "Failed to confirm payment.");
+            } else {
+                showNotification('SUCCESS', "Payment received! Your VIP points have been awarded.");
             }
             // Page will revalidate and update visually via Server Action
         } catch (e) {
             console.error(e);
-            alert("An error occurred confirming the payment.");
+            showNotification('ERROR', "An error occurred confirming the payment.");
         } finally {
             setIsLoading(false);
         }

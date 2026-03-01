@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { addOrUpdateRateAction, deleteRateAction, bulkAddOrUpdateRatesAction, deleteAllRatesAction } from "@/app/actions/rates";
+import { useNotification } from "@/context/NotificationContext";
 
 type Rate = {
     id: number;
@@ -20,6 +21,7 @@ const POPULAR_BRANDS = [
 ];
 
 export default function ClientRatesManager({ initialRates }: { initialRates: Rate[] }) {
+    const { showNotification } = useNotification();
     const [rates, setRates] = useState<Rate[]>(initialRates);
     const [loading, setLoading] = useState(false);
 
@@ -84,10 +86,11 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
             const combinedCategory = formatCategory(currency, priceTag);
             const finalPublicRate = isPublicSame ? parseFloat(rateMultiplier) : parseFloat(publicRateMultiplier);
             await addOrUpdateRateAction(cardBrand, combinedCategory, parseFloat(rateMultiplier), finalPublicRate);
-            window.location.reload();
+            showNotification('SUCCESS', `Rate for ${cardBrand} (${combinedCategory}) updated successfully.`);
+            setTimeout(() => window.location.reload(), 1000);
         } catch (error) {
             console.error(error);
-            alert("Failed to save rate configuration.");
+            showNotification('ERROR', "Failed to save rate configuration.");
         } finally {
             setLoading(false);
         }
@@ -119,10 +122,11 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
         setLoading(true);
         try {
             await deleteRateAction(id);
-            window.location.reload();
+            showNotification('SUCCESS', "Rate removed successfully.");
+            setTimeout(() => window.location.reload(), 1000);
         } catch (error) {
             console.error(error);
-            alert("Failed to delete rate.");
+            showNotification('ERROR', "Failed to delete rate.");
         } finally {
             setLoading(false);
         }
@@ -134,10 +138,11 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
         setLoading(true);
         try {
             await deleteAllRatesAction();
-            window.location.reload();
+            showNotification('SUCCESS', "All active rates have been removed.");
+            setTimeout(() => window.location.reload(), 1000);
         } catch (error) {
             console.error(error);
-            alert("Failed to delete all rates.");
+            showNotification('ERROR', "Failed to delete all rates.");
         } finally {
             setLoading(false);
         }
@@ -160,10 +165,11 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
             const combinedCategory = formatCategory(bulkCurrency, bulkPriceTag);
             const finalPublicRate = isBulkPublicSame ? parseFloat(bulkRateMultiplier) : parseFloat(bulkPublicRateMultiplier);
             await bulkAddOrUpdateRatesAction(bulkBrands, combinedCategory, parseFloat(bulkRateMultiplier), finalPublicRate);
-            window.location.reload();
+            showNotification('SUCCESS', `Bulk configuration applied to ${bulkBrands.length} brands.`);
+            setTimeout(() => window.location.reload(), 1000);
         } catch (error) {
             console.error(error);
-            alert("Failed to apply bulk configuration.");
+            showNotification('ERROR', "Failed to apply bulk configuration.");
         } finally {
             setLoading(false);
         }
