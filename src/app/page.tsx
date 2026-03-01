@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import Image from "next/image";
+import RatesCalculator from "@/components/RatesCalculator";
 import styles from "./page.module.css";
 import { prisma } from "@/lib/prisma";
 
@@ -41,15 +42,7 @@ export default async function Home() {
               </div>
             </div>
             <div className={styles.heroVisual}>
-              <div className={styles.floatingCard}>
-                <Image
-                  src="/images/apple-card-v3.png"
-                  alt="Apple Gift Card"
-                  width={380}
-                  height={240}
-                  style={{ width: '100%', height: 'auto', borderRadius: '1rem' }}
-                />
-              </div>
+              <RatesCalculator />
             </div>
           </div>
         </section>

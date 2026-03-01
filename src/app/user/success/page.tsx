@@ -44,7 +44,11 @@ export default async function SuccessPage(props: {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ opacity: 0.7 }}>Payout Method</span>
-                        <strong>{trade.payoutNetwork} ({trade.payoutPhoneNumber})</strong>
+                        <strong>
+                            {trade.payoutMethod === 'CRYPTO'
+                                ? `Crypto: ${trade.cryptoCoin} (${trade.cryptoNetwork})`
+                                : `${trade.payoutNetwork} (${trade.payoutPhoneNumber})`}
+                        </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ opacity: 0.7 }}>Status</span>

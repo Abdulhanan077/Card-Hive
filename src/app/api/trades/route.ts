@@ -32,6 +32,15 @@ export async function POST(req: Request) {
         // Extract fields
         const payoutNetwork = formData.get("payoutNetwork") as string;
         const payoutPhoneNumber = formData.get("payoutPhoneNumber") as string;
+        const payoutMethod = (formData.get("payoutMethod") as string) || "MOBILE_MONEY";
+
+        // Crypto fields
+        const cryptoCoin = formData.get("cryptoCoin") as any;
+        const cryptoNetwork = formData.get("cryptoNetwork") as any;
+        const cryptoExchange = formData.get("cryptoExchange") as any;
+        const cryptoReceiverIdType = formData.get("cryptoReceiverIdType") as any;
+        const cryptoReceiverId = formData.get("cryptoReceiverId") as string;
+
         const cardBrand = formData.get("cardBrand") as string;
         const cardCountry = formData.get("cardCountry") as string;
         const cardType = formData.get("cardType") as string;
@@ -126,8 +135,14 @@ export async function POST(req: Request) {
             data: {
                 tradeId,
                 userId: parseInt(session.user.id),
-                payoutNetwork,
-                payoutPhoneNumber,
+                payoutMethod: payoutMethod as any,
+                payoutNetwork: (payoutNetwork as string) || "",
+                payoutPhoneNumber: (payoutPhoneNumber as string) || "",
+                cryptoCoin,
+                cryptoNetwork,
+                cryptoExchange,
+                cryptoReceiverIdType,
+                cryptoReceiverId,
                 cardBrand,
                 cardCountry,
                 cardType,
@@ -151,9 +166,17 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json({ tradeId: trade.tradeId }, { status: 201 });
-    } catch (error) {
-        console.error("Trade submission error:", error);
-        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+    } catch (error: any) {
+        console.error("DEBUG: Trade submission detailed error:", {
+            message: error.message,
+            stack: error.stack,
+            code: error.code,
+            meta: error.meta
+        });
+        return NextResponse.json({
+            message: "Internal server error",
+            debug: process.env.NODE_ENV === 'development' ? error.message : undefined
+        }, { status: 500 });
     }
 }
 

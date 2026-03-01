@@ -107,10 +107,43 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
                         <h3 style={{ marginBottom: "1rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>
                             Payout Target
                         </h3>
-                        <div>
-                            <div style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{trade.payoutNetwork}</div>
-                            <div style={{ color: "var(--primary)", fontSize: "1.2rem", marginTop: "0.25rem" }}>{trade.payoutPhoneNumber}</div>
-                        </div>
+                        {trade.payoutMethod === 'CRYPTO' ? (
+                            <div>
+                                <div style={{ fontSize: "1.1rem", fontWeight: "bold", color: "var(--primary)" }}>
+                                    {trade.cryptoCoin} ({trade.cryptoNetwork})
+                                </div>
+                                <div style={{ fontSize: "0.9rem", color: "var(--primary)", marginTop: "0.25rem" }}>
+                                    Exchange: <strong>{trade.cryptoExchange}</strong>
+                                </div>
+                                <div style={{ marginTop: "0.75rem", padding: "0.5rem", backgroundColor: "var(--bg-alt)", borderRadius: "4px", fontSize: "0.85rem", wordBreak: "break-all" }}>
+                                    <div style={{ opacity: 0.7, marginBottom: "0.25rem" }}>
+                                        {trade.cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Wallet Address:' : 'Exchange ID:'}
+                                    </div>
+                                    <code style={{ fontWeight: "bold" }}>{trade.cryptoReceiverId}</code>
+                                </div>
+                                {(trade.cryptoTxHash || trade.cryptoTxNote) && (
+                                    <div style={{ marginTop: "1rem", borderTop: "1px dashed var(--border)", paddingTop: "0.75rem" }}>
+                                        {trade.cryptoTxHash && (
+                                            <div style={{ marginBottom: "0.5rem" }}>
+                                                <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>Transaction Reference:</div>
+                                                <div style={{ fontSize: "0.85rem", fontWeight: "bold", wordBreak: "break-all" }}>{trade.cryptoTxHash}</div>
+                                            </div>
+                                        )}
+                                        {trade.cryptoTxNote && (
+                                            <div>
+                                                <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>Admin Note:</div>
+                                                <div style={{ fontSize: "0.85rem", fontStyle: "italic" }}>{trade.cryptoTxNote}</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div>
+                                <div style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{trade.payoutNetwork}</div>
+                                <div style={{ color: "var(--primary)", fontSize: "1.2rem", marginTop: "0.25rem" }}>{trade.payoutPhoneNumber}</div>
+                            </div>
+                        )}
                     </div>
 
                 </div>

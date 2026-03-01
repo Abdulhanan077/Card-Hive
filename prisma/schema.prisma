@@ -102,8 +102,7 @@ model Trade {
   userId            Int
   user              User      @relation(fields: [userId], references: [id])
   fullName          String?
-  payoutNetwork     String    // MTN, Telecel
-  payoutPhoneNumber String
+
   cardBrand         String
   cardCountry       String
   cardType          String    // Physical, E-code
@@ -114,6 +113,20 @@ model Trade {
   serialNumber      String?
   cardCodeHash      String    // SHA-256 hash for duplicate detection
   status            String    @default("PENDING") // PENDING, UNDER_REVIEW, PAID, REJECTED, COMPLETED
+  
+  payoutMethod      PayoutMethod @default(MOBILE_MONEY)
+  payoutNetwork     String    // MTN, Telecel
+  payoutPhoneNumber String
+
+  // crypto payout fields (nullable for non-crypto trades)
+  cryptoCoin           CryptoCoin?
+  cryptoNetwork        CryptoNetwork?
+  cryptoExchange       CryptoExchange?
+  cryptoReceiverIdType CryptoReceiverIdType?
+  cryptoReceiverId     String?
+  cryptoTxHash         String?
+  cryptoTxNote         String?
+
   imageUrls         String    @default("[]") // JSON string of upload paths
   paymentReference  String?
   paidAt            DateTime?
@@ -139,6 +152,7 @@ model CardRate {
   cardBrand   String   // e.g., Apple/iTunes
   cardCountry String   // e.g., US
   rate        Float    // e.g., 10.5 (GHS per USD)
+  publicRate  Float?   // Optional: Different rate for public display
   updatedAt   DateTime @updatedAt
 
   @@unique([cardBrand, cardCountry])
@@ -191,3 +205,34 @@ enum LoginPortal {
   USER
   ADMIN
 }
+
+enum PayoutMethod {
+  MOBILE_MONEY
+  BANK_TRANSFER
+  CRYPTO
+}
+
+enum CryptoCoin {
+  USDT
+  BTC
+}
+
+enum CryptoNetwork {
+  TRC20
+  ERC20
+  BTC_MAINNET
+}
+
+enum CryptoExchange {
+  BINANCE
+  OKX
+  BYBIT
+  KUCOIN
+  OTHER
+}
+
+enum CryptoReceiverIdType {
+  WALLET_ADDRESS
+  EXCHANGE_ID
+}
+

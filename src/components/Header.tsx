@@ -31,6 +31,9 @@ export default function Header() {
                 </div>
 
                 <nav className={`nav-links ${isMenuOpen ? 'nav-open' : ''}`}>
+                    <Link href="/rates" className="nav-link" onClick={closeMenu}>
+                        Rates
+                    </Link>
                     <Link href="/#how-it-works" className="nav-link" onClick={closeMenu}>
                         How It Works
                     </Link>

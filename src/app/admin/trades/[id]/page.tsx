@@ -71,6 +71,14 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
             data.paymentReference = paymentReference;
             data.paidAt = new Date();
 
+            // Crypto fields
+            const cryptoTxHash = formData.get("cryptoTxHash") as string;
+            const cryptoTxNote = formData.get("cryptoTxNote") as string;
+            if (trade!.payoutMethod === "CRYPTO") {
+                data.cryptoTxHash = cryptoTxHash;
+                data.cryptoTxNote = cryptoTxNote;
+            }
+
             // Reward System Logic has been moved to the Customer "Confirm Receipt" Action
 
         } else if (status !== "PAID" && status !== "COMPLETED") {
@@ -148,9 +156,24 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                                 <div style={{ gridColumn: "1 / -1", backgroundColor: "var(--primary-light)", padding: "1rem", borderRadius: "var(--radius-md)", marginTop: "0.5rem" }}>
                                     <small style={{ color: "var(--primary-hover)", fontWeight: 600, textTransform: "uppercase" }}>PAYOUT DESTINATION</small>
                                     <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: "var(--foreground)", display: "flex", alignItems: "center" }}>
-                                        {trade.payoutNetwork} - {trade.payoutPhoneNumber}
-                                        <CopyButton textToCopy={`${trade.payoutNetwork} - ${trade.payoutPhoneNumber}`} />
+                                        {trade.payoutMethod === 'CRYPTO' ? (
+                                            <>
+                                                {trade.cryptoCoin} ({trade.cryptoNetwork}) - {trade.cryptoExchange}
+                                                <CopyButton textToCopy={`${trade.cryptoCoin} ${trade.cryptoNetwork} ${trade.cryptoExchange} ${trade.cryptoReceiverId}`} />
+                                            </>
+                                        ) : (
+                                            <>
+                                                {trade.payoutNetwork} - {trade.payoutPhoneNumber}
+                                                <CopyButton textToCopy={`${trade.payoutNetwork} - ${trade.payoutPhoneNumber}`} />
+                                            </>
+                                        )}
                                     </div>
+                                    {trade.payoutMethod === 'CRYPTO' && (
+                                        <div style={{ marginTop: "0.5rem", padding: "0.5rem", backgroundColor: "white", borderRadius: "4px", fontSize: "0.9rem", color: "var(--primary)" }}>
+                                            <span style={{ opacity: 0.7 }}>{trade.cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Wallet:' : 'Exchange ID:'}</span>
+                                            <strong style={{ marginLeft: "0.5rem", wordBreak: "break-all" }}>{trade.cryptoReceiverId}</strong>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -178,10 +201,44 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                                     name="paymentReference"
                                     className="form-input"
                                     defaultValue={trade.paymentReference || ""}
-                                    placeholder="Payment Ref (Required if Paid)"
+                                    placeholder="Local Payment Ref (Optional)"
                                     style={{ padding: "0.5rem" }}
                                 />
                             </div>
+
+                            {trade.payoutMethod === 'CRYPTO' && (
+                                <div style={{ border: '1px solid #fed7aa', backgroundColor: '#fff7ed', padding: '1rem', borderRadius: '8px', marginTop: '0.5rem' }}>
+                                    <h4 style={{ margin: '0 0 0.75rem 0', color: '#c2410c', fontSize: '0.9rem' }}>Manual Crypto Payout Processing</h4>
+                                    <p style={{ fontSize: '0.8rem', color: '#9a3412', marginBottom: '1rem' }}>
+                                        You must send funds manually from your exchange account. Record the details here.
+                                    </p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>TX Hash / Transfer ID</label>
+                                            <input
+                                                type="text"
+                                                name="cryptoTxHash"
+                                                className="form-input"
+                                                defaultValue={trade.cryptoTxHash || ""}
+                                                placeholder="Paste transaction hash here"
+                                                style={{ padding: "0.4rem", fontSize: '0.85rem' }}
+                                            />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Internal Note (Optional)</label>
+                                            <input
+                                                type="text"
+                                                name="cryptoTxNote"
+                                                className="form-input"
+                                                defaultValue={trade.cryptoTxNote || ""}
+                                                placeholder="e.g. Sent via Binance Pay"
+                                                style={{ padding: "0.4rem", fontSize: '0.85rem' }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <button type="submit" className="btn btn-primary" style={{ padding: "0.5rem" }}>Update Trade</button>
                         </form>
 

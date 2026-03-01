@@ -25,6 +25,7 @@ export default async function AdminTradesList(props: {
 }) {
     const searchParams = await props.searchParams;
     const statusFilter = searchParams.status;
+    const payoutMethodFilter = (searchParams as any).payoutMethod;
     const query = searchParams.query;
 
     const whereClause: any = {};
@@ -32,6 +33,11 @@ export default async function AdminTradesList(props: {
     if (statusFilter && ["PENDING", "UNDER_REVIEW", "PAID", "COMPLETED", "REJECTED"].includes(statusFilter)) {
         whereClause.status = statusFilter;
     }
+
+    if (payoutMethodFilter && ["MOBILE_MONEY", "CRYPTO"].includes(payoutMethodFilter)) {
+        whereClause.payoutMethod = payoutMethodFilter;
+    }
+
 
     if (query) {
         whereClause.OR = [
@@ -78,7 +84,10 @@ export default async function AdminTradesList(props: {
                     <Link href="/admin/trades?status=PAID" className={`btn ${statusFilter === 'PAID' ? 'btn-primary' : 'btn-secondary'}`}>Paid</Link>
                     <Link href="/admin/trades?status=COMPLETED" className={`btn ${statusFilter === 'COMPLETED' ? 'btn-primary' : 'btn-secondary'}`}>Completed</Link>
                     <Link href="/admin/trades?status=REJECTED" className={`btn ${statusFilter === 'REJECTED' ? 'btn-primary' : 'btn-secondary'}`}>Rejected</Link>
+                    <span style={{ borderLeft: '1px solid var(--border)', margin: '0 0.5rem' }}></span>
+                    <Link href="/admin/trades?payoutMethod=CRYPTO" className={`btn ${payoutMethodFilter === 'CRYPTO' ? 'btn-primary' : 'btn-secondary'}`}>Crypto Only</Link>
                 </div>
+
 
                 <form className="flex-mobile-col" style={{ display: 'flex', gap: '0.5rem', flex: 1, maxWidth: '100%' }}>
                     {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
@@ -127,7 +136,17 @@ export default async function AdminTradesList(props: {
                                         <div style={{ fontWeight: 500 }}>@{trade.user.username}</div>
                                         <div style={{ fontSize: '0.85em', opacity: 0.7 }}>{trade.user.email}</div>
                                     </td>
-                                    <td>{trade.payoutPhoneNumber}</td>
+                                    <td>
+                                        {trade.payoutMethod === 'CRYPTO' ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                                <span className="badge badge-paid" style={{ fontSize: '0.7rem', padding: '2px 6px', width: 'fit-content' }}>CRYPTO</span>
+                                                <div style={{ fontSize: '0.85rem' }}>{trade.cryptoCoin} ({trade.cryptoNetwork})</div>
+                                            </div>
+                                        ) : (
+                                            trade.payoutPhoneNumber
+                                        )}
+                                    </td>
+
                                     <td>
                                         {trade.cardBrand} <span style={{ opacity: 0.6, fontSize: '0.85em' }}>({trade.cardType})</span>
                                     </td>

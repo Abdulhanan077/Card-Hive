@@ -2,9 +2,8 @@ import { prisma } from "@/lib/prisma";
 import ClientRatesManager from "./ClientRatesManager";
 
 export default async function AdminRatesPage() {
-    const rates = await prisma.cardRate.findMany({
-        orderBy: { cardBrand: "asc" }
-    });
+    // Use raw SQL to bypass Prisma Client's internal validation of fields
+    const rates: any = await prisma.$queryRawUnsafe(`SELECT * FROM "CardRate" ORDER BY "cardBrand" ASC`);
 
     return (
         <>

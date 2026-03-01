@@ -158,12 +158,20 @@ export async function sendPaymentSentEmail(user: { email: string; username: stri
       <p>Great news! Payment for your recent gift card trade has been processed and sent.</p>
       
       <div style="${cardStyle}">
-        <strong>Payout Network:</strong> ${trade.payoutNetwork}<br/>
-        <strong>Phone Number:</strong> ${trade.payoutPhoneNumber}<br/>
-        <strong>Reference / ID:</strong> ${trade.paymentReference || "N/A"}<br/>
+        ${trade.payoutMethod === 'CRYPTO' ? `
+          <strong>Crypto Coin:</strong> ${trade.cryptoCoin}<br/>
+          <strong>Network:</strong> ${trade.cryptoNetwork}<br/>
+          <strong>Exchange:</strong> ${trade.cryptoExchange}<br/>
+          <strong>Receiver ID:</strong> ${trade.cryptoReceiverId}<br/>
+          <strong>TX Hash:</strong> ${trade.cryptoTxHash || "N/A"}<br/>
+        ` : `
+          <strong>Payout Network:</strong> ${trade.payoutNetwork}<br/>
+          <strong>Phone Number:</strong> ${trade.payoutPhoneNumber}<br/>
+          <strong>Reference / ID:</strong> ${trade.paymentReference || "N/A"}<br/>
+        `}
         <strong>Paid Date:</strong> ${trade.paidAt ? new Date(trade.paidAt).toLocaleString() : new Date().toLocaleString()}
       </div>
-      <p>Please check your mobile money wallet to confirm receipt.</p>
+      <p>Please check your ${trade.payoutMethod === 'CRYPTO' ? 'crypto exchange/wallet' : 'mobile money wallet'} to confirm receipt.</p>
       <a href="${getAppUrl()}/user/trades" style="${buttonStyle}">View Trade Details</a>
     </div>
   `;
@@ -226,6 +234,7 @@ export async function sendAdminNewTradeEmail(trade: any, user: { username: strin
         <h3>Trade Info</h3>
         <strong>Brand:</strong> ${trade.cardBrand}<br/>
         <strong>Value:</strong> ${trade.faceValue} ${trade.currency}<br/>
+        <strong>Payout Method:</strong> ${trade.payoutMethod === 'CRYPTO' ? `Crypto (${trade.cryptoCoin})` : trade.payoutNetwork}<br/>
         <strong>Created:</strong> ${new Date().toLocaleString()}
       </div>
       <a href="${getAppUrl()}/admin/trades/${trade.tradeId}" style="${buttonStyle}">Review Trade</a>

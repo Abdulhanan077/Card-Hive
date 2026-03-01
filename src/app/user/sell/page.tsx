@@ -18,6 +18,13 @@ export default function SellGiftCardPage() {
     const [faceValue, setFaceValue] = useState("");
     const [estimatedPayout, setEstimatedPayout] = useState<number | null>(null);
 
+    // Payout Method State
+    const [payoutMethod, setPayoutMethod] = useState<"MOBILE_MONEY" | "CRYPTO">("MOBILE_MONEY");
+    const [cryptoCoin, setCryptoCoin] = useState<"USDT" | "BTC">("USDT");
+    const [cryptoNetwork, setCryptoNetwork] = useState("");
+    const [cryptoExchange, setCryptoExchange] = useState("");
+    const [cryptoReceiverIdType, setCryptoReceiverIdType] = useState<"WALLET_ADDRESS" | "EXCHANGE_ID">("EXCHANGE_ID");
+
     // Fetch Rates on Mount
     useEffect(() => {
         fetch("/api/rates").then(res => res.json()).then(data => {
@@ -46,6 +53,16 @@ export default function SellGiftCardPage() {
             setCardCategory("");
         }
     }, [cardBrand, availableCategories, cardCategory]);
+
+    // Reset Network if Coin changes
+    useEffect(() => {
+        if (cryptoCoin === "USDT") {
+            setCryptoNetwork("TRC20");
+        } else {
+            setCryptoNetwork("BTC_MAINNET");
+        }
+    }, [cryptoCoin]);
+
 
     // Recalculate anytime inputs change
     useEffect(() => {
@@ -132,20 +149,106 @@ export default function SellGiftCardPage() {
                     {/* Payout Information */}
                     <div className={styles.formSection}>
                         <h3>1. Payout Information</h3>
-                        <div className={styles.grid2}>
-                            <div className="form-group">
-                                <label className="form-label">Payout Network</label>
-                                <select name="payoutNetwork" className="form-select" required>
-                                    <option value="">Select Network...</option>
-                                    <option value="MTN">MTN Mobile Money</option>
-                                    <option value="Telecel">Telecel Cash</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Mobile Money Number</label>
-                                <input type="tel" name="payoutPhoneNumber" className="form-input" required placeholder="055 123 4567" />
+                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                            <label className="form-label">Select Payout Method</label>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.75rem 1rem', border: '1px solid var(--border)', borderRadius: '8px', flex: 1, backgroundColor: payoutMethod === 'MOBILE_MONEY' ? 'var(--bg-alt)' : 'transparent', borderColor: payoutMethod === 'MOBILE_MONEY' ? 'var(--primary)' : 'var(--border)' }}>
+                                    <input type="radio" name="payoutMethod" value="MOBILE_MONEY" checked={payoutMethod === 'MOBILE_MONEY'} onChange={() => setPayoutMethod('MOBILE_MONEY')} />
+                                    <span>Mobile Money</span>
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.75rem 1rem', border: '1px solid var(--border)', borderRadius: '8px', flex: 1, backgroundColor: payoutMethod === 'CRYPTO' ? 'var(--bg-alt)' : 'transparent', borderColor: payoutMethod === 'CRYPTO' ? 'var(--primary)' : 'var(--border)' }}>
+                                    <input type="radio" name="payoutMethod" value="CRYPTO" checked={payoutMethod === 'CRYPTO'} onChange={() => setPayoutMethod('CRYPTO')} />
+                                    <span>Crypto (USDT/BTC)</span>
+                                </label>
                             </div>
                         </div>
+
+                        {payoutMethod === 'MOBILE_MONEY' ? (
+                            <div className={styles.grid2}>
+                                <div className="form-group">
+                                    <label className="form-label">Payout Network</label>
+                                    <select name="payoutNetwork" className="form-select" required={payoutMethod === 'MOBILE_MONEY'}>
+                                        <option value="">Select Network...</option>
+                                        <option value="MTN">MTN Mobile Money</option>
+                                        <option value="Telecel">Telecel Cash</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Mobile Money Number</label>
+                                    <input type="tel" name="payoutPhoneNumber" className="form-input" required={payoutMethod === 'MOBILE_MONEY'} placeholder="055 123 4567" />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className={styles.cryptoSection} style={{ padding: '1.5rem', backgroundColor: 'var(--bg-alt)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                                <div className={styles.grid2}>
+                                    <div className="form-group">
+                                        <label className="form-label">Select Coin</label>
+                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                                            <button type="button" onClick={() => setCryptoCoin('USDT')} className={`btn ${cryptoCoin === 'USDT' ? 'btn-primary' : 'btn-secondary'}`} style={{ flex: 1 }}>USDT</button>
+                                            <button type="button" onClick={() => setCryptoCoin('BTC')} className={`btn ${cryptoCoin === 'BTC' ? 'btn-primary' : 'btn-secondary'}`} style={{ flex: 1 }}>BTC</button>
+                                            <input type="hidden" name="cryptoCoin" value={cryptoCoin} />
+                                        </div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Network</label>
+                                        <select name="cryptoNetwork" className="form-select" required value={cryptoNetwork} onChange={(e) => setCryptoNetwork(e.target.value)}>
+                                            {cryptoCoin === 'USDT' ? (
+                                                <>
+                                                    <option value="TRC20">TRC20 (Tron)</option>
+                                                    <option value="ERC20">ERC20 (Ethereum)</option>
+                                                </>
+                                            ) : (
+                                                <option value="BTC_MAINNET">BTC (Bitcoin Mainnet)</option>
+                                            )}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className={styles.grid2} style={{ marginTop: '1rem' }}>
+                                    <div className="form-group">
+                                        <label className="form-label">Exchange</label>
+                                        <select name="cryptoExchange" className="form-select" required value={cryptoExchange} onChange={(e) => setCryptoExchange(e.target.value)}>
+                                            <option value="">Select Exchange...</option>
+                                            <option value="BINANCE">Binance</option>
+                                            <option value="OKX">OKX</option>
+                                            <option value="BYBIT">Bybit</option>
+                                            <option value="KUCOIN">KuCoin</option>
+                                            <option value="OTHER">Other</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Receiving Method</label>
+                                        <select name="cryptoReceiverIdType" className="form-select" required value={cryptoReceiverIdType} onChange={(e) => setCryptoReceiverIdType(e.target.value as any)}>
+                                            <option value="EXCHANGE_ID">Internal Transfer (ID/Email)</option>
+                                            <option value="WALLET_ADDRESS">External Wallet Address</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="form-group" style={{ marginTop: '1rem' }}>
+                                    <label className="form-label">
+                                        {cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Wallet Address' : (
+                                            cryptoExchange === 'BINANCE' ? 'Binance Email / Phone / UID' :
+                                                cryptoExchange === 'OKX' ? 'OKX UID or Email' :
+                                                    'Your Account ID / Email on this exchange'
+                                        )}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="cryptoReceiverId"
+                                        className="form-input"
+                                        required
+                                        placeholder={cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Paste your wallet address' : 'Enter your account identifier'}
+                                    />
+                                    <p className={styles.helpText} style={{ color: '#d97706', marginTop: '0.4rem', fontSize: '0.85rem' }}>
+                                        {cryptoReceiverIdType === 'WALLET_ADDRESS'
+                                            ? "⚠️ Ensure this address supports the selected coin and network. Transfers are irreversible."
+                                            : "We will use an internal transfer on the same exchange to reduce fees. Ensure this ID is correct."}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                     </div>
 
                     <hr className={styles.divider} />
@@ -282,6 +385,13 @@ export default function SellGiftCardPage() {
                             <span>I confirm I am the rightful owner of this gift card, it has not been used, and all details provided are accurate.</span>
                         </label>
                     </div>
+
+                    {payoutMethod === 'CRYPTO' && (
+                        <div style={{ backgroundColor: '#fff1f2', border: '1px solid #fecdd3', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem', color: '#9f1239', fontSize: '0.9rem' }}>
+                            <strong>⚠️ Final Warning:</strong> Please double-check your crypto details. Once sent by the admin, payments are irreversible.
+                        </div>
+                    )}
+
 
                     <div className={styles.actions}>
                         <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>

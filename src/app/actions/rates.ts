@@ -3,48 +3,49 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function addOrUpdateRateAction(cardBrand: string, cardCountry: string, rate: number) {
+export async function addOrUpdateRateAction(cardBrand: string, cardCountry: string, rate: number, publicRate?: number) {
     if (!cardBrand || !cardCountry || isNaN(rate)) {
         throw new Error("Invalid rate configuration provided.");
     }
 
-    await prisma.cardRate.upsert({
-        where: {
-            cardBrand_cardCountry: {
-                cardBrand,
-                cardCountry
-            }
-        },
-        update: { rate },
-        create: { cardBrand, cardCountry, rate }
-    });
+    // Use raw SQL to bypass Prisma Client's internal validation of fields
+    await prisma.$executeRaw`
+        INSERT INTO "CardRate" ("cardBrand", "cardCountry", "rate", "publicRate", "updatedAt")
+        VALUES (${cardBrand}, ${cardCountry}, ${rate}, ${publicRate ?? null}, NOW())
+        ON CONFLICT ("cardBrand", "cardCountry")
+        DO UPDATE SET
+            "rate" = EXCLUDED."rate",
+            "publicRate" = EXCLUDED."publicRate",
+            "updatedAt" = EXCLUDED."updatedAt"
+    `;
 
     revalidatePath("/admin/rates");
     revalidatePath("/user/sell");
+    revalidatePath("/rates");
 }
 
 export async function deleteRateAction(id: number) {
     await prisma.cardRate.delete({ where: { id } });
     revalidatePath("/admin/rates");
     revalidatePath("/user/sell");
+    revalidatePath("/rates");
 }
 
-export async function bulkAddOrUpdateRatesAction(brands: string[], cardCountry: string, rate: number) {
+export async function bulkAddOrUpdateRatesAction(brands: string[], cardCountry: string, rate: number, publicRate?: number) {
     if (!brands || brands.length === 0 || !cardCountry || isNaN(rate)) {
         throw new Error("Invalid bulk rate configuration provided.");
     }
 
     const upsertPromises = brands.map(brand =>
-        prisma.cardRate.upsert({
-            where: {
-                cardBrand_cardCountry: {
-                    cardBrand: brand,
-                    cardCountry
-                }
-            },
-            update: { rate },
-            create: { cardBrand: brand, cardCountry, rate }
-        })
+        prisma.$executeRaw`
+            INSERT INTO "CardRate" ("cardBrand", "cardCountry", "rate", "publicRate", "updatedAt")
+            VALUES (${brand}, ${cardCountry}, ${rate}, ${publicRate ?? null}, NOW())
+            ON CONFLICT ("cardBrand", "cardCountry")
+            DO UPDATE SET
+                "rate" = EXCLUDED."rate",
+                "publicRate" = EXCLUDED."publicRate",
+                "updatedAt" = EXCLUDED."updatedAt"
+        `
     );
 
     // Execute all upserts in a transaction
@@ -52,10 +53,12 @@ export async function bulkAddOrUpdateRatesAction(brands: string[], cardCountry: 
 
     revalidatePath("/admin/rates");
     revalidatePath("/user/sell");
+    revalidatePath("/rates");
 }
 
 export async function deleteAllRatesAction() {
     await prisma.cardRate.deleteMany();
     revalidatePath("/admin/rates");
     revalidatePath("/user/sell");
+    revalidatePath("/rates");
 }

@@ -1,0 +1,297 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { FaCalculator, FaArrowRight, FaSyncAlt } from "react-icons/fa";
+import Link from "next/link";
+
+type Rate = {
+    id: number;
+    cardBrand: string;
+    cardCountry: string;
+    rate: number;
+    publicRate: number | null;
+};
+
+export default function RatesCalculator() {
+    const [rates, setRates] = useState<Rate[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedBrand, setSelectedBrand] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("");
+    const [amount, setAmount] = useState<string>("");
+    const [result, setResult] = useState<number | null>(null);
+
+    useEffect(() => {
+        fetch("/api/rates")
+            .then(res => res.json())
+            .then(data => {
+                setRates(data.rates || []);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch rates:", err);
+                setLoading(false);
+            });
+    }, []);
+
+    const brands = Array.from(new Set(rates.map(r => r.cardBrand))).sort();
+    const categories = Array.from(new Set(rates.filter(r => r.cardBrand === selectedBrand).map(r => r.cardCountry))).sort();
+
+    useEffect(() => {
+        if (selectedBrand && selectedCategory && amount && !isNaN(parseFloat(amount))) {
+            const rateRecord = rates.find(r => r.cardBrand === selectedBrand && r.cardCountry === selectedCategory);
+            if (rateRecord) {
+                const multiplier = rateRecord.publicRate ?? rateRecord.rate;
+                setResult(parseFloat(amount) * multiplier);
+            } else {
+                setResult(null);
+            }
+        } else {
+            setResult(null);
+        }
+    }, [selectedBrand, selectedCategory, amount, rates]);
+
+    return (
+        <div className="calculator-container animate-in">
+            <style jsx>{`
+                .calculator-container {
+                    background: var(--surface);
+                    border-radius: var(--radius-xl);
+                    padding: 2rem;
+                    box-shadow: var(--shadow-lg);
+                    border: 1px solid var(--border);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .calculator-container::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 150px;
+                    height: 150px;
+                    background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
+                    opacity: 0.5;
+                    pointer-events: none;
+                }
+
+                .calc-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    margin-bottom: 2rem;
+                }
+
+                .calc-icon {
+                    background: var(--primary);
+                    color: white;
+                    padding: 0.75rem;
+                    border-radius: var(--radius-md);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .calc-title {
+                    margin: 0;
+                    font-size: 1.5rem;
+                    font-weight: 800;
+                    color: var(--foreground);
+                }
+
+                .calc-grid {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 1.5rem;
+                }
+
+                .field-label {
+                    display: block;
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    margin-bottom: 0.5rem;
+                    color: var(--foreground);
+                    opacity: 0.8;
+                }
+
+                .select-wrapper {
+                    position: relative;
+                }
+
+                .calc-select, .calc-input {
+                    width: 100%;
+                    padding: 1rem;
+                    border-radius: var(--radius-lg);
+                    border: 2px solid var(--border);
+                    background: var(--background);
+                    color: var(--foreground);
+                    font-size: 1rem;
+                    font-weight: 500;
+                    transition: var(--transition);
+                }
+
+                .calc-select:focus, .calc-input:focus {
+                    outline: none;
+                    border-color: var(--primary);
+                    box-shadow: 0 0 0 4px var(--primary-light);
+                }
+
+                .calc-select:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
+                .result-area {
+                    margin-top: 2rem;
+                    padding-top: 2rem;
+                    border-top: 1px dashed var(--border);
+                    text-align: center;
+                }
+
+                .result-label {
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    color: var(--foreground);
+                    opacity: 0.6;
+                    margin-bottom: 0.5rem;
+                }
+
+                .result-value {
+                    font-size: 2.5rem;
+                    font-weight: 900;
+                    color: var(--primary);
+                    margin: 0.5rem 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
+                }
+
+                .result-currency {
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                    vertical-align: middle;
+                    margin-top: 0.5rem;
+                }
+
+                .calc-cta {
+                    margin-top: 1.5rem;
+                    width: 100%;
+                }
+
+                .view-all-link {
+                    display: block;
+                    text-align: center;
+                    margin-top: 1.5rem;
+                    color: var(--primary);
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    text-decoration: none;
+                    transition: var(--transition);
+                }
+
+                .view-all-link:hover {
+                    text-decoration: underline;
+                    transform: translateX(5px);
+                }
+
+                @media (max-width: 640px) {
+                    .calculator-container {
+                        padding: 1.5rem;
+                    }
+                    .result-value {
+                        font-size: 2rem;
+                    }
+                }
+
+                .animate-in {
+                    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+
+                @keyframes slideUp {
+                    from { transform: translateY(20px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+            `}</style>
+
+            <div className="calc-header">
+                <div className="calc-icon">
+                    <FaCalculator size={20} />
+                </div>
+                <h3 className="calc-title">Rate Calculator</h3>
+            </div>
+
+            <div className="calc-grid">
+                <div className="form-group">
+                    <label className="field-label">Select Gift Card Brand</label>
+                    <select
+                        className="calc-select"
+                        value={selectedBrand}
+                        onChange={(e) => {
+                            setSelectedBrand(e.target.value);
+                            setSelectedCategory("");
+                        }}
+                    >
+                        <option value="">Choose Brand...</option>
+                        {brands.map(brand => (
+                            <option key={brand} value={brand}>{brand}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="form-group">
+                    <label className="field-label">Category / Country</label>
+                    <select
+                        className="calc-select"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        disabled={!selectedBrand}
+                    >
+                        <option value="">{selectedBrand ? "Choose Category..." : "Select Brand First"}</option>
+                        {categories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="form-group">
+                    <label className="field-label">Amount (USD/GBP/EUR)</label>
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            type="number"
+                            className="calc-input"
+                            placeholder="Enter face value amount"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="result-area">
+                <div className="result-label">ESTIMATED PAYOUT</div>
+                <div className="result-value">
+                    {result !== null ? (
+                        <>
+                            <span className="result-currency">GHS</span>
+                            {result.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </>
+                    ) : (
+                        <span style={{ opacity: 0.3 }}>0.00</span>
+                    )}
+                </div>
+                <p style={{ fontSize: '0.8rem', opacity: 0.5, marginTop: '0.5rem' }}>
+                    * Rates are dynamic and subject to change.
+                </p>
+
+                <Link href="/login" className="btn btn-primary calc-cta">
+                    Sell Now <FaArrowRight style={{ marginLeft: '0.5rem' }} />
+                </Link>
+
+                <Link href="/rates" className="view-all-link">
+                    View Full Rates Table <FaArrowRight size={10} style={{ marginLeft: '0.3rem' }} />
+                </Link>
+            </div>
+        </div>
+    );
+}

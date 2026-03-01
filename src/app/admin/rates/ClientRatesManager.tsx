@@ -8,6 +8,7 @@ type Rate = {
     cardBrand: string;
     cardCountry: string;
     rate: number;
+    publicRate: number | null;
     updatedAt: Date;
 };
 
@@ -29,6 +30,8 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
     const [priceTag, setPriceTag] = useState("Any Amount");
     const [isCustomPrice, setIsCustomPrice] = useState(false);
     const [rateMultiplier, setRateMultiplier] = useState("");
+    const [publicRateMultiplier, setPublicRateMultiplier] = useState("");
+    const [isPublicSame, setIsPublicSame] = useState(true);
 
     // Bulk Form State
     const [bulkBrands, setBulkBrands] = useState<string[]>(POPULAR_BRANDS);
@@ -36,6 +39,8 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
     const [bulkPriceTag, setBulkPriceTag] = useState("Any Amount");
     const [isBulkCustomPrice, setIsBulkCustomPrice] = useState(false);
     const [bulkRateMultiplier, setBulkRateMultiplier] = useState("");
+    const [bulkPublicRateMultiplier, setBulkPublicRateMultiplier] = useState("");
+    const [isBulkPublicSame, setIsBulkPublicSame] = useState(true);
 
     const CURRENCIES = ["USD", "GBP", "EUR", "CAD", "AUD", "Global"];
     const PRICE_TAGS = [
@@ -77,7 +82,8 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
         setLoading(true);
         try {
             const combinedCategory = formatCategory(currency, priceTag);
-            await addOrUpdateRateAction(cardBrand, combinedCategory, parseFloat(rateMultiplier));
+            const finalPublicRate = isPublicSame ? parseFloat(rateMultiplier) : parseFloat(publicRateMultiplier);
+            await addOrUpdateRateAction(cardBrand, combinedCategory, parseFloat(rateMultiplier), finalPublicRate);
             window.location.reload();
         } catch (error) {
             console.error(error);
@@ -96,6 +102,13 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
         setPriceTag(tag);
         setIsCustomPrice(!PRICE_TAGS.includes(tag));
         setRateMultiplier(rate.rate.toString());
+        if (rate.publicRate !== null) {
+            setPublicRateMultiplier(rate.publicRate.toString());
+            setIsPublicSame(rate.publicRate === rate.rate);
+        } else {
+            setPublicRateMultiplier("");
+            setIsPublicSame(true);
+        }
 
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
@@ -145,7 +158,8 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
         setLoading(true);
         try {
             const combinedCategory = formatCategory(bulkCurrency, bulkPriceTag);
-            await bulkAddOrUpdateRatesAction(bulkBrands, combinedCategory, parseFloat(bulkRateMultiplier));
+            const finalPublicRate = isBulkPublicSame ? parseFloat(bulkRateMultiplier) : parseFloat(bulkPublicRateMultiplier);
+            await bulkAddOrUpdateRatesAction(bulkBrands, combinedCategory, parseFloat(bulkRateMultiplier), finalPublicRate);
             window.location.reload();
         } catch (error) {
             console.error(error);
@@ -249,22 +263,43 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                         </div>
 
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Rate Multiplier</label>
+                            <label className="form-label">Trading Payout Rate (multiplier)</label>
                             <input
                                 type="number"
                                 step="any"
                                 value={rateMultiplier}
                                 onChange={(e) => setRateMultiplier(e.target.value)}
                                 className="form-input"
-                                placeholder="e.g. 10.5 (Payout per Face Value unit)"
+                                placeholder="e.g. 10.5"
                                 required
                             />
                         </div>
+
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                <label className="form-label">Public Display Rate</label>
+                                <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
+                                    <input type="checkbox" checked={isPublicSame} onChange={(e) => setIsPublicSame(e.target.checked)} />
+                                    Same as Trading
+                                </label>
+                            </div>
+                            <input
+                                type="number"
+                                step="any"
+                                value={isPublicSame ? rateMultiplier : publicRateMultiplier}
+                                onChange={(e) => setPublicRateMultiplier(e.target.value)}
+                                className="form-input"
+                                placeholder="Public display rate"
+                                disabled={isPublicSame}
+                                required={!isPublicSame}
+                            />
+                        </div>
+
                         <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
                             <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={loading}>
                                 {loading ? "Saving..." : "Save Rate Config"}
                             </button>
-                            <button type="button" className="btn btn-secondary" onClick={() => { setCardBrand(""); setIsCustomBrand(false); setCurrency("USD"); setPriceTag("Any Amount"); setIsCustomPrice(false); setRateMultiplier(""); }} disabled={loading}>
+                            <button type="button" className="btn btn-secondary" onClick={() => { setCardBrand(""); setIsCustomBrand(false); setCurrency("USD"); setPriceTag("Any Amount"); setIsCustomPrice(false); setRateMultiplier(""); setPublicRateMultiplier(""); setIsPublicSame(true); }} disabled={loading}>
                                 Clear
                             </button>
                         </div>
@@ -325,7 +360,7 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
 
 
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Rate Multiplier</label>
+                            <label className="form-label">Trading Payout Rate (multiplier)</label>
                             <input
                                 type="number"
                                 step="any"
@@ -334,6 +369,26 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                                 className="form-input"
                                 placeholder="e.g. 10.5"
                                 required
+                            />
+                        </div>
+
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                <label className="form-label">Public Display Rate</label>
+                                <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
+                                    <input type="checkbox" checked={isBulkPublicSame} onChange={(e) => setIsBulkPublicSame(e.target.checked)} />
+                                    Same as Trading
+                                </label>
+                            </div>
+                            <input
+                                type="number"
+                                step="any"
+                                value={isBulkPublicSame ? bulkRateMultiplier : bulkPublicRateMultiplier}
+                                onChange={(e) => setBulkPublicRateMultiplier(e.target.value)}
+                                className="form-input"
+                                placeholder="Public display rate"
+                                disabled={isBulkPublicSame}
+                                required={!isBulkPublicSame}
                             />
                         </div>
 
@@ -391,8 +446,8 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                                 <tr>
                                     <th>Brand</th>
                                     <th>Currency / Category</th>
-                                    <th>Multiplier Rate</th>
-                                    <th>Last Updated</th>
+                                    <th>Trading Rate</th>
+                                    <th>Public Rate</th>
                                     <th style={{ textAlign: "right", paddingRight: "1rem" }}>Actions</th>
                                 </tr>
                             </thead>
@@ -406,7 +461,15 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                                             </span>
                                         </td>
                                         <td style={{ color: "var(--primary)", fontWeight: 700, padding: "0.75rem" }}>{rate.rate}x</td>
-                                        <td style={{ padding: "0.75rem" }}>{new Date(rate.updatedAt).toLocaleDateString()}</td>
+                                        <td style={{ padding: "0.75rem" }}>
+                                            {rate.publicRate !== null ? (
+                                                <span style={{ color: rate.publicRate !== rate.rate ? "#d97706" : "inherit", fontWeight: rate.publicRate !== rate.rate ? 600 : 400 }}>
+                                                    {rate.publicRate}x
+                                                </span>
+                                            ) : (
+                                                <span style={{ opacity: 0.5 }}>-</span>
+                                            )}
+                                        </td>
                                         <td style={{ textAlign: "right", padding: "0.75rem", display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
                                             <button
                                                 onClick={() => handleEdit(rate)}
