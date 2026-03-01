@@ -65,7 +65,7 @@ export default function PublicRatesPage() {
                     <div style={{ display: 'flex', gap: '3rem', alignItems: 'start' }} className="flex-mobile-col">
 
                         {/* Sidebar: Calculator */}
-                        <div style={{ position: 'sticky', top: '100px', flex: '1' }} className="w-full">
+                        <div style={{ flex: '1' }} className="w-full sticky-desktop">
                             <RatesCalculator />
 
                             <div className="card glass" style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--primary-light)', border: 'none' }}>
