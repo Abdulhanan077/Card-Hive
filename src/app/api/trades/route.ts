@@ -121,7 +121,7 @@ export async function POST(req: Request) {
         // Fetch active rate
         const rateRecord = await prisma.cardRate.findUnique({
             where: {
-                cardBrand_cardCountry: { cardBrand, cardCountry }
+                cardBrand_cardCountry_cardType: { cardBrand, cardCountry, cardType }
             }
         });
 

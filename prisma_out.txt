@@ -1,0 +1,76 @@
+﻿Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-lucky-violet-ai8ekhwk.c-4.us-east-1.aws.neon.tech"
+
+The database is already in sync with the Prisma schema.
+
+Running generate... (Use --skip-generate to skip the generators)
+[2K[1A[2K[GRunning generate... - Prisma Client
+[2K[1A[2K[GEPERM: operation not permitted, rename 'C:\Users\Abdul\Desktop\OMOR BIGGY TRADES
+\node_modules\.prisma\client\query_engine-windows.dll.node.tmp12644' -> 'C:\User
+s\Abdul\Desktop\OMOR BIGGY TRADES\node_modules\.prisma\client\query_engine-windo
+ws.dll.node'
+
+node.exe : ΓöîΓöÇΓöÇΓöÇ
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö
+ÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓ
+öÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö
+ÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓ
+öÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö
+ÇΓöÉ
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (ΓöîΓöÇΓöÇΓöÇΓ   
+ öÇ...ΓöÇΓöÇΓöÇΓöÇΓ    
+öÉ:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Γöé  Update available 
+5.22.0 -> 7.4.2        
+               Γöé
+Γöé                    
+                       
+              Γöé
+Γöé  This is a major 
+update - please follow 
+the guide at    Γöé
+Γöé  https://pris.ly/d/
+major-version-upgrade  
+              Γöé
+Γöé                    
+                       
+              Γöé
+Γöé  Run the following 
+to update              
+              Γöé
+Γöé    npm i 
+--save-dev 
+prisma@latest          
+             Γöé
+Γöé    npm i 
+@prisma/client@latest  
+                       
+ Γöé
+ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö
+ÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓ
+öÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö
+ÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓ
+öÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö
+ÇΓöÇΓöÇΓöÇΓöÇΓöÿ

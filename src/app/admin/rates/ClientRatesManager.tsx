@@ -8,6 +8,7 @@ type Rate = {
     id: number;
     cardBrand: string;
     cardCountry: string;
+    cardType: string;
     rate: number;
     publicRate: number | null;
     updatedAt: Date;
@@ -31,6 +32,7 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
     const [currency, setCurrency] = useState("USD");
     const [priceTag, setPriceTag] = useState("Any Amount");
     const [isCustomPrice, setIsCustomPrice] = useState(false);
+    const [cardType, setCardType] = useState("Physical");
     const [rateMultiplier, setRateMultiplier] = useState("");
     const [publicRateMultiplier, setPublicRateMultiplier] = useState("");
     const [isPublicSame, setIsPublicSame] = useState(true);
@@ -40,6 +42,7 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
     const [bulkCurrency, setBulkCurrency] = useState("USD");
     const [bulkPriceTag, setBulkPriceTag] = useState("Any Amount");
     const [isBulkCustomPrice, setIsBulkCustomPrice] = useState(false);
+    const [bulkCardType, setBulkCardType] = useState("Physical");
     const [bulkRateMultiplier, setBulkRateMultiplier] = useState("");
     const [bulkPublicRateMultiplier, setBulkPublicRateMultiplier] = useState("");
     const [isBulkPublicSame, setIsBulkPublicSame] = useState(true);
@@ -85,8 +88,8 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
         try {
             const combinedCategory = formatCategory(currency, priceTag);
             const finalPublicRate = isPublicSame ? parseFloat(rateMultiplier) : parseFloat(publicRateMultiplier);
-            await addOrUpdateRateAction(cardBrand, combinedCategory, parseFloat(rateMultiplier), finalPublicRate);
-            showNotification('SUCCESS', `Rate for ${cardBrand} (${combinedCategory}) updated successfully.`);
+            await addOrUpdateRateAction(cardBrand, combinedCategory, cardType, parseFloat(rateMultiplier), finalPublicRate);
+            showNotification('SUCCESS', `Rate for ${cardBrand} (${combinedCategory} - ${cardType}) updated successfully.`);
             setTimeout(() => window.location.reload(), 1000);
         } catch (error) {
             console.error(error);
@@ -104,6 +107,7 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
         setCurrency(curr);
         setPriceTag(tag);
         setIsCustomPrice(!PRICE_TAGS.includes(tag));
+        setCardType(rate.cardType || "Physical");
         setRateMultiplier(rate.rate.toString());
         if (rate.publicRate !== null) {
             setPublicRateMultiplier(rate.publicRate.toString());
@@ -164,8 +168,8 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
         try {
             const combinedCategory = formatCategory(bulkCurrency, bulkPriceTag);
             const finalPublicRate = isBulkPublicSame ? parseFloat(bulkRateMultiplier) : parseFloat(bulkPublicRateMultiplier);
-            await bulkAddOrUpdateRatesAction(bulkBrands, combinedCategory, parseFloat(bulkRateMultiplier), finalPublicRate);
-            showNotification('SUCCESS', `Bulk configuration applied to ${bulkBrands.length} brands.`);
+            await bulkAddOrUpdateRatesAction(bulkBrands, combinedCategory, bulkCardType, parseFloat(bulkRateMultiplier), finalPublicRate);
+            showNotification('SUCCESS', `Bulk configuration applied to ${bulkBrands.length} brands (${bulkCardType}).`);
             setTimeout(() => window.location.reload(), 1000);
         } catch (error) {
             console.error(error);
@@ -269,6 +273,19 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                         </div>
 
                         <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label">Card Type</label>
+                            <select
+                                value={cardType}
+                                onChange={(e) => setCardType(e.target.value)}
+                                className="form-select"
+                                required
+                            >
+                                <option value="Physical">Physical Card</option>
+                                <option value="E-code">E-code (Digital)</option>
+                            </select>
+                        </div>
+
+                        <div className="form-group" style={{ marginBottom: 0 }}>
                             <label className="form-label">Trading Payout Rate (multiplier)</label>
                             <input
                                 type="number"
@@ -305,7 +322,7 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                             <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={loading}>
                                 {loading ? "Saving..." : "Save Rate Config"}
                             </button>
-                            <button type="button" className="btn btn-secondary" onClick={() => { setCardBrand(""); setIsCustomBrand(false); setCurrency("USD"); setPriceTag("Any Amount"); setIsCustomPrice(false); setRateMultiplier(""); setPublicRateMultiplier(""); setIsPublicSame(true); }} disabled={loading}>
+                            <button type="button" className="btn btn-secondary" onClick={() => { setCardBrand(""); setIsCustomBrand(false); setCurrency("USD"); setPriceTag("Any Amount"); setIsCustomPrice(false); setCardType("Physical"); setRateMultiplier(""); setPublicRateMultiplier(""); setIsPublicSame(true); }} disabled={loading}>
                                 Clear
                             </button>
                         </div>
@@ -364,6 +381,18 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                             </div>
                         </div>
 
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label">Card Type</label>
+                            <select
+                                value={bulkCardType}
+                                onChange={(e) => setBulkCardType(e.target.value)}
+                                className="form-select"
+                                required
+                            >
+                                <option value="Physical">Physical Card</option>
+                                <option value="E-code">E-code (Digital)</option>
+                            </select>
+                        </div>
 
                         <div className="form-group" style={{ marginBottom: 0 }}>
                             <label className="form-label">Trading Payout Rate (multiplier)</label>
@@ -452,6 +481,7 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                                 <tr>
                                     <th>Brand</th>
                                     <th>Currency / Category</th>
+                                    <th>Type</th>
                                     <th>Trading Rate</th>
                                     <th>Public Rate</th>
                                     <th style={{ textAlign: "right", paddingRight: "1rem" }}>Actions</th>
@@ -464,6 +494,11 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                                         <td style={{ padding: "0.75rem" }}>
                                             <span style={{ backgroundColor: "var(--bg-alt)", padding: "0.25rem 0.5rem", borderRadius: "var(--radius-sm)", fontSize: "0.9em" }}>
                                                 {rate.cardCountry}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: "0.75rem" }}>
+                                            <span style={{ backgroundColor: rate.cardType === 'E-code' ? 'var(--blue-light, #e0f2fe)' : 'var(--green-light, #dcfce7)', color: rate.cardType === 'E-code' ? 'var(--blue-dark, #0284c7)' : 'var(--green-dark, #166534)', padding: "0.2rem 0.4rem", borderRadius: "4px", fontSize: "0.85em" }}>
+                                                {rate.cardType || "Physical"}
                                             </span>
                                         </td>
                                         <td style={{ color: "var(--primary)", fontWeight: 700, padding: "0.75rem" }}>{rate.rate}x</td>

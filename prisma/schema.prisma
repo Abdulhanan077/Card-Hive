@@ -151,11 +151,12 @@ model CardRate {
   id          Int      @id @default(autoincrement())
   cardBrand   String   // e.g., Apple/iTunes
   cardCountry String   // e.g., US
+  cardType    String   @default("Physical") // Physical, E-code
   rate        Float    // e.g., 10.5 (GHS per USD)
   publicRate  Float?   // Optional: Different rate for public display
   updatedAt   DateTime @updatedAt
 
-  @@unique([cardBrand, cardCountry])
+  @@unique([cardBrand, cardCountry, cardType])
 }
 
 model Message {

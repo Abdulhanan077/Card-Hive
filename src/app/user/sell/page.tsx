@@ -12,15 +12,16 @@ export default function SellGiftCardPage() {
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
 
     // Rate Calculator State
-    const [rates, setRates] = useState<{ cardBrand: string, cardCountry: string, rate: number }[]>([]);
+    const [rates, setRates] = useState<{ cardBrand: string, cardCountry: string, cardType?: string, rate: number }[]>([]);
     const [cardBrand, setCardBrand] = useState("");
     const [cardCategory, setCardCategory] = useState("");
+    const [cardType, setCardType] = useState("Physical");
     const [faceValue, setFaceValue] = useState("");
     const [estimatedPayout, setEstimatedPayout] = useState<number | null>(null);
 
     // Payout Method State
     const [payoutMethod, setPayoutMethod] = useState<"MOBILE_MONEY" | "CRYPTO">("MOBILE_MONEY");
-    const [cryptoCoin, setCryptoCoin] = useState<"USDT" | "BTC">("USDT");
+    const [cryptoCoin, setCryptoCoin] = useState<"USDT">("USDT");
     const [cryptoNetwork, setCryptoNetwork] = useState("");
     const [cryptoExchange, setCryptoExchange] = useState("");
     const [cryptoReceiverIdType, setCryptoReceiverIdType] = useState<"WALLET_ADDRESS" | "EXCHANGE_ID">("EXCHANGE_ID");
@@ -56,11 +57,7 @@ export default function SellGiftCardPage() {
 
     // Reset Network if Coin changes
     useEffect(() => {
-        if (cryptoCoin === "USDT") {
-            setCryptoNetwork("TRC20");
-        } else {
-            setCryptoNetwork("BTC_MAINNET");
-        }
+        setCryptoNetwork("TRC20");
     }, [cryptoCoin]);
 
 
@@ -72,13 +69,13 @@ export default function SellGiftCardPage() {
             return;
         }
 
-        const activeRate = rates.find(r => r.cardBrand === cardBrand && r.cardCountry === cardCategory);
+        const activeRate = rates.find(r => r.cardBrand === cardBrand && r.cardCountry === cardCategory && (r.cardType === cardType || (!r.cardType && cardType === "Physical")));
         if (activeRate) {
             setEstimatedPayout(value * activeRate.rate);
         } else {
             setEstimatedPayout(null);
         }
-    }, [cardBrand, cardCategory, faceValue, rates]);
+    }, [cardBrand, cardCategory, cardType, faceValue, rates]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -158,7 +155,7 @@ export default function SellGiftCardPage() {
                                 </label>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.75rem 1rem', border: '1px solid var(--border)', borderRadius: '8px', flex: 1, backgroundColor: payoutMethod === 'CRYPTO' ? 'var(--bg-alt)' : 'transparent', borderColor: payoutMethod === 'CRYPTO' ? 'var(--primary)' : 'var(--border)' }}>
                                     <input type="radio" name="payoutMethod" value="CRYPTO" checked={payoutMethod === 'CRYPTO'} onChange={() => setPayoutMethod('CRYPTO')} />
-                                    <span>Crypto (USDT/BTC)</span>
+                                    <span>Crypto (USDT)</span>
                                 </label>
                             </div>
                         </div>
@@ -184,22 +181,15 @@ export default function SellGiftCardPage() {
                                     <div className="form-group">
                                         <label className="form-label">Select Coin</label>
                                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                                            <button type="button" onClick={() => setCryptoCoin('USDT')} className={`btn ${cryptoCoin === 'USDT' ? 'btn-primary' : 'btn-secondary'}`} style={{ flex: 1 }}>USDT</button>
-                                            <button type="button" onClick={() => setCryptoCoin('BTC')} className={`btn ${cryptoCoin === 'BTC' ? 'btn-primary' : 'btn-secondary'}`} style={{ flex: 1 }}>BTC</button>
-                                            <input type="hidden" name="cryptoCoin" value={cryptoCoin} />
+                                            <button type="button" className={`btn btn-primary`} style={{ flex: 1, cursor: 'default' }}>USDT</button>
+                                            <input type="hidden" name="cryptoCoin" value="USDT" />
                                         </div>
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label">Network</label>
                                         <select name="cryptoNetwork" className="form-select" required value={cryptoNetwork} onChange={(e) => setCryptoNetwork(e.target.value)}>
-                                            {cryptoCoin === 'USDT' ? (
-                                                <>
-                                                    <option value="TRC20">TRC20 (Tron)</option>
-                                                    <option value="ERC20">ERC20 (Ethereum)</option>
-                                                </>
-                                            ) : (
-                                                <option value="BTC_MAINNET">BTC (Bitcoin Mainnet)</option>
-                                            )}
+                                            <option value="TRC20">TRC20 (Tron)</option>
+                                            <option value="ERC20">ERC20 (Ethereum)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -304,7 +294,13 @@ export default function SellGiftCardPage() {
                         <div className={styles.grid2}>
                             <div className="form-group">
                                 <label className="form-label">Type</label>
-                                <select name="cardType" className="form-select" required>
+                                <select
+                                    name="cardType"
+                                    className="form-select"
+                                    required
+                                    value={cardType}
+                                    onChange={(e) => setCardType(e.target.value)}
+                                >
                                     <option value="Physical">Physical Card</option>
                                     <option value="E-code">E-code (Digital)</option>
                                 </select>

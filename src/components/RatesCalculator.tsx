@@ -8,6 +8,7 @@ type Rate = {
     id: number;
     cardBrand: string;
     cardCountry: string;
+    cardType: string;
     rate: number;
     publicRate: number | null;
 };
@@ -17,6 +18,7 @@ export default function RatesCalculator() {
     const [loading, setLoading] = useState(true);
     const [selectedBrand, setSelectedBrand] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
+    const [selectedType, setSelectedType] = useState("Physical");
     const [amount, setAmount] = useState<string>("");
     const [result, setResult] = useState<number | null>(null);
 
@@ -38,7 +40,7 @@ export default function RatesCalculator() {
 
     useEffect(() => {
         if (selectedBrand && selectedCategory && amount && !isNaN(parseFloat(amount))) {
-            const rateRecord = rates.find(r => r.cardBrand === selectedBrand && r.cardCountry === selectedCategory);
+            const rateRecord = rates.find(r => r.cardBrand === selectedBrand && r.cardCountry === selectedCategory && (r.cardType === selectedType || (!r.cardType && selectedType === "Physical")));
             if (rateRecord) {
                 const multiplier = rateRecord.publicRate ?? rateRecord.rate;
                 setResult(parseFloat(amount) * multiplier);
@@ -251,6 +253,18 @@ export default function RatesCalculator() {
                         {categories.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
                         ))}
+                    </select>
+                </div>
+
+                <div className="form-group">
+                    <label className="field-label">Card Type</label>
+                    <select
+                        className="calc-select"
+                        value={selectedType}
+                        onChange={(e) => setSelectedType(e.target.value)}
+                    >
+                        <option value="Physical">Physical Card</option>
+                        <option value="E-code">E-code (Digital)</option>
                     </select>
                 </div>
 

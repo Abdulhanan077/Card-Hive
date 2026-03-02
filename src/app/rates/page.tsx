@@ -11,6 +11,7 @@ type Rate = {
     id: number;
     cardBrand: string;
     cardCountry: string;
+    cardType?: string;
     rate: number;
     publicRate: number | null;
 };
@@ -20,6 +21,7 @@ export default function PublicRatesPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedBrand, setSelectedBrand] = useState("All Brands");
+    const [selectedType, setSelectedType] = useState("All Types");
 
     useEffect(() => {
         fetch("/api/rates")
@@ -41,7 +43,8 @@ export default function PublicRatesPage() {
             rate.cardBrand.toLowerCase().includes(searchTerm.toLowerCase()) ||
             rate.cardCountry.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesBrand = selectedBrand === "All Brands" || rate.cardBrand === selectedBrand;
-        return matchesSearch && matchesBrand;
+        const matchesType = selectedType === "All Types" || (rate.cardType || "Physical") === selectedType;
+        return matchesSearch && matchesBrand && matchesType;
     });
 
     return (
@@ -109,6 +112,17 @@ export default function PublicRatesPage() {
                                         {brands.map(b => <option key={b} value={b}>{b}</option>)}
                                     </select>
                                 </div>
+                                <div className="form-group" style={{ marginBottom: 0, width: '150px' }}>
+                                    <select
+                                        className="form-select"
+                                        value={selectedType}
+                                        onChange={(e) => setSelectedType(e.target.value)}
+                                    >
+                                        <option value="All Types">All Types</option>
+                                        <option value="Physical">Physical</option>
+                                        <option value="E-code">E-code</option>
+                                    </select>
+                                </div>
                             </div>
 
                             {/* Table */}
@@ -123,12 +137,13 @@ export default function PublicRatesPage() {
                                         <p style={{ opacity: 0.5 }}>No rates found matching your criteria.</p>
                                     </div>
                                 ) : (
-                                    <div className="table-container">
-                                        <table className="data-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+                                    <div className="table-container" style={{ width: '100%', overflowX: 'auto' }}>
+                                        <table className="data-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', minWidth: '600px' }}>
                                             <thead style={{ background: 'var(--surface-hover)' }}>
                                                 <tr>
                                                     <th style={{ padding: '1.25rem 1.5rem' }}>Card Brand</th>
                                                     <th style={{ padding: '1.25rem 1.5rem' }}>Category</th>
+                                                    <th style={{ padding: '1.25rem 1.5rem' }}>Type</th>
                                                     <th style={{ padding: '1.25rem 1.5rem' }}>Rate (GHS/$)</th>
                                                     <th style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>Action</th>
                                                 </tr>
@@ -140,6 +155,19 @@ export default function PublicRatesPage() {
                                                         <td style={{ padding: '1.25rem 1.5rem' }}>
                                                             <span style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700 }}>
                                                                 {rate.cardCountry}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                            <span style={{
+                                                                background: (rate.cardType === 'E-code') ? '#e0f2fe' : '#dcfce7',
+                                                                color: (rate.cardType === 'E-code') ? '#0369a1' : '#166534',
+                                                                padding: '0.25rem 0.5rem',
+                                                                borderRadius: '4px',
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: 600,
+                                                                border: `1px solid ${(rate.cardType === 'E-code') ? '#bae6fd' : '#bbf7d0'}`
+                                                            }}>
+                                                                {rate.cardType || 'Physical'}
                                                             </span>
                                                         </td>
                                                         <td style={{ padding: '1.25rem 1.5rem', fontSize: '1.125rem', fontWeight: 800, color: 'var(--primary)' }}>
