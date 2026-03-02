@@ -33,7 +33,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     <Link href="/admin" className="sidebar-link">Dashboard Home</Link>
                     <Link href="/admin/trades" className="sidebar-link">Manage Trades</Link>
                     <Link href="/admin/users" className="sidebar-link">Registered Users</Link>
-                    <Link href="/admin/rewards" className="sidebar-link" style={{ color: 'var(--warning)' }}>Reward Redemptions</Link>
+                    <Link href="/admin/rewards" className="sidebar-link" style={{ color: 'black' }}>Reward Redemptions</Link>
                     <Link href="/admin/rates" className="sidebar-link">Manage Rates</Link>
                     <Link href="/admin/success-stories" className="sidebar-link">Success Stories</Link>
                     <Link href="/admin/settings" className="sidebar-link">Site Settings</Link>
