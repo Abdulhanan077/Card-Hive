@@ -161,7 +161,7 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 90;
+    z-index: 2000;
     backdrop-filter: blur(2px);
     transition: opacity 0.3s ease;
 }
@@ -205,7 +205,7 @@
         width: 280px;
         max-width: 80vw;
         height: 100vh;
-        z-index: 100;
+        z-index: 2100;
         border-right: 1px solid var(--border);
         box-shadow: var(--shadow-xl);
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
