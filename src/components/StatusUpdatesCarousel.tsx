@@ -123,6 +123,7 @@ export default function StatusUpdatesCarousel() {
                         drag={cards.length > 1 ? "x" : false}
                         dragConstraints={{ left: 0, right: 0 }}
                         dragElastic={0.8}
+                        dragDirectionLock={true}
                         onDragStart={() => {
                             if (selectedCard) setSelectedCard(null);
                         }}
@@ -161,19 +162,16 @@ export default function StatusUpdatesCarousel() {
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20, opacity: 0 }}
-                            drag={true}
-                            dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
+                            drag="x"
+                            dragConstraints={{ left: 0, right: 0 }}
                             dragElastic={0.7}
+                            dragDirectionLock={true}
                             onDragEnd={(e, info: PanInfo) => {
                                 // Horizontal Swipe (Switch card)
                                 if (Math.abs(info.offset.x) > 100 || Math.abs(info.velocity.x) > 500) {
                                     const direction = info.offset.x > 0 ? 300 : -300;
                                     setExitX(direction);
                                     handleSwipe();
-                                    setSelectedCard(null);
-                                }
-                                // Vertical Swipe (Close modal only)
-                                else if (Math.abs(info.offset.y) > 100 || Math.abs(info.velocity.y) > 500) {
                                     setSelectedCard(null);
                                 }
                             }}
