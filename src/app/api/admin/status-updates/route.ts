@@ -21,41 +21,44 @@ export async function POST(req: Request) {
         }
 
         const formData = await req.formData();
-        const image = formData.get("image") as File;
-        const caption = formData.get("caption") as string || "";
+        const image = formData.get("image") as File | null;
+        let imageUrl = null;
 
-        if (!image) {
-            return NextResponse.json({ message: "Image is required" }, { status: 400 });
+        const message = formData.get("message") as string;
+        if (!message || message.trim() === "") {
+            return NextResponse.json({ message: "Message text is required" }, { status: 400 });
         }
 
-        // Upload to R2
-        const uniqueName = `success-${Date.now()}-${image.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-        const buffer = Buffer.from(await image.arrayBuffer());
+        if (image && image.size > 0) {
+            // Upload to R2
+            const uniqueName = `status-${Date.now()}-${image.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
+            const buffer = Buffer.from(await image.arrayBuffer());
 
-        await s3Client.send(new PutObjectCommand({
-            Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
-            Key: uniqueName,
-            Body: buffer,
-            ContentType: image.type,
-        }));
+            await s3Client.send(new PutObjectCommand({
+                Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
+                Key: uniqueName,
+                Body: buffer,
+                ContentType: image.type,
+            }));
 
-        const imageUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${uniqueName}`;
+            imageUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${uniqueName}`;
+        }
 
         // Set expiration to 24 hours from now
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
 
-        const story = await prisma.successStory.create({
+        const update = await prisma.statusUpdate.create({
             data: {
                 imageUrl,
-                caption,
+                message,
                 expiresAt,
             },
         });
 
-        return NextResponse.json({ story }, { status: 201 });
+        return NextResponse.json({ update }, { status: 201 });
     } catch (error) {
-        console.error("Error creating success story:", error);
+        console.error("Error creating status update:", error);
         return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }
@@ -74,34 +77,36 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ message: "ID is required" }, { status: 400 });
         }
 
-        const story = await prisma.successStory.findUnique({
+        const update = await prisma.statusUpdate.findUnique({
             where: { id: parseInt(id) },
         });
 
-        if (!story) {
-            return NextResponse.json({ message: "Story not found" }, { status: 404 });
+        if (!update) {
+            return NextResponse.json({ message: "Status update not found" }, { status: 404 });
         }
 
-        // Extract key from URL to delete from R2
-        const key = story.imageUrl.split("/").pop();
-        if (key) {
-            try {
-                await s3Client.send(new DeleteObjectCommand({
-                    Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
-                    Key: key,
-                }));
-            } catch (err) {
-                console.warn("Failed to delete image from R2:", err);
+        // Extract key from URL to delete from R2 if image exists
+        if (update.imageUrl) {
+            const key = update.imageUrl.split("/").pop();
+            if (key) {
+                try {
+                    await s3Client.send(new DeleteObjectCommand({
+                        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
+                        Key: key,
+                    }));
+                } catch (err) {
+                    console.warn("Failed to delete image from R2:", err);
+                }
             }
         }
 
-        await prisma.successStory.delete({
+        await prisma.statusUpdate.delete({
             where: { id: parseInt(id) },
         });
 
-        return NextResponse.json({ message: "Success story deleted" });
+        return NextResponse.json({ message: "Status update deleted" });
     } catch (error) {
-        console.error("Error deleting success story:", error);
+        console.error("Error deleting status update:", error);
         return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

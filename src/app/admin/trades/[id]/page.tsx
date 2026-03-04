@@ -79,7 +79,25 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                 data.cryptoTxNote = cryptoTxNote;
             }
 
-            // Reward System Logic has been moved to the Customer "Confirm Receipt" Action
+            // Reward System Logic: Award points immediately when Admin pays
+            const newCompletedCount = (trade!.user as any).completedTradesCount + 1;
+            const vipTier = calculateVipTier(newCompletedCount);
+            const traderBonus = 2 * vipTier.multiplier;
+
+            await prisma.user.update({
+                where: { id: trade!.userId },
+                data: {
+                    rewardBalance: { increment: traderBonus },
+                    completedTradesCount: { increment: 1 }
+                }
+            });
+
+            if ((trade!.user as any).referredBy) {
+                await prisma.user.update({
+                    where: { id: (trade!.user as any).referredBy },
+                    data: { rewardBalance: { increment: 2 } }
+                });
+            }
 
         } else if (status !== "PAID" && status !== "COMPLETED") {
             data.paymentReference = null;
@@ -163,8 +181,15 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                                             </>
                                         ) : (
                                             <>
-                                                {trade.payoutNetwork} - {trade.payoutPhoneNumber}
-                                                <CopyButton textToCopy={`${trade.payoutNetwork} - ${trade.payoutPhoneNumber}`} />
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                                    <div>{trade.payoutNetwork} - {trade.payoutPhoneNumber}</div>
+                                                    {trade.payoutAccountName && (
+                                                        <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", fontWeight: 500 }}>
+                                                            Account Name: <span style={{ color: "var(--foreground)" }}>{trade.payoutAccountName}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <CopyButton textToCopy={`${trade.payoutNetwork} - ${trade.payoutPhoneNumber}${trade.payoutAccountName ? ` (${trade.payoutAccountName})` : ''}`} />
                                             </>
                                         )}
                                     </div>

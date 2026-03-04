@@ -6,7 +6,7 @@ import { calculateVipTier, getNextVipTier } from "@/lib/vipTiers";
 import ReferralLinkCopy from "@/components/ReferralLinkCopy";
 import { FaApple, FaSteam, FaXbox, FaGooglePlay, FaAmazon } from 'react-icons/fa';
 import { SiRazer } from 'react-icons/si';
-import SuccessStoriesCarousel from "@/components/SuccessStoriesCarousel";
+import StatusUpdatesCarousel from "@/components/StatusUpdatesCarousel";
 
 // Helper function to map brand names to icons
 const getBrandIcon = (brandName: string) => {
@@ -58,7 +58,7 @@ export default async function UserDashboardHome() {
                 </div>
             )}
 
-            <SuccessStoriesCarousel />
+            <StatusUpdatesCarousel />
 
             <div className="dashboard-grid">
 

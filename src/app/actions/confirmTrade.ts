@@ -19,42 +19,25 @@ export async function confirmTradePayment(tradeId: string) {
         include: { user: true }
     });
 
+    console.log(`[ConfirmReceipt] Trade ID: ${tradeId}, Found Trade:`, trade?.id);
+
     if (!trade || trade.userId !== userId) {
+        console.error(`[ConfirmReceipt] Unauthorized or not found. Trade userId: ${trade?.userId}, Session userId: ${userId}`);
         return { success: false, error: "Trade not found or unauthorized" };
     }
 
     if (trade.status !== "PAID") {
+        console.error(`[ConfirmReceipt] Invalid status. Current status: ${trade.status}`);
         return { success: false, error: "Trade must be marked as PAID by admin before confirmation." };
     }
+
+    console.log(`[ConfirmReceipt] Validation passed. Proceeding with update for trade ${trade.id}.`);
 
     // 1. Mark Trade as COMPLETED
     await prisma.trade.update({
         where: { id: trade.id },
         data: { status: "COMPLETED" }
     });
-
-    /* --- REWARD SYSTEM LOGIC TRIGGERED ON CONFIRMATION --- */
-
-    // 2. VIP Tier Points & Trader Bonus
-    const newCompletedCount = (trade.user as any).completedTradesCount + 1;
-    const vipTier = calculateVipTier(newCompletedCount);
-    const traderBonus = 2 * vipTier.multiplier; // Base 2 pts multiplied by VIP tier
-
-    await prisma.user.update({
-        where: { id: trade.userId },
-        data: {
-            rewardBalance: { increment: traderBonus },
-            completedTradesCount: { increment: 1 }
-        }
-    });
-
-    // 3. Referrer Bonus (+2 points)
-    if ((trade.user as any).referredBy) {
-        await prisma.user.update({
-            where: { id: (trade.user as any).referredBy },
-            data: { rewardBalance: { increment: 2 } }
-        });
-    }
 
     revalidatePath("/user");
     revalidatePath("/user/trades");

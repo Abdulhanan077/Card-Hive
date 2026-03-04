@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
-import ConfirmReceiptButton from "@/app/components/ConfirmReceiptButton";
+import ConfirmReceiptButton from "@/components/ConfirmReceiptButton";
 
 type TradeWithCount = Prisma.TradeGetPayload<{
     include: {
@@ -87,7 +87,7 @@ export default async function UserTradesPage(props: {
                         </thead>
                         <tbody>
                             {trades.map((trade) => (
-                                <tr key={trade.id} style={{ cursor: "pointer" }}>
+                                <tr key={trade.id}>
                                     <td style={{ fontWeight: 600, color: "var(--primary)" }}>
                                         <Link href={`/user/trades/${trade.tradeId}`} style={{ textDecoration: "none" }}>
                                             {trade.tradeId}

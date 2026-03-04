@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import SidebarAutoClose from "@/components/SidebarAutoClose";
+import SessionTracker from "@/app/components/SessionTracker";
 import "./user.css";
 
 export default async function UserLayout({ children }: { children: React.ReactNode }) {
@@ -15,6 +16,7 @@ export default async function UserLayout({ children }: { children: React.ReactNo
 
     return (
         <div className="dashboard-layout">
+            <SessionTracker />
             <SidebarAutoClose />
             <input type="checkbox" id="sidebar-toggle" />
             <label htmlFor="sidebar-toggle" className="sidebar-overlay"></label>

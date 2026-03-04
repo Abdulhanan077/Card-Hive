@@ -41,19 +41,21 @@ export default function SellGiftCardPage() {
     // Get Unique Brands configured by Admin
     const availableBrands = Array.from(new Set(rates.map(r => r.cardBrand)));
 
-    // Get Categories (Country/PriceTag) specifically available for the selected Brand
-    const availableCategories = rates
-        .filter(r => r.cardBrand === cardBrand)
-        .map(r => r.cardCountry);
+    // Get Categories (Country/PriceTag) specifically available for the selected Brand AND Type
+    const availableCategories = Array.from(new Set(
+        rates
+            .filter(r => r.cardBrand === cardBrand && (r.cardType === cardType || (!r.cardType && cardType === "Physical")))
+            .map(r => r.cardCountry)
+    ));
 
-    // Automatically select first category if brand changes and categories exist
+    // Automatically select first category if brand/type changes and categories exist
     useEffect(() => {
         if (availableCategories.length > 0 && !availableCategories.includes(cardCategory)) {
             setCardCategory(availableCategories[0]);
         } else if (availableCategories.length === 0) {
             setCardCategory("");
         }
-    }, [cardBrand, availableCategories, cardCategory]);
+    }, [cardBrand, cardType, cardCategory]);
 
     // Reset Network if Coin changes
     useEffect(() => {
@@ -174,6 +176,10 @@ export default function SellGiftCardPage() {
                                     <label className="form-label">Mobile Money Number</label>
                                     <input type="tel" name="payoutPhoneNumber" className="form-input" required={payoutMethod === 'MOBILE_MONEY'} placeholder="055 123 4567" />
                                 </div>
+                                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                                    <label className="form-label">Account Name</label>
+                                    <input type="text" name="payoutAccountName" className="form-input" required={payoutMethod === 'MOBILE_MONEY'} placeholder="Enter the registered name on this account" />
+                                </div>
                             </div>
                         ) : (
                             <div className={styles.cryptoSection} style={{ padding: '1.5rem', backgroundColor: 'var(--bg-alt)', borderRadius: '12px', border: '1px solid var(--border)' }}>
@@ -268,31 +274,6 @@ export default function SellGiftCardPage() {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Currency & Category</label>
-                                <select
-                                    className="form-select"
-                                    required
-                                    value={cardCategory}
-                                    onChange={(e) => setCardCategory(e.target.value)}
-                                    disabled={!cardBrand || availableCategories.length === 0}
-                                >
-                                    {cardBrand && availableCategories.length === 0 ? (
-                                        <option value="">No rates available for {cardBrand}</option>
-                                    ) : (
-                                        <>
-                                            <option value="">Select Category...</option>
-                                            {availableCategories.map(cat => (
-                                                <option key={cat} value={cat}>{cat}</option>
-                                            ))}
-                                            {cardBrand === "Other" && <option value="Manual">Manual Entry</option>}
-                                        </>
-                                    )}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className={styles.grid2}>
-                            <div className="form-group">
                                 <label className="form-label">Type</label>
                                 <select
                                     name="cardType"
@@ -303,6 +284,31 @@ export default function SellGiftCardPage() {
                                 >
                                     <option value="Physical">Physical Card</option>
                                     <option value="E-code">E-code (Digital)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className={styles.grid2}>
+                            <div className="form-group">
+                                <label className="form-label">Currency & Category</label>
+                                <select
+                                    className="form-select"
+                                    required
+                                    value={cardCategory}
+                                    onChange={(e) => setCardCategory(e.target.value)}
+                                    disabled={!cardBrand || availableCategories.length === 0}
+                                >
+                                    {cardBrand && availableCategories.length === 0 ? (
+                                        <option value="">No rates available for {cardType} {cardBrand}</option>
+                                    ) : (
+                                        <>
+                                            <option value="">Select Category...</option>
+                                            {availableCategories.map(cat => (
+                                                <option key={cat} value={cat}>{cat}</option>
+                                            ))}
+                                            {cardBrand === "Other" && <option value="Manual">Manual Entry</option>}
+                                        </>
+                                    )}
                                 </select>
                             </div>
                             <div className="form-group">

@@ -32,6 +32,7 @@ export async function POST(req: Request) {
         // Extract fields
         const payoutNetwork = formData.get("payoutNetwork") as string;
         const payoutPhoneNumber = formData.get("payoutPhoneNumber") as string;
+        const payoutAccountName = formData.get("payoutAccountName") as string;
         const payoutMethod = (formData.get("payoutMethod") as string) || "MOBILE_MONEY";
 
         // Crypto fields
@@ -138,6 +139,7 @@ export async function POST(req: Request) {
                 payoutMethod: payoutMethod as any,
                 payoutNetwork: (payoutNetwork as string) || "",
                 payoutPhoneNumber: (payoutPhoneNumber as string) || "",
+                payoutAccountName: (payoutAccountName as string) || null,
                 cryptoCoin,
                 cryptoNetwork,
                 cryptoExchange,

@@ -117,6 +117,7 @@ model Trade {
   payoutMethod      PayoutMethod @default(MOBILE_MONEY)
   payoutNetwork     String    // MTN, Telecel
   payoutPhoneNumber String
+  payoutAccountName String?   // Account name attached to the mobile money number
 
   // crypto payout fields (nullable for non-crypto trades)
   cryptoCoin           CryptoCoin?
@@ -182,10 +183,11 @@ model RewardRedemption {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
-model SuccessStory {
+model StatusUpdate {
   id        Int      @id @default(autoincrement())
-  imageUrl  String
-  caption   String?
+  imageUrl  String?
+  message   String   @db.Text
+  views     Int      @default(0)
   expiresAt DateTime
   createdAt DateTime @default(now())
 }

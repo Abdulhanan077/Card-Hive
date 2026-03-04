@@ -152,7 +152,6 @@ export const authOptions: NextAuthOptions = {
 
                 const deviceString = `${browser.name || "Unknown"} on ${os.name || "Unknown"} ${device.model ? `(${device.model})` : ""}`;
 
-                /*
                 await prisma.user.update({
                     where: { id: parseInt(user.id) },
                     data: {
@@ -161,7 +160,6 @@ export const authOptions: NextAuthOptions = {
                         lastDevice: deviceString,
                     }
                 });
-                */
             } catch (err) {
                 console.error("Failed to update user login activity", err);
             }

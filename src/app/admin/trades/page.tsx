@@ -150,7 +150,7 @@ export default async function AdminTradesList(props: {
                                     <td>
                                         {trade.cardBrand} <span style={{ opacity: 0.6, fontSize: '0.85em' }}>({trade.cardType})</span>
                                     </td>
-                                    <td style={{ fontWeight: 500, color: 'var(--primary)' }}>${trade.faceValue.toFixed(2)}</td>
+                                    <td style={{ fontWeight: 500, color: 'var(--primary)' }}>{trade.faceValue.toFixed(2)} {trade.currency}</td>
                                     <td>
                                         <span className={`badge badge-${trade.status.toLowerCase()}`}>
                                             {trade.status.replace("_", " ")}

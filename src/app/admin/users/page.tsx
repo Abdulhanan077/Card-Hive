@@ -37,7 +37,12 @@ export default async function AdminUsersList(props: {
         orderBy: orderByClause,
         include: {
             _count: {
-                select: { trades: true, referrals: true }
+                select: {
+                    trades: {
+                        where: { status: { in: ["PAID", "COMPLETED"] } }
+                    },
+                    referrals: true
+                }
             }
         }
     });
@@ -51,7 +56,21 @@ export default async function AdminUsersList(props: {
 
         targetUser = await prisma.user.findUnique({
             where: { username: cleanTargetUsername },
-            select: { id: true, username: true, rewardBalance: true, status: true, completedTradesCount: true, _count: { select: { trades: true, referrals: true } } }
+            select: {
+                id: true,
+                username: true,
+                rewardBalance: true,
+                status: true,
+                completedTradesCount: true,
+                _count: {
+                    select: {
+                        trades: {
+                            where: { status: { in: ["PAID", "COMPLETED"] } }
+                        },
+                        referrals: true
+                    }
+                }
+            }
         });
     }
 

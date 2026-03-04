@@ -13,7 +13,7 @@ export default function ClientMetricsCharts({ statusData, volumeData }: ClientMe
             {/* Pie Chart for Trade Status Distribution */}
             <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
                 <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>Trade Status Distribution</h3>
-                <div style={{ height: '300px', width: '100%' }}>
+                <div style={{ height: 300, minHeight: 300, width: '100%', position: 'relative' }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
@@ -42,7 +42,7 @@ export default function ClientMetricsCharts({ statusData, volumeData }: ClientMe
             {/* Bar Chart for Trade Volume */}
             <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
                 <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>Volume by Status</h3>
-                <div style={{ height: '300px', width: '100%' }}>
+                <div style={{ height: 300, minHeight: 300, width: '100%', position: 'relative' }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                             data={statusData}

@@ -7,6 +7,7 @@ import SidebarAutoClose from "@/components/SidebarAutoClose";
 import "../user/user.css"; // Reuse dashboard styles
 import SidebarNotifications from "./SidebarNotifications";
 import AdminNotificationBell from "./AdminNotificationBell";
+import SessionTracker from "@/app/components/SessionTracker";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
     const session = await getServerSession(authOptions);
@@ -17,6 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
     return (
         <div className="dashboard-layout">
+            <SessionTracker />
             <SidebarAutoClose />
             <input type="checkbox" id="sidebar-toggle" />
             <label htmlFor="sidebar-toggle" className="sidebar-overlay"></label>
@@ -35,7 +37,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     <Link href="/admin/users" className="sidebar-link">Registered Users</Link>
                     <Link href="/admin/rewards" className="sidebar-link" style={{ color: 'black' }}>Reward Redemptions</Link>
                     <Link href="/admin/rates" className="sidebar-link">Manage Rates</Link>
-                    <Link href="/admin/success-stories" className="sidebar-link">Success Stories</Link>
+                    <Link href="/admin/status-updates" className="sidebar-link">Status Updates</Link>
                     <Link href="/admin/settings" className="sidebar-link">Site Settings</Link>
                     <Link href="/admin/logins" className="sidebar-link" style={{ color: 'var(--success)' }}>Security Logs</Link>
 

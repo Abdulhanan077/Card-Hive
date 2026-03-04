@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json({
             success: true,
-            message: `Test email initiated to ${email}. Check your server console for the Resend API response if it succeeded, or look in your inbox!`
+            message: `Test email initiated to ${email}. Check your server console for the ZeptoMail API response if it succeeded, or look in your inbox!`
         });
     } catch (error) {
         console.error("Test email route error:", error);

@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 type SendEmailParams = {
   to: string;
@@ -6,189 +6,235 @@ type SendEmailParams = {
   html: string;
 };
 
+const getAppUrl = () => process.env.APP_URL || "http://localhost:3000";
+
+const transporter = nodemailer.createTransport({
+  host: process.env.ZEPTOMAIL_SMTP_HOST || "smtp.zeptomail.com",
+  port: 465,
+  secure: true, // Port 465 uses SSL
+  auth: {
+    user: process.env.ZEPTOMAIL_SMTP_USER || "emailapikey",
+    pass: process.env.ZEPTOMAIL_SMTP_PASS,
+  },
+});
+
+import fs from "fs";
+import path from "path";
+
 export async function sendEmail({ to, subject, html }: SendEmailParams) {
-  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
-    console.warn("Missing RESEND_API_KEY or EMAIL_FROM. Email sending skipped.");
+  if (!process.env.ZEPTOMAIL_SMTP_PASS || !process.env.EMAIL_FROM) {
+    console.warn("Missing ZeptoMail SMTP credentials. Email sending skipped.");
     return;
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
   try {
-    const result = await resend.emails.send({
-      from: process.env.EMAIL_FROM,
+    const info = await transporter.sendMail({
+      from: `"Card Hive" <${process.env.EMAIL_FROM}>`,
       to,
       subject,
       html,
-      replyTo: process.env.EMAIL_ADMIN, // Better deliverability
     });
 
-    if (result.error) {
-      console.error("Resend API error:", result.error);
-      return;
-    }
-
-    if (result.data) {
-      console.log("Email sent successfully:", result.data.id);
-    }
+    console.log("Email sent via ZeptoMail SMTP:", info.messageId);
   } catch (err) {
-    console.error("Resend email exception:", err);
+    console.error("ZeptoMail SMTP error:", err);
   }
 }
 
-// Global styles for email templates
-const containerStyle = "font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;";
-const buttonStyle = "display: inline-block; padding: 10px 20px; margin: 20px 0; background-color: #0ea5e9; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;";
-const cardStyle = "background-color: #f9fafb; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #e5e7eb;";
+// --- Professional Email Template Wrapper ---
 
-const getAppUrl = () => process.env.APP_URL || "http://localhost:3000";
+const wrapTemplate = (content: string, preheader?: string) => {
+  const logoUrl = "cid:logo";
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Hive Notification</title>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #f3f4f6; }
+        .wrapper { width: 100%; table-layout: fixed; background-color: #f3f4f6; padding-bottom: 40px; }
+        .main { background-color: #ffffff; max-width: 600px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .header { background-color: #0ea5e9; padding: 32px 20px; text-align: center; }
+        .header img { max-height: 48px; width: auto; }
+        .content { padding: 40px 32px; }
+        .footer { padding: 32px; text-align: center; color: #6b7280; font-size: 14px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #0ea5e9; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 24px 0; }
+        .card { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .divider { border-top: 1px solid #e5e7eb; margin: 32px 0; }
+        .ps { font-size: 14px; color: #6b7280; margin-top: 24px; }
+        @media screen and (max-width: 600px) {
+            .content { padding: 32px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div style="display: none; max-height: 0px; overflow: hidden;">${preheader || ''}</div>
+        <table class="main" width="100%" cellpadding="0" cellspacing="0">
+            <!-- Header -->
+              <tr>
+                <td style="padding: 40px 0; text-align: center; background-color: #0ea5e9;">
+                  <span style="color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: -0.025em; font-family: 'Outfit', 'Inter', sans-serif; display: inline-block;">
+                    CARD HIVE
+                  </span>
+                </td>
+              </tr>
+            <tr>
+                <td class="content">
+                    ${content}
+                    <div class="divider"></div>
+                    <p>Best regards,<br><strong>The Card Hive Team</strong></p>
+                </td>
+            </tr>
+            <tr>
+                <td class="footer">
+                    <p>&copy; ${new Date().getFullYear()} Card Hive. All rights reserved.</p>
+                    <p>This is an automated notification. Please do not reply to this email.</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
+  `;
+};
 
 // --- Email Templates ---
 
 export async function sendWelcomeEmail(user: { email: string; username: string }) {
-  const html = `
-    <div style="${containerStyle}">
-      <h2>Welcome to Card Hive, ${user.username}! 🎉</h2>
-      <p>We're excited to have you on board. Card Hive is the premier platform to securely trade your gift cards for instant cash.</p>
-      <p>Whether you have iTunes, Amazon, Steam, or other cards, we offer competitive rates and fast payouts.</p>
-      <a href="${getAppUrl()}/user" style="${buttonStyle}">Go to your Dashboard</a>
-      <p>If you have any questions, our support team is always here to help.</p>
-      <p>Best regards,<br/>The Card Hive Team</p>
-    </div>
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">Welcome to Card Hive, ${user.username}! 🎉</h1>
+    <p>We're thrilled to have you join our community. Card Hive is designed to give you the most secure and instant cash for your gift cards.</p>
+    <p>You can now start trading your cards at the best rates in the market. Check out your dashboard to see our latest rates and start your first trade.</p>
+    <a href="${getAppUrl()}/user" class="button">Go to Dashboard</a>
+    <p>If you have any questions, our support team is just a message away.</p>
   `;
+  const html = wrapTemplate(content, "Welcome to the Hive!");
   return sendEmail({ to: user.email, subject: "Welcome to Card Hive", html });
 }
 
 export async function sendOTPEmail(email: string, otp: string) {
-  const html = `
-    <div style="${containerStyle}">
-      <h2>Your Card Hive Verification Code</h2>
-      <p>Please use the following 6-digit code to complete your registration:</p>
-      <div style="${cardStyle}; text-align: center;">
-        <h1 style="letter-spacing: 5px; color: #0ea5e9; font-size: 32px; margin: 0;">${otp}</h1>
-      </div>
-      <p>This code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.</p>
-      <p>Best regards,<br/>The Card Hive Team</p>
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">Verify Your Email</h1>
+    <p>Thank you for choosing Card Hive. Use the verification code below to complete your registration:</p>
+    <div class="card" style="text-align: center; letter-spacing: 4px;">
+        <span style="font-size: 32px; font-weight: 700; color: #0ea5e9;">${otp}</span>
     </div>
+    <p>This code will expire in 10 minutes. If you didn't request this code, please ignore this email.</p>
   `;
+  const html = wrapTemplate(content, "Your verification code");
   return sendEmail({ to: email, subject: "Your Verification Code - Card Hive", html });
 }
 
 export async function sendPasswordResetOTPEmail(email: string, otp: string) {
-  const html = `
-    <div style="${containerStyle}">
-      <h2>Reset your Card Hive password</h2>
-      <p>Please use the following 6-digit code to reset your account password:</p>
-      <div style="${cardStyle}; text-align: center;">
-        <h1 style="letter-spacing: 5px; color: #2563eb; font-size: 32px; margin: 0;">${otp}</h1>
-      </div>
-      <p>This code will expire in 10 minutes. If you did not request a password reset, you can safely ignore this email.</p>
-      <p>Best regards,<br/>The Card Hive Team</p>
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">Reset Your Password</h1>
+    <p>We received a request to reset your Card Hive password. Use the code below to proceed:</p>
+    <div class="card" style="text-align: center; letter-spacing: 4px;">
+        <span style="font-size: 32px; font-weight: 700; color: #0ea5e9;">${otp}</span>
     </div>
+    <p>This code will expire in 10 minutes. If you didn't request a password reset, your account is safe.</p>
   `;
+  const html = wrapTemplate(content, "Password reset code");
   return sendEmail({ to: email, subject: "Reset your Password - Card Hive", html });
 }
 
 export async function sendPasswordResetEmail(user: { email: string }, token: string) {
   const resetUrl = `${getAppUrl()}/reset-password?token=${token}`;
-  const html = `
-    <div style="${containerStyle}">
-      <h2>Reset your Card Hive password</h2>
-      <p>We received a request to reset the password for your account.</p>
-      <a href="${resetUrl}" style="${buttonStyle}">Reset Password</a>
-      <p>This link will expire in 1 hour. If you did not request a password reset, you can safely ignore this email.</p>
-    </div>
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">Reset Your Password</h1>
+    <p>Click the button below to reset your Card Hive password. This link is valid for 1 hour.</p>
+    <a href="${resetUrl}" class="button">Reset Password</a>
+    <p>If you didn't request this, you can safely ignore this email.</p>
   `;
+  const html = wrapTemplate(content, "Reset your password link");
   return sendEmail({ to: user.email, subject: "Reset your Card Hive password", html });
 }
 
 export async function sendTradeSubmittedEmail(user: { email: string; username: string }, trade: any) {
-  const html = `
-    <div style="${containerStyle}">
-      <h2>We received your trade ${trade.tradeId}</h2>
-      <p>Hello ${user.username},</p>
-      <p>Thank you for submitting your gift card. Our team will review it shortly. Here are the details of your submission:</p>
-      <div style="${cardStyle}">
-        <strong>Trade ID:</strong> ${trade.tradeId}<br/>
-        <strong>Card Brand:</strong> ${trade.cardBrand}<br/>
-        <strong>Value:</strong> ${trade.faceValue} ${trade.currency}<br/>
-        <strong>Status:</strong> Pending
-      </div>
-      <a href="${getAppUrl()}/user/trades" style="${buttonStyle}">View Trade in Dashboard</a>
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">Trade Received! 📥</h1>
+    <p>Hello ${user.username}, we've received your submission for trade <strong>${trade.tradeId}</strong>. Our team is already reviewing it.</p>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: #6b7280;">Trade ID:</span>
+            <span style="font-weight: 600;">${trade.tradeId}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: #6b7280;">Card Brand:</span>
+            <span style="font-weight: 600;">${trade.cardBrand}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280;">Amount:</span>
+            <span style="font-weight: 600;">${trade.faceValue} ${trade.currency}</span>
+        </div>
     </div>
+    <a href="${getAppUrl()}/user/trades" class="button">Track Your Trade</a>
   `;
+  const html = wrapTemplate(content, `Trade ${trade.tradeId} received`);
   return sendEmail({ to: user.email, subject: `We received your trade ${trade.tradeId}`, html });
 }
 
 export async function sendTradeStatusUpdateEmail(user: { email: string; username: string }, trade: any, oldStatus: string, newStatus: string) {
   let subject = `Your trade ${trade.tradeId} status has been updated`;
-  if (newStatus === "UNDER_REVIEW") subject = `Your trade ${trade.tradeId} is now Under Review`;
-  if (newStatus === "APPROVED") subject = `Your trade ${trade.tradeId} has been Approved`;
-  if (newStatus === "REJECTED") subject = `Your trade ${trade.tradeId} has been Rejected`;
-  if (newStatus === "PAID") subject = `Your trade ${trade.tradeId} has been Marked as Paid`;
+  let statusColor = "#3b82f6";
 
-  let notesHtml = "";
-  if (newStatus === "REJECTED" && trade.adminNotes) {
-    notesHtml = `<p style="color: #ef4444; font-weight: bold; margin-top: 10px;">Reason: ${trade.adminNotes}</p>`;
-  }
+  if (newStatus === "APPROVED") statusColor = "#10b981";
+  if (newStatus === "REJECTED") statusColor = "#ef4444";
+  if (newStatus === "PAID") statusColor = "#10b981";
 
-  const html = `
-    <div style="${containerStyle}">
-      <h2>Trade Status Update</h2>
-      <p>Hello ${user.username},</p>
-      <p>The status of your trade <strong>${trade.tradeId}</strong> has changed from <em>${oldStatus.replace("_", " ")}</em> to <strong>${newStatus.replace("_", " ")}</strong>.</p>
-      
-      <div style="${cardStyle}">
-        <strong>Trade ID:</strong> ${trade.tradeId}<br/>
-        <strong>Card Brand:</strong> ${trade.cardBrand}<br/>
-        <strong>Value:</strong> ${trade.faceValue} ${trade.currency}
-        ${notesHtml}
-      </div>
-      <a href="${getAppUrl()}/user/trades" style="${buttonStyle}">View Trade Details</a>
+  let statusText = newStatus.replace("_", " ");
+
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">Status Updated</h1>
+    <p>The status of your trade <strong>${trade.tradeId}</strong> has changed:</p>
+    <div class="card" style="text-align: center;">
+        <span style="font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">New Status</span><br>
+        <span style="font-size: 24px; font-weight: 700; color: ${statusColor};">${statusText}</span>
     </div>
+    ${newStatus === "REJECTED" && trade.adminNotes ? `
+        <div style="margin-top: 16px; color: #ef4444;">
+            <strong>Note from Admin:</strong> ${trade.adminNotes}
+        </div>
+    ` : ''}
+    <a href="${getAppUrl()}/user/trades" class="button">View Details</a>
   `;
+  const html = wrapTemplate(content, `Trade ${trade.tradeId} updated to ${statusText}`);
   return sendEmail({ to: user.email, subject, html });
 }
 
 export async function sendPaymentSentEmail(user: { email: string; username: string }, trade: any) {
-  const html = `
-    <div style="${containerStyle}">
-      <h2>Payment sent for trade ${trade.tradeId} 💸</h2>
-      <p>Hello ${user.username},</p>
-      <p>Great news! Payment for your recent gift card trade has been processed and sent.</p>
-      
-      <div style="${cardStyle}">
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">Payment Sent! 💸</h1>
+    <p>Great news, ${user.username}! Your payment for trade <strong>${trade.tradeId}</strong> has been processed.</p>
+    <div class="card">
         ${trade.payoutMethod === 'CRYPTO' ? `
-          <strong>Crypto Coin:</strong> ${trade.cryptoCoin}<br/>
-          <strong>Network:</strong> ${trade.cryptoNetwork}<br/>
-          <strong>Exchange:</strong> ${trade.cryptoExchange}<br/>
-          <strong>Receiver ID:</strong> ${trade.cryptoReceiverId}<br/>
-          <strong>TX Hash:</strong> ${trade.cryptoTxHash || "N/A"}<br/>
+            <p><strong>Crypto:</strong> ${trade.cryptoCoin} (${trade.cryptoNetwork})</p>
+            <p><strong>Receiver ID:</strong> ${trade.cryptoReceiverId}</p>
         ` : `
-          <strong>Payout Network:</strong> ${trade.payoutNetwork}<br/>
-          <strong>Phone Number:</strong> ${trade.payoutPhoneNumber}<br/>
-          <strong>Reference / ID:</strong> ${trade.paymentReference || "N/A"}<br/>
+            <p><strong>Network:</strong> ${trade.payoutNetwork}</p>
+            <p><strong>Phone:</strong> ${trade.payoutPhoneNumber}</p>
         `}
-        <strong>Paid Date:</strong> ${trade.paidAt ? new Date(trade.paidAt).toLocaleString() : new Date().toLocaleString()}
-      </div>
-      <p>Please check your ${trade.payoutMethod === 'CRYPTO' ? 'crypto exchange/wallet' : 'mobile money wallet'} to confirm receipt.</p>
-      <a href="${getAppUrl()}/user/trades" style="${buttonStyle}">View Trade Details</a>
+        <p><strong>Amount:</strong> ${trade.faceValue} ${trade.currency}</p>
     </div>
+    <p>Please check your wallet/account. It may take a few minutes to reflect.</p>
+    <a href="${getAppUrl()}/user/trades" class="button">View History</a>
   `;
+  const html = wrapTemplate(content, `Payment sent for ${trade.tradeId}`);
   return sendEmail({ to: user.email, subject: `Payment sent for trade ${trade.tradeId}`, html });
 }
 
 export async function sendDuplicateCardAttemptEmail(user: { email: string; username: string }, trade: any) {
-  const html = `
-    <div style="${containerStyle}">
-      <h2>Trade Verification Information</h2>
-      <p>Hello ${user.username},</p>
-      <p>Our system noted that the gift card you recently submitted has already been processed or is currently being reviewed in another session.</p>
-      <p>To ensure security and accuracy for all users, we do not process entries that appear multiple times in our records.</p>
-      <p>If you have any questions or would like to provide more details, please reach out to our team.</p>
-      <a href="${getAppUrl()}/user/support" style="${buttonStyle}">Support Center</a>
-    </div>
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">Security Verification</h1>
+    <p>Hello ${user.username}, our system flagged a duplicate card code submission in your recent trade attempt.</p>
+    <p>To protect our community, we do not process codes that have already been submitted. If you believe this is an error, please contact our support team immediately.</p>
+    <a href="${getAppUrl()}/user/support" class="button" style="background-color: #ef4444;">Contact Support</a>
   `;
+  const html = wrapTemplate(content, "Duplicate card submission alert");
   return sendEmail({ to: user.email, subject: "Action Required: Trade Status Verification - Card Hive", html });
 }
 
@@ -196,21 +242,18 @@ export async function sendAdminNewUserEmail(user: { username: string; email: str
   const adminEmail = process.env.EMAIL_ADMIN;
   if (!adminEmail) return;
 
-  const html = `
-    <div style="${containerStyle}">
-      <h2>New User Registration 🎉</h2>
-      <p>A new user has just signed up on Card Hive.</p>
-      
-      <div style="${cardStyle}">
-        <h3>User Details</h3>
-        <strong>Username:</strong> ${user.username}<br/>
-        <strong>Email:</strong> ${user.email}<br/>
-        <strong>Phone:</strong> ${user.phoneNumber}<br/>
-        <strong>Registered At:</strong> ${new Date().toLocaleString()}
-      </div>
-      <a href="${getAppUrl()}/admin/users" style="${buttonStyle}">View Users in Admin Panel</a>
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">New Registration 🎉</h1>
+    <p>A new user has just joined Card Hive.</p>
+    <div class="card">
+        <p><strong>Username:</strong> ${user.username}</p>
+        <p><strong>Email:</strong> ${user.email}</p>
+        <p><strong>Phone:</strong> ${user.phoneNumber}</p>
+        <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
     </div>
+    <a href="${getAppUrl()}/admin/users" class="button">Manage Users</a>
   `;
+  const html = wrapTemplate(content, `New user: @${user.username}`);
   return sendEmail({ to: adminEmail, subject: `New User Registration: @${user.username}`, html });
 }
 
@@ -218,28 +261,18 @@ export async function sendAdminNewTradeEmail(trade: any, user: { username: strin
   const adminEmail = process.env.EMAIL_ADMIN;
   if (!adminEmail) return;
 
-  const html = `
-    <div style="${containerStyle}">
-      <h2>New Trade Alert: ${trade.tradeId}</h2>
-      <p>A new trade has been submitted.</p>
-      
-      <div style="${cardStyle}">
-        <h3>User Info</h3>
-        <strong>Username:</strong> ${user.username}<br/>
-        <strong>Email:</strong> ${user.email}<br/>
-        <strong>Phone:</strong> ${user.phoneNumber}
-      </div>
-
-      <div style="${cardStyle}">
-        <h3>Trade Info</h3>
-        <strong>Brand:</strong> ${trade.cardBrand}<br/>
-        <strong>Value:</strong> ${trade.faceValue} ${trade.currency}<br/>
-        <strong>Payout Method:</strong> ${trade.payoutMethod === 'CRYPTO' ? `Crypto (${trade.cryptoCoin})` : trade.payoutNetwork}<br/>
-        <strong>Created:</strong> ${new Date().toLocaleString()}
-      </div>
-      <a href="${getAppUrl()}/admin/trades/${trade.tradeId}" style="${buttonStyle}">Review Trade</a>
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">New Trade Alert! 🚨</h1>
+    <p>A new trade has been submitted by <strong>@${user.username}</strong>.</p>
+    <div class="card">
+        <h3 style="margin-top: 0;">Trade Info</h3>
+        <p><strong>Brand:</strong> ${trade.cardBrand}</p>
+        <p><strong>Value:</strong> ${trade.faceValue} ${trade.currency}</p>
+        <p><strong>Payout:</strong> ${trade.payoutMethod === 'CRYPTO' ? 'Crypto' : trade.payoutNetwork}</p>
     </div>
+    <a href="${getAppUrl()}/admin/trades/${trade.tradeId}" class="button">Review Trade</a>
   `;
+  const html = wrapTemplate(content, `Action required: Trade ${trade.tradeId}`);
   return sendEmail({ to: adminEmail, subject: `New Card Hive trade: ${trade.tradeId}`, html });
 }
 
@@ -247,27 +280,22 @@ export async function sendAdminDuplicateAlert(trade: any, relatedTrades: any[], 
   const adminEmail = process.env.EMAIL_ADMIN;
   if (!adminEmail) return;
 
-  const relatedHtml = relatedTrades.map((rt: any) => `<li><a href="${getAppUrl()}/admin/trades/${rt.tradeId}">${rt.tradeId}</a> - Status: ${rt.status}</li>`).join("");
+  const relatedHtml = relatedTrades.map((rt: any) => `<li><a href="${getAppUrl()}/admin/trades/${rt.tradeId}" style="color: #0ea5e9;">${rt.tradeId}</a> - Status: ${rt.status}</li>`).join("");
 
-  const html = `
-    <div style="${containerStyle}">
-      <h2 style="color: #4b5563;">Review Required: Card submission info</h2>
-      <p>A user attempted to submit a card code that matches an existing record hash in the system.</p>
-      
-      <div style="${cardStyle}">
-        <strong>Account:</strong> @${user.username} (${user.email})<br/>
+  const content = `
+    <h1 style="margin-top: 0; color: #ef4444;">Duplicate Code Alert! ⚠️</h1>
+    <p>User <strong>@${user.username}</strong> attempted to submit a card code that exists in our records.</p>
+    <div class="card">
         <strong>Details:</strong> ${trade.cardBrand} ${trade.faceValue} ${trade.currency}
-      </div>
-
-      <div style="${cardStyle}">
-        <h3 style="margin-top:0;">Related entries found:</h3>
-        <ul>
+    </div>
+    <div class="card">
+        <h3 style="margin-top:0;">Matching Entries:</h3>
+        <ul style="padding-left: 20px;">
           ${relatedHtml}
         </ul>
-      </div>
-      <p>Please review these details at your convenience.</p>
     </div>
   `;
+  const html = wrapTemplate(content, "Critical: Duplicate card code submission");
   return sendEmail({ to: adminEmail, subject: `Action Required: Card review for @${user.username}`, html });
 }
 
@@ -275,17 +303,15 @@ export async function sendAdminErrorAlert(details: string, context?: any) {
   const adminEmail = process.env.EMAIL_ADMIN;
   if (!adminEmail) return;
 
-  const html = `
-    <div style="${containerStyle}; border: 2px solid #f59e0b;">
-      <h2 style="color: #f59e0b;">Card Hive System Alert</h2>
-      <p>An unexpected error occurred in the system:</p>
-      
-      <div style="${cardStyle}; background-color: #fef3c7;">
-        <pre style="white-space: pre-wrap; word-break: break-word;">${details}</pre>
-        ${context ? `<pre style="font-size: 12px; margin-top: 10px;">${JSON.stringify(context, null, 2)}</pre>` : ''}
-      </div>
+  const content = `
+    <h1 style="margin-top: 0; color: #f59e0b;">System Alert</h1>
+    <p>An unexpected error occurred:</p>
+    <div class="card" style="background-color: #fffbeb;">
+        <pre style="white-space: pre-wrap; word-break: break-word; font-size: 12px;">${details}</pre>
+        ${context ? `<pre style="font-size: 11px; margin-top: 10px;">${JSON.stringify(context, null, 2)}</pre>` : ''}
     </div>
   `;
+  const html = wrapTemplate(content, "System error notification");
   return sendEmail({ to: adminEmail, subject: "Card Hive Email/System Error", html });
 }
 
@@ -293,18 +319,14 @@ export async function sendAdminNewMessageEmail(message: any, tradeId: string, se
   const adminEmail = process.env.EMAIL_ADMIN;
   if (!adminEmail) return;
 
-  const html = `
-    <div style="${containerStyle}">
-      <h2>New Message Alert: Trade ${tradeId} 💬</h2>
-      <p><strong>@${sender.username}</strong> has sent a new message regarding trade <strong>${tradeId}</strong>.</p>
-      
-      <div style="${cardStyle}">
-        <p style="margin: 0; font-style: italic;">"${message.content}"</p>
-      </div>
-      
-      <p>Please respond at your earliest convenience.</p>
-      <a href="${getAppUrl()}/admin/trades/${tradeId}" style="${buttonStyle}">Open Chat in Admin Panel</a>
+  const content = `
+    <h1 style="margin-top: 0; color: #111827;">New Message 💬</h1>
+    <p><strong>@${sender.username}</strong> sent a message about trade <strong>${tradeId}</strong>:</p>
+    <div class="card" style="font-style: italic; border-left: 4px solid #0ea5e9;">
+        "${message.content}"
     </div>
+    <a href="${getAppUrl()}/admin/trades/${tradeId}" class="button">Open Chat</a>
   `;
+  const html = wrapTemplate(content, `Message from @${sender.username}`);
   return sendEmail({ to: adminEmail, subject: `New Message from @${sender.username} - Trade ${tradeId}`, html });
 }

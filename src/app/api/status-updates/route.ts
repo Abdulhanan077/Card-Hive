@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Force TS refresh
+
 
 export async function GET() {
     try {
         const now = new Date();
-        const stories = await prisma.successStory.findMany({
+        const updates = await prisma.statusUpdate.findMany({
             where: {
                 expiresAt: {
                     gt: now,
@@ -15,9 +16,9 @@ export async function GET() {
             },
         });
 
-        return NextResponse.json({ stories });
+        return NextResponse.json({ updates });
     } catch (error) {
-        console.error("Error fetching success stories:", error);
+        console.error("Error fetching status updates:", error);
         return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

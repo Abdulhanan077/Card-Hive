@@ -36,7 +36,18 @@ export default function RatesCalculator() {
     }, []);
 
     const brands = Array.from(new Set(rates.map(r => r.cardBrand))).sort();
-    const categories = Array.from(new Set(rates.filter(r => r.cardBrand === selectedBrand).map(r => r.cardCountry))).sort();
+    const categories = Array.from(new Set(
+        rates
+            .filter(r => r.cardBrand === selectedBrand && (r.cardType === selectedType || (!r.cardType && selectedType === "Physical")))
+            .map(r => r.cardCountry)
+    )).sort();
+
+    // Auto-select category when lists change to prevent invalid state
+    useEffect(() => {
+        if (categories.length > 0 && !categories.includes(selectedCategory)) {
+            setSelectedCategory(""); // Reset to force user to choose valid option for new type
+        }
+    }, [selectedBrand, selectedType, categories, selectedCategory]);
 
     useEffect(() => {
         if (selectedBrand && selectedCategory && amount && !isNaN(parseFloat(amount))) {
@@ -242,6 +253,21 @@ export default function RatesCalculator() {
                 </div>
 
                 <div className="form-group">
+                    <label className="field-label">Card Type</label>
+                    <select
+                        className="calc-select"
+                        value={selectedType}
+                        onChange={(e) => {
+                            setSelectedType(e.target.value);
+                            setSelectedCategory("");
+                        }}
+                    >
+                        <option value="Physical">Physical Card</option>
+                        <option value="E-code">E-code (Digital)</option>
+                    </select>
+                </div>
+
+                <div className="form-group">
                     <label className="field-label">Category / Country</label>
                     <select
                         className="calc-select"
@@ -249,22 +275,10 @@ export default function RatesCalculator() {
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         disabled={!selectedBrand}
                     >
-                        <option value="">{selectedBrand ? "Choose Category..." : "Select Brand First"}</option>
+                        <option value="">{selectedBrand ? `Choose Category for ${selectedType}...` : "Select Brand First"}</option>
                         {categories.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
                         ))}
-                    </select>
-                </div>
-
-                <div className="form-group">
-                    <label className="field-label">Card Type</label>
-                    <select
-                        className="calc-select"
-                        value={selectedType}
-                        onChange={(e) => setSelectedType(e.target.value)}
-                    >
-                        <option value="Physical">Physical Card</option>
-                        <option value="E-code">E-code (Digital)</option>
                     </select>
                 </div>
 
