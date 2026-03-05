@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import CopyButton from "@/components/CopyButton";
 
 export default async function AdminRewardsQueue() {
     const redemptions = await prisma.rewardRedemption.findMany({
@@ -10,10 +11,8 @@ export default async function AdminRewardsQueue() {
     const settings = await prisma.settings.findFirst();
     const rate = settings?.rewardPointsToGhs || 100.0;
 
-    async function processRedemptionAction(formData: FormData) {
+    async function processRedemptionAction(id: number, status: string) {
         "use server";
-        const id = parseInt(formData.get("id") as string);
-        const status = formData.get("status") as string; // "PAID" | "REJECTED"
 
         const req = await prisma.rewardRedemption.findUnique({ where: { id } });
         if (!req || req.status !== "PENDING") return;
@@ -81,18 +80,26 @@ export default async function AdminRewardsQueue() {
                                         </span>
                                     </td>
                                     <td>{req.payoutMethod}</td>
-                                    <td style={{ maxWidth: '200px', wordBreak: 'break-all' }}>{req.payoutDetails}</td>
+                                    <td style={{ maxWidth: '200px', wordBreak: 'break-all' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between' }}>
+                                            <span>{req.payoutDetails}</span>
+                                            <CopyButton textToCopy={req.payoutDetails || ""} />
+                                        </div>
+                                    </td>
                                     <td>
                                         <span className={`badge badge-${req.status.toLowerCase()}`}>{req.status}</span>
                                     </td>
                                     <td>{new Date(req.createdAt).toLocaleDateString()}</td>
                                     <td>
                                         {req.status === "PENDING" ? (
-                                            <form action={processRedemptionAction} style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <input type="hidden" name="id" value={req.id} />
-                                                <button type="submit" name="status" value="PAID" className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Pay</button>
-                                                <button type="submit" name="status" value="REJECTED" className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', backgroundColor: '#fef2f2', color: 'var(--danger)', border: '1px solid currentColor' }}>Reject</button>
-                                            </form>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <form action={processRedemptionAction.bind(null, req.id, "PAID")}>
+                                                    <button type="submit" className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Pay</button>
+                                                </form>
+                                                <form action={processRedemptionAction.bind(null, req.id, "REJECTED")}>
+                                                    <button type="submit" className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', backgroundColor: '#fef2f2', color: 'var(--danger)', border: '1px solid currentColor' }}>Reject</button>
+                                                </form>
+                                            </div>
                                         ) : (
                                             <span style={{ opacity: 0.5 }}>Processed</span>
                                         )}
