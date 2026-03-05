@@ -2,24 +2,23 @@
 
 import { useState } from "react";
 import { resendVerificationEmail, resendForgotPassword } from "../../actions/admin-emails";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function ResendAuthEmailButtons({ userId }: { userId: number }) {
+    const { showNotification } = useNotification();
     const [loading, setLoading] = useState<string | null>(null);
-    const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
     const handleResend = async (type: "verify" | "reset") => {
         setLoading(type);
-        setMessage(null);
         try {
             if (type === "verify") await resendVerificationEmail(userId);
             if (type === "reset") await resendForgotPassword(userId);
 
-            setMessage({ text: `Email (${type === 'verify' ? 'Verification' : 'Reset'}) sent successfully!`, type: "success" });
+            showNotification('SUCCESS', `Email (${type === 'verify' ? 'Verification' : 'Reset'}) sent successfully!`);
         } catch (err: any) {
-            setMessage({ text: err.message || "Failed to resend email", type: "error" });
+            showNotification('ERROR', err.message || "Failed to resend email");
         } finally {
             setLoading(null);
-            setTimeout(() => setMessage(null), 5000);
         }
     };
 
@@ -44,19 +43,6 @@ export default function ResendAuthEmailButtons({ userId }: { userId: number }) {
                     {loading === "reset" ? "..." : "Reset Link"}
                 </button>
             </div>
-            {message && (
-                <div style={{
-                    marginTop: "0.5rem",
-                    padding: "0.4rem",
-                    borderRadius: "4px",
-                    fontSize: "0.75rem",
-                    backgroundColor: message.type === "success" ? "#f0fdf4" : "#fef2f2",
-                    color: message.type === "success" ? "#166534" : "#991b1b",
-                    border: `1px solid ${message.type === "success" ? "#bbf7d0" : "#fecaca"}`
-                }}>
-                    {message.text}
-                </div>
-            )}
         </div>
     );
 }

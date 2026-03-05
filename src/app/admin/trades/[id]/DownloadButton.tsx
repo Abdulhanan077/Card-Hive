@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function DownloadButton({ src, fileName }: { src: string; fileName: string }) {
+    const { showNotification } = useNotification();
     const [isDownloading, setIsDownloading] = useState(false);
 
     const handleDownload = async () => {
@@ -25,9 +27,10 @@ export default function DownloadButton({ src, fileName }: { src: string; fileNam
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+            showNotification('SUCCESS', 'Image downloaded successfully!');
         } catch (error) {
             console.error("Download failed:", error);
-            alert("Failed to download image. It may be due to CORS restrictions. Please right-click the image and 'Save Image As...'");
+            showNotification('ERROR', "Failed to download image. It may be due to CORS restrictions. Please right-click the image and 'Save Image As...'");
         } finally {
             setIsDownloading(false);
         }

@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./sell.module.css";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function SellGiftCardPage() {
     const router = useRouter();
+    const { showNotification } = useNotification();
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [files, setFiles] = useState<File[]>([]);
@@ -13,10 +15,12 @@ export default function SellGiftCardPage() {
 
     // Rate Calculator State
     const [rates, setRates] = useState<{ cardBrand: string, cardCountry: string, cardType?: string, rate: number }[]>([]);
+    const [usdtRate, setUsdtRate] = useState<number>(15.0);
     const [cardBrand, setCardBrand] = useState("");
     const [cardCategory, setCardCategory] = useState("");
     const [cardType, setCardType] = useState("Physical");
     const [faceValue, setFaceValue] = useState("");
+    const [faceValueError, setFaceValueError] = useState("");
     const [estimatedPayout, setEstimatedPayout] = useState<number | null>(null);
 
     // Payout Method State
@@ -30,6 +34,7 @@ export default function SellGiftCardPage() {
     useEffect(() => {
         fetch("/api/rates").then(res => res.json()).then(data => {
             if (data.rates) setRates(data.rates);
+            if (data.usdtExchangeRate) setUsdtRate(data.usdtExchangeRate);
         }).catch(err => console.error("Failed to load rates:", err));
     }, []);
 
@@ -66,9 +71,34 @@ export default function SellGiftCardPage() {
     // Recalculate anytime inputs change
     useEffect(() => {
         const value = parseFloat(faceValue);
+        setFaceValueError("");
+
         if (!cardBrand || !cardCategory || isNaN(value)) {
             setEstimatedPayout(null);
             return;
+        }
+
+        // Validate face value against category
+        const matchRange = cardCategory.match(/\(\$(\d+)\s*-\s*\$(\d+)\)/) || cardCategory.match(/\((\d+)\s*-\s*(\d+)\)/);
+        const matchMin = cardCategory.match(/\(\$(\d+)\+\)/) || cardCategory.match(/\((\d+)\+\)/);
+        const matchExact = cardCategory.match(/\(\$?(\d+)\)/);
+
+        if (matchRange) {
+            const min = parseFloat(matchRange[1]);
+            const max = parseFloat(matchRange[2]);
+            if (value < min || value > max) {
+                setFaceValueError(`Amount must be between ${min} and ${max} for this category.`);
+            }
+        } else if (matchMin) {
+            const min = parseFloat(matchMin[1]);
+            if (value < min) {
+                setFaceValueError(`Amount must be at least ${min} for this category.`);
+            }
+        } else if (matchExact) {
+            const exact = parseFloat(matchExact[1]);
+            if (value !== exact) {
+                setFaceValueError(`Amount must be exactly ${exact} for this category.`);
+            }
         }
 
         const activeRate = rates.find(r => r.cardBrand === cardBrand && r.cardCountry === cardCategory && (r.cardType === cardType || (!r.cardType && cardType === "Physical")));
@@ -94,6 +124,14 @@ export default function SellGiftCardPage() {
         e.preventDefault();
         setLoading(true);
         setError("");
+
+        if (faceValueError) {
+            setError(faceValueError);
+            showNotification('ERROR', faceValueError);
+            setLoading(false);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+        }
 
         const formData = new FormData(e.currentTarget);
 
@@ -121,9 +159,11 @@ export default function SellGiftCardPage() {
                 throw new Error(data.message || "Failed to submit trade");
             }
 
+            showNotification('SUCCESS', 'Trade submitted successfully!');
             router.push(`/user/success?tradeId=${data.tradeId}`);
         } catch (err: any) {
             setError(err.message);
+            showNotification('ERROR', err.message);
             window.scrollTo({ top: 0, behavior: "smooth" });
         } finally {
             setLoading(false);
@@ -323,14 +363,22 @@ export default function SellGiftCardPage() {
                                     value={faceValue}
                                     onChange={(e) => setFaceValue(e.target.value)}
                                 />
+                                {faceValueError && <p style={{ color: "var(--danger, #dc2626)", fontSize: "0.85rem", marginTop: "0.4rem" }}>{faceValueError}</p>}
                             </div>
                         </div>
 
                         {/* Dynamic Payout Calculator Display */}
                         {estimatedPayout !== null ? (
-                            <div style={{ padding: "1rem", backgroundColor: "var(--bg-alt)", borderRadius: "8px", border: "1px solid var(--border-color)", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div style={{ padding: "1rem", backgroundColor: "var(--bg-alt)", borderRadius: "8px", border: "1px solid var(--border-color)", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
                                 <span style={{ fontWeight: 500, opacity: 0.8 }}>Estimated Payout:</span>
-                                <span style={{ fontSize: "1.25rem", fontWeight: "bold", color: "var(--primary)" }}>GH₵ {estimatedPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                                    <span style={{ fontSize: "1.25rem", fontWeight: "bold", color: "var(--primary)" }}>GH₵ {estimatedPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    {payoutMethod === "CRYPTO" && (
+                                        <span style={{ fontSize: "1rem", fontWeight: 600, color: "#16a34a", marginTop: "0.25rem" }}>
+                                            ≈ {(estimatedPayout / usdtRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         ) : cardBrand && faceValue ? (
                             <div style={{ padding: "1rem", backgroundColor: "#fffbeb", borderRadius: "8px", border: "1px solid #fde68a", marginBottom: "1.5rem", color: "#d97706" }}>

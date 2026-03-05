@@ -25,15 +25,37 @@ export async function saveSettings(formData: FormData) {
         data.rewardPointsToGhs = parseFloat(rewardPtsGhsStr);
     }
 
+    const usdtRateStr = formData.get("usdtExchangeRate") as string;
+    if (usdtRateStr) {
+        data.usdtExchangeRate = parseFloat(usdtRateStr);
+    }
+
     const existingSettings = await prisma.settings.findFirst();
 
     if (existingSettings) {
-        await prisma.settings.update({
-            where: { id: existingSettings.id },
-            data
-        });
+        // Save the rate via raw SQL to bypass Prisma Client filtering out unknown fields
+        const usdtRate = data.usdtExchangeRate;
+        delete data.usdtExchangeRate;
+
+        if (Object.keys(data).length > 0) {
+            await prisma.settings.update({
+                where: { id: existingSettings.id },
+                data
+            });
+        }
+
+        if (usdtRate !== undefined) {
+            await prisma.$executeRawUnsafe(`UPDATE "Settings" SET "usdtExchangeRate" = ${usdtRate} WHERE id = ${existingSettings.id}`);
+        }
+
     } else {
-        await prisma.settings.create({ data });
+        const usdtRate = data.usdtExchangeRate;
+        delete data.usdtExchangeRate;
+
+        const created = await prisma.settings.create({ data });
+        if (usdtRate !== undefined) {
+            await prisma.$executeRawUnsafe(`UPDATE "Settings" SET "usdtExchangeRate" = ${usdtRate} WHERE id = ${created.id}`);
+        }
     }
 
     revalidatePath("/admin/settings");

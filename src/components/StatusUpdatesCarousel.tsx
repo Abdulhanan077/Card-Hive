@@ -48,6 +48,17 @@ export default function StatusUpdatesCarousel() {
     const [selectedCard, setSelectedCard] = useState<StatusUpdate | null>(null);
 
     useEffect(() => {
+        // Load initially viewed items from localStorage
+        const storedViews = localStorage.getItem("viewedStatusUpdates");
+        if (storedViews) {
+            try {
+                const parsed = JSON.parse(storedViews);
+                setViewedIds(new Set(parsed));
+            } catch (e) {
+                // Ignore parse errors
+            }
+        }
+
         fetch("/api/status-updates").then(res => res.json()).then(data => {
             if (data.updates) setCards(data.updates);
             setIsLoading(false);
@@ -56,13 +67,21 @@ export default function StatusUpdatesCarousel() {
 
     const handleView = async (id: number) => {
         if (viewedIds.has(id)) return;
-        setViewedIds(prev => new Set(prev).add(id));
+
+        // Update local state and localStorage immediately
+        const newSet = new Set(viewedIds).add(id);
+        setViewedIds(newSet);
+        localStorage.setItem("viewedStatusUpdates", JSON.stringify(Array.from(newSet)));
+
+        // Send to backend
         fetch(`/api/status-updates/${id}/view`, { method: "POST" }).catch(() => { });
     };
 
     useEffect(() => {
-        if (cards.length > 0) handleView(cards[0].id);
-    }, [cards]);
+        if (cards.length > 0 && !viewedIds.has(cards[0].id)) {
+            handleView(cards[0].id);
+        }
+    }, [cards, viewedIds]);
 
     if (isLoading || cards.length === 0) return null;
 

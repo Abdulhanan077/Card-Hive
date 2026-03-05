@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import SafeImage from "@/app/components/SafeImage";
+import { useNotification } from "@/context/NotificationContext";
 
 interface StatusUpdate {
     id: number;
@@ -25,13 +26,13 @@ const CARD_GRADIENTS = [
 
 export default function AdminStatusUpdatesPage() {
     const router = useRouter();
+    const { showNotification } = useNotification();
     const [updates, setUpdates] = useState<StatusUpdate[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [image, setImage] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [messageText, setMessageText] = useState("");
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     useEffect(() => {
         fetchUpdates();
@@ -68,12 +69,11 @@ export default function AdminStatusUpdatesPage() {
         e.preventDefault();
 
         if (!messageText.trim()) {
-            setMessage({ type: 'error', text: 'A message is required.' });
+            showNotification('ERROR', 'A message is required.');
             return;
         }
 
         setIsUploading(true);
-        setMessage(null);
 
         try {
             const formData = new FormData();
@@ -86,19 +86,16 @@ export default function AdminStatusUpdatesPage() {
             });
 
             if (res.ok) {
-                setMessage({
-                    type: 'success',
-                    text: `Status update posted successfully! It will be visible for 24 hours.`
-                });
+                showNotification('SUCCESS', `Status update posted successfully! It will be visible for 24 hours.`);
                 setImage(null);
                 setPreviewUrl(null);
                 setMessageText("");
                 fetchUpdates();
             } else {
-                setMessage({ type: 'error', text: "Failed to post status update." });
+                showNotification('ERROR', "Failed to post status update.");
             }
         } catch (error) {
-            setMessage({ type: 'error', text: "An error occurred while posting" });
+            showNotification('ERROR', "An error occurred while posting");
         } finally {
             setIsUploading(false);
         }
@@ -114,8 +111,9 @@ export default function AdminStatusUpdatesPage() {
 
             if (res.ok) {
                 fetchUpdates();
+                showNotification('SUCCESS', "Status update deleted.");
             } else {
-                alert("Failed to delete status update");
+                showNotification('ERROR', "Failed to delete status update");
             }
         } catch (error) {
             console.error("Delete error:", error);
@@ -128,12 +126,6 @@ export default function AdminStatusUpdatesPage() {
                 <h1 className="dashboard-title">Manage Status Updates</h1>
                 <p className="dashboard-subtitle">Broadcast professional updates and payment proofs to all users. Posts expire automatically after 24 hours.</p>
             </header>
-
-            {message && (
-                <div className={`alert alert-${message.type}`} style={{ marginBottom: '2rem' }}>
-                    {message.text}
-                </div>
-            )}
 
             <div className="summary-cards" style={{ marginBottom: '2rem' }}>
                 <div className="summary-card" style={{ gridColumn: 'span 1' }}>

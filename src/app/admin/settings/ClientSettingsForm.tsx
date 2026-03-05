@@ -2,24 +2,24 @@
 
 import { useState } from "react";
 import { saveSettings } from "./actions";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function ClientSettingsForm({ settings }: { settings: any }) {
+    const { showNotification } = useNotification();
     const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
-        setSuccess(false);
 
         const formData = new FormData(e.currentTarget);
 
         try {
             await saveSettings(formData);
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 4000); // Hide after 4 seconds
+            showNotification('SUCCESS', 'Settings saved successfully!');
         } catch (error) {
             console.error(error);
+            showNotification('ERROR', 'Failed to save settings');
         } finally {
             setLoading(false);
         }
@@ -27,23 +27,6 @@ export default function ClientSettingsForm({ settings }: { settings: any }) {
 
     return (
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-
-            {success && (
-                <div style={{
-                    backgroundColor: "#dcfce7",
-                    color: "#16a34a",
-                    padding: "1rem",
-                    borderRadius: "8px",
-                    border: "1px solid #bbf7d0",
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem"
-                }}>
-                    <span>✅</span> Settings saved successfully!
-                </div>
-            )}
-
             <div className="form-group">
                 <label className="form-label">Site Name</label>
                 <input
@@ -102,6 +85,20 @@ export default function ClientSettingsForm({ settings }: { settings: any }) {
                     name="rewardPointsToGhs"
                     className="form-input"
                     defaultValue={settings?.rewardPointsToGhs ?? 100.0}
+                    required
+                />
+            </div>
+
+            <div className="form-group" style={{ marginTop: "1rem" }}>
+                <label className="form-label" style={{ color: "var(--primary)", fontWeight: 600 }}>USDT Exchange Rate (GHS per 1 USDT)</label>
+                <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "0.5rem" }}>The rate used to calculate estimated payouts for Crypto (USDT) method.</p>
+                <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    name="usdtExchangeRate"
+                    className="form-input"
+                    defaultValue={settings?.usdtExchangeRate ?? 15.0}
                     required
                 />
             </div>

@@ -10,6 +10,7 @@ import DownloadButton from "./DownloadButton";
 import { sendTradeStatusUpdateEmail, sendPaymentSentEmail } from "@/lib/email";
 import ResendEmailButtons from "./ResendEmailButtons";
 import SafeImage from "@/app/components/SafeImage";
+import StatusControlsClient from "./StatusControlsClient";
 
 export default async function TradeDetailView(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -131,6 +132,9 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
         revalidatePath(`/admin`);
     }
 
+    const rawSettings: any = await prisma.$queryRawUnsafe(`SELECT "usdtExchangeRate" FROM "Settings" LIMIT 1`);
+    const usdtRate = rawSettings && rawSettings.length > 0 ? rawSettings[0].usdtExchangeRate : 15.0;
+
     return (
         <>
             <div className="dashboard-header" style={{ marginBottom: "2rem" }}>
@@ -173,32 +177,37 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                                 <div><small>Account Email</small><div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>{trade.user.email}</div></div>
                                 <div style={{ gridColumn: "1 / -1", backgroundColor: "var(--primary-light)", padding: "1rem", borderRadius: "var(--radius-md)", marginTop: "0.5rem" }}>
                                     <small style={{ color: "var(--primary-hover)", fontWeight: 600, textTransform: "uppercase" }}>PAYOUT DESTINATION</small>
-                                    <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: "var(--foreground)", display: "flex", alignItems: "center" }}>
+                                    <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: "var(--foreground)", display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.5rem" }}>
                                         {trade.payoutMethod === 'CRYPTO' ? (
                                             <>
-                                                {trade.cryptoCoin} ({trade.cryptoNetwork}) - {trade.cryptoExchange}
-                                                <CopyButton textToCopy={`${trade.cryptoCoin} ${trade.cryptoNetwork} ${trade.cryptoExchange} ${trade.cryptoReceiverId}`} />
+                                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                                    {trade.cryptoCoin} ({trade.cryptoNetwork}) - {trade.cryptoExchange}
+                                                </div>
+                                                {trade.cryptoReceiverId && (
+                                                    <div style={{ padding: "0.5rem", backgroundColor: "white", borderRadius: "4px", fontSize: "0.9rem", color: "var(--primary)", display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                                                        <span style={{ opacity: 0.7 }}>{trade.cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Wallet:' : 'Exchange ID:'}</span>
+                                                        <strong style={{ wordBreak: "break-all" }}>{trade.cryptoReceiverId}</strong>
+                                                        <CopyButton textToCopy={trade.cryptoReceiverId} label={trade.cryptoReceiverIdType === 'WALLET_ADDRESS' ? "Copy Wallet" : "Copy ID"} />
+                                                    </div>
+                                                )}
                                             </>
                                         ) : (
                                             <>
-                                                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                                                    <div>{trade.payoutNetwork} - {trade.payoutPhoneNumber}</div>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                                                        <span>{trade.payoutNetwork} - {trade.payoutPhoneNumber}</span>
+                                                        <CopyButton textToCopy={trade.payoutPhoneNumber} label="Copy Number" />
+                                                    </div>
                                                     {trade.payoutAccountName && (
-                                                        <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", fontWeight: 500 }}>
+                                                        <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", fontWeight: 500, display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
                                                             Account Name: <span style={{ color: "var(--foreground)" }}>{trade.payoutAccountName}</span>
+                                                            <CopyButton textToCopy={trade.payoutAccountName} label="Copy Name" />
                                                         </div>
                                                     )}
                                                 </div>
-                                                <CopyButton textToCopy={`${trade.payoutNetwork} - ${trade.payoutPhoneNumber}${trade.payoutAccountName ? ` (${trade.payoutAccountName})` : ''}`} />
                                             </>
                                         )}
                                     </div>
-                                    {trade.payoutMethod === 'CRYPTO' && (
-                                        <div style={{ marginTop: "0.5rem", padding: "0.5rem", backgroundColor: "white", borderRadius: "4px", fontSize: "0.9rem", color: "var(--primary)" }}>
-                                            <span style={{ opacity: 0.7 }}>{trade.cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Wallet:' : 'Exchange ID:'}</span>
-                                            <strong style={{ marginLeft: "0.5rem", wordBreak: "break-all" }}>{trade.cryptoReceiverId}</strong>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -210,7 +219,7 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                             </span>
                         </div>
 
-                        <form action={updateStatusAction} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        <StatusControlsClient action={updateStatusAction}>
                             <div className="form-group" style={{ marginBottom: 0 }}>
                                 <select name="status" className="form-select" defaultValue={trade.status} style={{ padding: "0.5rem" }}>
                                     <option value="PENDING">Pending (Initial)</option>
@@ -263,9 +272,7 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                                     </div>
                                 </div>
                             )}
-
-                            <button type="submit" className="btn btn-primary" style={{ padding: "0.5rem" }}>Update Trade</button>
-                        </form>
+                        </StatusControlsClient>
 
                         <ResendEmailButtons tradeId={trade.id} status={trade.status} />
                     </div>
@@ -285,8 +292,13 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                             {trade.calculatedPayout && (
                                 <div style={{ gridColumn: "1 / -1", backgroundColor: "var(--bg-alt)", padding: "0.75rem", borderRadius: "var(--radius-md)" }}>
                                     <small>SYSTEM CALCULATED PAYOUT</small>
-                                    <div style={{ fontSize: "1.1rem", fontWeight: "bold", color: "var(--primary)" }}>
-                                        GH₵ {trade.calculatedPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    <div style={{ fontSize: "1.1rem", fontWeight: "bold", color: "var(--primary)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <span>GH₵ {trade.calculatedPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                        {trade.payoutMethod === 'CRYPTO' && (
+                                            <span style={{ fontSize: "1rem", color: "#16a34a" }}>
+                                                ≈ {(trade.calculatedPayout / usdtRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             )}

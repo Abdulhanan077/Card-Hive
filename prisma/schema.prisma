@@ -146,6 +146,7 @@ model Settings {
   faqContent              String   @default("[]") // JSON string of FAQs
   referralBonusPercentage Float    @default(1.5) // Percentage of the referred user's first trade
   rewardPointsToGhs       Float    @default(100.0) // How much 100 Reward Points is worth in GHS
+  usdtExchangeRate        Float    @default(15.0) // How much GHS is 1 USDT currently
 }
 
 model CardRate {

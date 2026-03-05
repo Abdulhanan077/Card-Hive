@@ -107,8 +107,8 @@ export default async function UserDashboardHome() {
                                     Share your code and earn a percentage of their first trade as points!
                                 </p>
                                 <div style={{ backgroundColor: 'white', padding: '0.5rem', borderRadius: '4px', marginTop: '0.5rem' }}>
-                                    <div style={{ fontSize: '0.8rem', color: 'gray', marginBottom: '0.2rem' }}>Your Code:</div>
-                                    <div style={{ fontWeight: 'bold', color: 'var(--primary)', fontSize: '1.1rem' }}>{userData?.referralCode}</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'gray', marginBottom: '0.2rem' }}>Your Referral Link:</div>
+                                    <ReferralLinkCopy referralCode={userData?.referralCode || null} />
                                 </div>
                             </div>
                         </div>
