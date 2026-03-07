@@ -5,6 +5,7 @@ import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import SidebarAutoClose from "@/components/SidebarAutoClose";
 import SessionTracker from "@/app/components/SessionTracker";
+import UserNotificationBell from "./UserNotificationBell";
 import "./user.css";
 
 export default async function UserLayout({ children }: { children: React.ReactNode }) {
@@ -44,9 +45,15 @@ export default async function UserLayout({ children }: { children: React.ReactNo
                 </nav>
             </aside>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100vh', overflow: 'hidden' }}>
-                <div className="mobile-top-bar">
-                    <label htmlFor="sidebar-toggle" className="mobile-menu-btn" aria-label="Open menu">☰</label>
-                    <span style={{ fontWeight: 600 }}>🛍️ Card Hive</span>
+                <div className="mobile-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <label htmlFor="sidebar-toggle" className="mobile-menu-btn" aria-label="Open menu">☰</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <img src="/logo.png" alt="Card Hive Logo" style={{ height: '24px', width: 'auto' }} />
+                            <span style={{ fontWeight: 600 }}>Card Hive</span>
+                        </div>
+                    </div>
+                    <UserNotificationBell />
                 </div>
                 <main className="dashboard-main" style={{ flex: 1, overflowY: 'auto' }}>
                     {children}

@@ -22,6 +22,9 @@ const s3Client = new S3Client({
 
 export async function POST(req: Request) {
     try {
+        console.log("🚀 POST /api/trades started");
+        console.log("DEBUG: DATABASE_URL check:", process.env.DATABASE_URL?.split('@')[1] || "Not found");
+
         const session = await getServerSession(authOptions);
         if (!session?.user) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -29,11 +32,11 @@ export async function POST(req: Request) {
 
         const formData = await req.formData();
 
-        // Extract fields
-        const payoutNetwork = formData.get("payoutNetwork") as string;
-        const payoutPhoneNumber = formData.get("payoutPhoneNumber") as string;
-        const payoutAccountName = formData.get("payoutAccountName") as string;
+        // Extract generic payout fields
         const payoutMethod = (formData.get("payoutMethod") as string) || "MOBILE_MONEY";
+        const payoutNetwork = (formData.get("payoutNetwork") as string) || "";
+        const payoutPhoneNumber = (formData.get("payoutPhoneNumber") as string) || "";
+        const payoutAccountName = (formData.get("payoutAccountName") as string) || null;
 
         // Crypto fields
         const cryptoCoin = formData.get("cryptoCoin") as any;
@@ -42,142 +45,146 @@ export async function POST(req: Request) {
         const cryptoReceiverIdType = formData.get("cryptoReceiverIdType") as any;
         const cryptoReceiverId = formData.get("cryptoReceiverId") as string;
 
-        const cardBrand = formData.get("cardBrand") as string;
-        const cardCountry = formData.get("cardCountry") as string;
-        const cardType = formData.get("cardType") as string;
-        const faceValue = parseFloat(formData.get("faceValue") as string);
-        const currency = formData.get("currency") as string;
-        const cardCode = formData.get("cardCode") as string;
-        const serialNumber = (formData.get("serialNumber") as string) || "";
         const notes = formData.get("notes") as string;
 
-        if (!cardCode || !faceValue || !cardBrand) {
-            return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
+        // Extract cards data
+        const cardsJson = formData.get("cards") as string;
+        if (!cardsJson) {
+            return NextResponse.json({ message: "No cards provided" }, { status: 400 });
         }
 
-        // 1. Duplicate Check Logic
-        const rawToHash = `${cardCode}-${serialNumber}`.trim();
-        const cardCodeHash = crypto.createHash("sha256").update(rawToHash).digest("hex");
+        const cards = JSON.parse(cardsJson) as Array<{
+            cardBrand: string;
+            cardCountry: string;
+            cardType: string;
+            faceValue: number;
+            currency: string;
+            cardCode: string;
+            serialNumber?: string;
+        }>;
 
-        const duplicateTrade = await prisma.trade.findFirst({
-            where: {
-                cardCodeHash,
-                status: {
-                    not: "REJECTED"
-                }
-            }
+        if (cards.length === 0) {
+            return NextResponse.json({ message: "No cards provided" }, { status: 400 });
+        }
+
+        // 1. Batch Duplicate Check Logic
+        const cardCodeHashes = cards.map(card => {
+            const rawToHash = `${card.cardCode}-${card.serialNumber || ""}`.trim();
+            return crypto.createHash("sha256").update(rawToHash).digest("hex");
         });
 
-        if (duplicateTrade) {
-            // Find the user who attempted this
-            const attempter = await prisma.user.findUnique({ where: { id: parseInt(session.user.id) } });
-            if (attempter) {
-                if (attempter.emailNotificationsEnabled) {
-                    await sendDuplicateCardAttemptEmail({ email: attempter.email, username: attempter.username }, { cardBrand, faceValue, currency });
-                }
-                await sendAdminDuplicateAlert(
-                    { cardBrand, faceValue, currency },
-                    [duplicateTrade],
-                    { username: attempter.username, email: attempter.email }
-                );
-            }
+        const duplicateTrades = await prisma.trade.findMany({
+            where: {
+                cardCodeHash: { in: cardCodeHashes },
+                status: { not: "REJECTED" }
+            },
+            select: { cardCodeHash: true, cardCode: true, tradeId: true }
+        });
 
+        if (duplicateTrades.length > 0) {
             return NextResponse.json(
-                { message: "This card appears to have already been submitted. If you believe this is a mistake, please contact support." },
+                { message: `One or more cards (including ${duplicateTrades[0].cardCode}) appear to have already been submitted.` },
                 { status: 409 }
             );
         }
 
-        // 2. Handle Image Uploads
+        // 2. Batch Fetch Rates
+        // We fetch all rates for the brands involved in the whole batch
+        const brands = Array.from(new Set(cards.map(c => c.cardBrand)));
+        const relevantRates = await prisma.cardRate.findMany({
+            where: {
+                cardBrand: { in: brands }
+            }
+        });
+
+        // 3. Handle Image Uploads... (already optimized)
         const images = formData.getAll("images") as File[];
         const imageUrls: string[] = [];
-
         if (images.length > 0) {
             for (const image of images) {
                 if (image.size > 0) {
                     const uniqueName = `${Date.now()}-${image.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-
-                    const buffer = Buffer.from(await image.arrayBuffer());
-
-                    const command = new PutObjectCommand({
+                    await s3Client.send(new PutObjectCommand({
                         Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
                         Key: uniqueName,
-                        Body: buffer,
+                        Body: Buffer.from(await image.arrayBuffer()),
                         ContentType: image.type,
-                    });
-
-                    await s3Client.send(command);
-
-                    // Reconstruct the public R2 domain URL
-                    const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${uniqueName}`;
-                    imageUrls.push(publicUrl);
+                    }));
+                    imageUrls.push(`${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${uniqueName}`);
                 }
             }
         }
 
-        // 3. Generate Trade ID
-        const count = await prisma.trade.count();
-        const tradeId = `GC-${new Date().getFullYear()}-${(count + 1).toString().padStart(6, "0")}`;
+        const batchId = `BATCH-${Date.now()}-${session.user.id}`;
+        const createdTrades = [];
+        const baseTradeCount = await prisma.trade.count();
 
-        // Fetch active rate
-        const rateRecord = await prisma.cardRate.findUnique({
-            where: {
-                cardBrand_cardCountry_cardType: { cardBrand, cardCountry, cardType }
-            }
-        });
+        for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            const tradeId = `GC-${new Date().getFullYear()}-${(baseTradeCount + i + 1).toString().padStart(6, "0")}`;
+            const cardCodeHash = cardCodeHashes[i];
 
-        let calculatedPayout = null;
-        if (rateRecord) {
-            calculatedPayout = faceValue * rateRecord.rate;
+            const rateRecord = relevantRates.find(r =>
+                r.cardBrand === card.cardBrand &&
+                r.cardCountry === card.cardCountry &&
+                r.cardType === card.cardType
+            );
+            const calculatedPayout = rateRecord ? (card.faceValue * rateRecord.rate) : null;
+
+            // 4. Save to Database
+            const trade = await prisma.trade.create({
+                data: {
+                    tradeId,
+                    fullName: batchId,
+                    userId: parseInt(session.user.id),
+                    payoutMethod: payoutMethod as any,
+                    payoutNetwork,
+                    payoutPhoneNumber,
+                    payoutAccountName,
+                    cryptoCoin,
+                    cryptoNetwork,
+                    cryptoExchange,
+                    cryptoReceiverIdType,
+                    cryptoReceiverId,
+                    cardBrand: card.cardBrand,
+                    cardCountry: card.cardCountry,
+                    cardType: card.cardType,
+                    faceValue: card.faceValue,
+                    currency: card.currency,
+                    cardCode: card.cardCode,
+                    serialNumber: card.serialNumber || "",
+                    calculatedPayout,
+                    cardCodeHash,
+                    imageUrls: JSON.stringify(imageUrls),
+                    adminNotes: notes,
+                }
+            });
+            createdTrades.push(trade);
         }
-
-        // 4. Save to Database
-        const trade = await prisma.trade.create({
-            data: {
-                tradeId,
-                userId: parseInt(session.user.id),
-                payoutMethod: payoutMethod as any,
-                payoutNetwork: (payoutNetwork as string) || "",
-                payoutPhoneNumber: (payoutPhoneNumber as string) || "",
-                payoutAccountName: (payoutAccountName as string) || null,
-                cryptoCoin,
-                cryptoNetwork,
-                cryptoExchange,
-                cryptoReceiverIdType,
-                cryptoReceiverId,
-                cardBrand,
-                cardCountry,
-                cardType,
-                faceValue,
-                currency,
-                cardCode,
-                serialNumber,
-                calculatedPayout,
-                cardCodeHash,
-                imageUrls: JSON.stringify(imageUrls),
-                adminNotes: notes, // Store initial notes logic if needed, or create separate field
-            }
-        });
 
         const user = await prisma.user.findUnique({ where: { id: parseInt(session.user.id) } });
         if (user) {
+            // Send one email for the whole batch
             if (user.emailNotificationsEnabled) {
-                await sendTradeSubmittedEmail({ email: user.email, username: user.username }, trade);
+                await sendTradeSubmittedEmail({ email: user.email, username: user.username }, createdTrades);
             }
-            await sendAdminNewTradeEmail(trade, { username: user.username, email: user.email, phoneNumber: user.phoneNumber });
+            await sendAdminNewTradeEmail(createdTrades, { username: user.username, email: user.email, phoneNumber: user.phoneNumber });
         }
 
-        return NextResponse.json({ tradeId: trade.tradeId }, { status: 201 });
+        return NextResponse.json({ tradeId: createdTrades[0].tradeId, batchId }, { status: 201 });
     } catch (error: any) {
-        console.error("DEBUG: Trade submission detailed error:", {
-            message: error.message,
-            stack: error.stack,
-            code: error.code,
-            meta: error.meta
-        });
+        console.error("DEBUG: Trade submission detailed error:", error);
+        console.error("DEBUG META:", JSON.stringify(error.meta));
+
+        // Detailed logging for each card specifically if reached
         return NextResponse.json({
             message: "Internal server error",
-            debug: process.env.NODE_ENV === 'development' ? error.message : undefined
+            debug: {
+                message: error.message,
+                code: error.code,
+                meta: error.meta,
+                name: error.name
+            }
         }, { status: 500 });
     }
 }

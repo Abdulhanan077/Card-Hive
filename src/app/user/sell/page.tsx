@@ -5,6 +5,18 @@ import { useRouter } from "next/navigation";
 import styles from "./sell.module.css";
 import { useNotification } from "@/context/NotificationContext";
 
+interface CardEntry {
+    id: string;
+    cardBrand: string;
+    cardCategory: string;
+    cardType: string;
+    faceValue: string;
+    faceValueError: string;
+    estimatedPayout: number | null;
+    cardCode: string;
+    serialNumber: string;
+}
+
 export default function SellGiftCardPage() {
     const router = useRouter();
     const { showNotification } = useNotification();
@@ -13,20 +25,29 @@ export default function SellGiftCardPage() {
     const [files, setFiles] = useState<File[]>([]);
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
 
-    // Rate Calculator State
+    // Global Rates State
     const [rates, setRates] = useState<{ cardBrand: string, cardCountry: string, cardType?: string, rate: number }[]>([]);
     const [usdtRate, setUsdtRate] = useState<number>(15.0);
-    const [cardBrand, setCardBrand] = useState("");
-    const [cardCategory, setCardCategory] = useState("");
-    const [cardType, setCardType] = useState("Physical");
-    const [faceValue, setFaceValue] = useState("");
-    const [faceValueError, setFaceValueError] = useState("");
-    const [estimatedPayout, setEstimatedPayout] = useState<number | null>(null);
 
-    // Payout Method State
+    // Multiple Cards State
+    const [cards, setCards] = useState<CardEntry[]>([
+        {
+            id: Math.random().toString(36).substr(2, 9),
+            cardBrand: "",
+            cardCategory: "",
+            cardType: "Physical",
+            faceValue: "",
+            faceValueError: "",
+            estimatedPayout: null,
+            cardCode: "",
+            serialNumber: ""
+        }
+    ]);
+
+    // Payout Method State (Common for all cards in the batch)
     const [payoutMethod, setPayoutMethod] = useState<"MOBILE_MONEY" | "CRYPTO">("MOBILE_MONEY");
     const [cryptoCoin, setCryptoCoin] = useState<"USDT">("USDT");
-    const [cryptoNetwork, setCryptoNetwork] = useState("");
+    const [cryptoNetwork, setCryptoNetwork] = useState("TRC20");
     const [cryptoExchange, setCryptoExchange] = useState("");
     const [cryptoReceiverIdType, setCryptoReceiverIdType] = useState<"WALLET_ADDRESS" | "EXCHANGE_ID">("EXCHANGE_ID");
 
@@ -43,78 +64,89 @@ export default function SellGiftCardPage() {
         return () => filePreviews.forEach(URL.revokeObjectURL);
     }, [filePreviews]);
 
-    // Get Unique Brands configured by Admin
-    const availableBrands = Array.from(new Set(rates.map(r => r.cardBrand)));
+    const availableBrands = Array.from(new Set(rates.map((r: { cardBrand: string }) => r.cardBrand)));
 
-    // Get Categories (Country/PriceTag) specifically available for the selected Brand AND Type
-    const availableCategories = Array.from(new Set(
-        rates
-            .filter(r => r.cardBrand === cardBrand && (r.cardType === cardType || (!r.cardType && cardType === "Physical")))
-            .map(r => r.cardCountry)
-    ));
+    const addCard = () => {
+        setCards([...cards, {
+            id: Math.random().toString(36).substr(2, 9),
+            cardBrand: "",
+            cardCategory: "",
+            cardType: "Physical",
+            faceValue: "",
+            faceValueError: "",
+            estimatedPayout: null,
+            cardCode: "",
+            serialNumber: ""
+        }]);
+    };
 
-    // Automatically select first category if brand/type changes and categories exist
-    useEffect(() => {
-        if (availableCategories.length > 0 && !availableCategories.includes(cardCategory)) {
-            setCardCategory(availableCategories[0]);
-        } else if (availableCategories.length === 0) {
-            setCardCategory("");
+    const removeCard = (id: string) => {
+        if (cards.length > 1) {
+            setCards(cards.filter(c => c.id !== id));
         }
-    }, [cardBrand, cardType, cardCategory]);
+    };
 
-    // Reset Network if Coin changes
-    useEffect(() => {
-        setCryptoNetwork("TRC20");
-    }, [cryptoCoin]);
+    const updateCard = (id: string, updates: Partial<CardEntry>) => {
+        setCards((prevCards: CardEntry[]) => prevCards.map((card: CardEntry) => {
+            if (card.id !== id) return card;
 
+            const updatedCard = { ...card, ...updates };
 
-    // Recalculate anytime inputs change
-    useEffect(() => {
-        const value = parseFloat(faceValue);
-        setFaceValueError("");
+            // Recalculate if relevant fields changed
+            if (updates.cardBrand || updates.cardCategory || updates.cardType || updates.faceValue !== undefined) {
+                const value = parseFloat(updatedCard.faceValue);
+                updatedCard.faceValueError = "";
 
-        if (!cardBrand || !cardCategory || isNaN(value)) {
-            setEstimatedPayout(null);
-            return;
-        }
+                if (!updatedCard.cardBrand || !updatedCard.cardCategory || isNaN(value)) {
+                    updatedCard.estimatedPayout = null;
+                } else {
+                    // Validate face value against category
+                    const matchRange = updatedCard.cardCategory.match(/\(\$(\d+)\s*-\s*\$(\d+)\)/) || updatedCard.cardCategory.match(/\((\d+)\s*-\s*(\d+)\)/);
+                    const matchMin = updatedCard.cardCategory.match(/\(\$(\d+)\+\)/) || updatedCard.cardCategory.match(/\((\d+)\+\)/);
+                    const matchExact = updatedCard.cardCategory.match(/\(\$?(\d+)\)/);
 
-        // Validate face value against category
-        const matchRange = cardCategory.match(/\(\$(\d+)\s*-\s*\$(\d+)\)/) || cardCategory.match(/\((\d+)\s*-\s*(\d+)\)/);
-        const matchMin = cardCategory.match(/\(\$(\d+)\+\)/) || cardCategory.match(/\((\d+)\+\)/);
-        const matchExact = cardCategory.match(/\(\$?(\d+)\)/);
+                    if (matchRange) {
+                        const min = parseFloat(matchRange[1]);
+                        const max = parseFloat(matchRange[2]);
+                        if (value < min || value > max) {
+                            updatedCard.faceValueError = `Amount must be between ${min} and ${max} for this category.`;
+                        }
+                    } else if (matchMin) {
+                        const min = parseFloat(matchMin[1]);
+                        if (value < min) {
+                            updatedCard.faceValueError = `Amount must be at least ${min} for this category.`;
+                        }
+                    } else if (matchExact) {
+                        const exact = parseFloat(matchExact[1]);
+                        if (value !== exact) {
+                            updatedCard.faceValueError = `Amount must be exactly ${exact} for this category.`;
+                        }
+                    }
 
-        if (matchRange) {
-            const min = parseFloat(matchRange[1]);
-            const max = parseFloat(matchRange[2]);
-            if (value < min || value > max) {
-                setFaceValueError(`Amount must be between ${min} and ${max} for this category.`);
+                    const activeRate = rates.find(r =>
+                        r.cardBrand === updatedCard.cardBrand &&
+                        r.cardCountry === updatedCard.cardCategory &&
+                        (r.cardType === updatedCard.cardType || (!r.cardType && updatedCard.cardType === "Physical"))
+                    );
+
+                    if (activeRate) {
+                        updatedCard.estimatedPayout = value * activeRate.rate;
+                    } else {
+                        updatedCard.estimatedPayout = null;
+                    }
+                }
             }
-        } else if (matchMin) {
-            const min = parseFloat(matchMin[1]);
-            if (value < min) {
-                setFaceValueError(`Amount must be at least ${min} for this category.`);
-            }
-        } else if (matchExact) {
-            const exact = parseFloat(matchExact[1]);
-            if (value !== exact) {
-                setFaceValueError(`Amount must be exactly ${exact} for this category.`);
-            }
-        }
 
-        const activeRate = rates.find(r => r.cardBrand === cardBrand && r.cardCountry === cardCategory && (r.cardType === cardType || (!r.cardType && cardType === "Physical")));
-        if (activeRate) {
-            setEstimatedPayout(value * activeRate.rate);
-        } else {
-            setEstimatedPayout(null);
-        }
-    }, [cardBrand, cardCategory, cardType, faceValue, rates]);
+            return updatedCard;
+        }));
+    };
+
+    const totalPayout = cards.reduce((sum: number, card: CardEntry) => sum + (card.estimatedPayout || 0), 0);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const selectedFiles = Array.from(e.target.files);
             setFiles(selectedFiles);
-
-            // Generate previews for the images
             const previews = selectedFiles.map(file => URL.createObjectURL(file));
             setFilePreviews(previews);
         }
@@ -125,9 +157,11 @@ export default function SellGiftCardPage() {
         setLoading(true);
         setError("");
 
-        if (faceValueError) {
-            setError(faceValueError);
-            showNotification('ERROR', faceValueError);
+        // Check for errors in any card
+        const firstError = cards.find((c: CardEntry) => c.faceValueError)?.faceValueError;
+        if (firstError) {
+            setError(firstError);
+            showNotification('ERROR', firstError);
             setLoading(false);
             window.scrollTo({ top: 0, behavior: "smooth" });
             return;
@@ -135,31 +169,38 @@ export default function SellGiftCardPage() {
 
         const formData = new FormData(e.currentTarget);
 
-        // Map the new single category back to the expected API fields
-        formData.set("cardCountry", cardCategory);
-        // Extract base currency from category e.g. "USD ($10-49)" -> "USD"
-        const extractedCurrency = cardCategory.split(' ')[0] || "USD";
-        formData.set("currency", extractedCurrency);
+        // Prepare cards data for API
+        const cardsData = cards.map((c: CardEntry) => {
+            const extractedCurrency = c.cardCategory.split(' ')[0] || "USD";
+            return {
+                cardBrand: c.cardBrand,
+                cardCountry: c.cardCategory,
+                cardType: c.cardType,
+                faceValue: parseFloat(c.faceValue),
+                currency: extractedCurrency,
+                cardCode: c.cardCode,
+                serialNumber: c.serialNumber
+            };
+        });
 
-        // Append files manually to ensure array format
+        formData.set("cards", JSON.stringify(cardsData));
+
+        // Append files manually
         formData.delete("images");
-        files.forEach(file => {
+        files.forEach((file: File) => {
             formData.append("images", file);
         });
 
         try {
             const res = await fetch("/api/trades", {
                 method: "POST",
-                body: formData, // FormData automatically sets multipart/form-data
+                body: formData,
             });
 
             const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Failed to submit trade");
 
-            if (!res.ok) {
-                throw new Error(data.message || "Failed to submit trade");
-            }
-
-            showNotification('SUCCESS', 'Trade submitted successfully!');
+            showNotification('SUCCESS', `Successfully submitted ${cards.length} gift cards!`);
             router.push(`/user/success?tradeId=${data.tradeId}`);
         } catch (err: any) {
             setError(err.message);
@@ -173,11 +214,11 @@ export default function SellGiftCardPage() {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h1 className="dashboard-title">Sell Your Gift Card</h1>
-                <p className="dashboard-subtitle">Fill in the details below to submit your card for review and instant payout.</p>
+                <h1 className="dashboard-title">Sell Your Gift Cards</h1>
+                <p className="dashboard-subtitle">List one or more cards below to submit them for review and instant payout.</p>
             </div>
 
-            <div className="card" style={{ maxWidth: '800px' }}>
+            <div className="card" style={{ maxWidth: '900px' }}>
                 {error && (
                     <div className={styles.errorMessage}>
                         <strong>Submission Error:</strong> {error}
@@ -263,139 +304,167 @@ export default function SellGiftCardPage() {
                                 </div>
 
                                 <div className="form-group" style={{ marginTop: '1rem' }}>
-                                    <label className="form-label">
-                                        {cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Wallet Address' : (
-                                            cryptoExchange === 'NOONES' ? 'NoOnes Email / UID' :
-                                                cryptoExchange === 'BINANCE' ? 'Binance Email / Phone / UID' :
-                                                    cryptoExchange === 'OKX' ? 'OKX UID or Email' :
-                                                        'Your Account ID / Email on this exchange'
-                                        )}
-                                    </label>
+                                    <label className="form-label">Account Identifer</label>
                                     <input
                                         type="text"
                                         name="cryptoReceiverId"
                                         className="form-input"
                                         required
-                                        placeholder={cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Paste your wallet address' : 'Enter your account identifier'}
+                                        placeholder="Wallet Address or ID"
                                     />
-                                    <p className={styles.helpText} style={{ color: '#d97706', marginTop: '0.4rem', fontSize: '0.85rem' }}>
-                                        {cryptoReceiverIdType === 'WALLET_ADDRESS'
-                                            ? "⚠️ Ensure this address supports the selected coin and network. Transfers are irreversible."
-                                            : "We will use an internal transfer on the same exchange to reduce fees. Ensure this ID is correct."}
-                                    </p>
                                 </div>
                             </div>
                         )}
-
                     </div>
 
                     <hr className={styles.divider} />
 
-                    {/* Card Details */}
+                    {/* Card Details Section */}
                     <div className={styles.formSection}>
-                        <h3>2. Gift Card Details</h3>
-
-                        <div className={styles.grid2}>
-                            <div className="form-group">
-                                <label className="form-label">Card Brand</label>
-                                <select
-                                    name="cardBrand"
-                                    className="form-select"
-                                    required
-                                    value={cardBrand}
-                                    onChange={(e) => setCardBrand(e.target.value)}
-                                >
-                                    <option value="">Select Brand...</option>
-                                    {availableBrands.map(brand => (
-                                        <option key={brand} value={brand}>{brand}</option>
-                                    ))}
-                                    {/* Fallback option if user has a brand not listed in rates */}
-                                    {!availableBrands.includes("Other") && <option value="Other">Other (Manual Review)</option>}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Type</label>
-                                <select
-                                    name="cardType"
-                                    className="form-select"
-                                    required
-                                    value={cardType}
-                                    onChange={(e) => setCardType(e.target.value)}
-                                >
-                                    <option value="Physical">Physical Card</option>
-                                    <option value="E-code">E-code (Digital)</option>
-                                </select>
-                            </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 style={{ margin: 0 }}>2. Gift Cards to Trade</h3>
+                            <button type="button" onClick={addCard} className="btn" style={{ backgroundColor: 'var(--success)', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span>➕</span> Add Another Card
+                            </button>
                         </div>
 
-                        <div className={styles.grid2}>
-                            <div className="form-group">
-                                <label className="form-label">Currency & Category</label>
-                                <select
-                                    className="form-select"
-                                    required
-                                    value={cardCategory}
-                                    onChange={(e) => setCardCategory(e.target.value)}
-                                    disabled={!cardBrand || availableCategories.length === 0}
-                                >
-                                    {cardBrand && availableCategories.length === 0 ? (
-                                        <option value="">No rates available for {cardType} {cardBrand}</option>
-                                    ) : (
-                                        <>
-                                            <option value="">Select Category...</option>
-                                            {availableCategories.map(cat => (
-                                                <option key={cat} value={cat}>{cat}</option>
-                                            ))}
-                                            {cardBrand === "Other" && <option value="Manual">Manual Entry</option>}
-                                        </>
+                        {cards.map((card, index) => {
+                            const availableCategories = Array.from(new Set(
+                                rates
+                                    .filter((r: { cardBrand: string, cardType?: string }) => r.cardBrand === card.cardBrand && (r.cardType === card.cardType || (!r.cardType && card.cardType === "Physical")))
+                                    .map((r: { cardCountry: string }) => r.cardCountry)
+                            ));
+
+                            return (
+                                <div key={card.id} className={styles.cardItem} style={{ border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem', position: 'relative', backgroundColor: 'var(--bg)' }}>
+                                    {cards.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeCard(card.id)}
+                                            style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', opacity: 0.6 }}
+                                            title="Remove card"
+                                        >
+                                            ❌
+                                        </button>
                                     )}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Exact Face Value Amount</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    name="faceValue"
-                                    className="form-input"
-                                    required
-                                    placeholder="e.g. 50"
-                                    value={faceValue}
-                                    onChange={(e) => setFaceValue(e.target.value)}
-                                />
-                                {faceValueError && <p style={{ color: "var(--danger, #dc2626)", fontSize: "0.85rem", marginTop: "0.4rem" }}>{faceValueError}</p>}
-                            </div>
-                        </div>
+                                    <div style={{ marginBottom: '1rem', fontWeight: 600, color: 'var(--primary)' }}>Card #{index + 1}</div>
 
-                        {/* Dynamic Payout Calculator Display */}
-                        {estimatedPayout !== null ? (
-                            <div style={{ padding: "1rem", backgroundColor: "var(--bg-alt)", borderRadius: "8px", border: "1px solid var(--border-color)", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-                                <span style={{ fontWeight: 500, opacity: 0.8 }}>Estimated Payout:</span>
-                                <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                                    <span style={{ fontSize: "1.25rem", fontWeight: "bold", color: "var(--primary)" }}>GH₵ {estimatedPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                    {payoutMethod === "CRYPTO" && (
-                                        <span style={{ fontSize: "1rem", fontWeight: 600, color: "#16a34a", marginTop: "0.25rem" }}>
-                                            ≈ {(estimatedPayout / usdtRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
-                                        </span>
+                                    <div className={styles.grid2}>
+                                        <div className="form-group">
+                                            <label className="form-label">Card Brand</label>
+                                            <select
+                                                className="form-select"
+                                                required
+                                                value={card.cardBrand}
+                                                onChange={(e) => updateCard(card.id, { cardBrand: e.target.value, cardCategory: "" })}
+                                            >
+                                                <option value="">Select Brand...</option>
+                                                {availableBrands.map(brand => (
+                                                    <option key={brand} value={brand}>{brand}</option>
+                                                ))}
+                                                {!availableBrands.includes("Other") && <option value="Other">Other (Manual Review)</option>}
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Type</label>
+                                            <select
+                                                className="form-select"
+                                                required
+                                                value={card.cardType}
+                                                onChange={(e) => updateCard(card.id, { cardType: e.target.value })}
+                                            >
+                                                <option value="Physical">Physical Card</option>
+                                                <option value="E-code">E-code (Digital)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.grid2}>
+                                        <div className="form-group">
+                                            <label className="form-label">Currency & Category</label>
+                                            <select
+                                                className="form-select"
+                                                required
+                                                value={card.cardCategory}
+                                                onChange={(e) => updateCard(card.id, { cardCategory: e.target.value })}
+                                                disabled={!card.cardBrand || availableCategories.length === 0}
+                                            >
+                                                {card.cardBrand && availableCategories.length === 0 ? (
+                                                    <option value="">No rates available</option>
+                                                ) : (
+                                                    <>
+                                                        <option value="">Select Category...</option>
+                                                        {availableCategories.map(cat => (
+                                                            <option key={cat} value={cat}>{cat}</option>
+                                                        ))}
+                                                        {card.cardBrand === "Other" && <option value="Manual">Manual Entry</option>}
+                                                    </>
+                                                )}
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Exact Face Value Amount</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                className="form-input"
+                                                required
+                                                placeholder="e.g. 50"
+                                                value={card.faceValue}
+                                                onChange={(e) => updateCard(card.id, { faceValue: e.target.value })}
+                                            />
+                                            {card.faceValueError && <p style={{ color: "var(--danger)", fontSize: "0.85rem", marginTop: "0.4rem" }}>{card.faceValueError}</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.grid2}>
+                                        <div className="form-group">
+                                            <label className="form-label">Card Code / PIN</label>
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                required
+                                                placeholder="Enter card code"
+                                                value={card.cardCode}
+                                                onChange={(e) => updateCard(card.id, { cardCode: e.target.value })}
+                                                style={{ fontFamily: 'monospace' }}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Serial Number (Optional)</label>
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                placeholder="Enter serial number"
+                                                value={card.serialNumber}
+                                                onChange={(e) => updateCard(card.id, { serialNumber: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {card.estimatedPayout !== null && (
+                                        <div style={{ marginTop: '1rem', textAlign: 'right', fontSize: '0.9rem', color: 'var(--success)', fontWeight: 600 }}>
+                                            Estimated Card Payout: GH₵ {card.estimatedPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        </div>
                                     )}
                                 </div>
-                            </div>
-                        ) : cardBrand && faceValue ? (
-                            <div style={{ padding: "1rem", backgroundColor: "#fffbeb", borderRadius: "8px", border: "1px solid #fde68a", marginBottom: "1.5rem", color: "#d97706" }}>
-                                <span>No current automated rate found. Final payout will be evaluated by an Admin upon submission.</span>
-                            </div>
-                        ) : null}
+                            );
+                        })}
 
-                        <div className="form-group">
-                            <label className="form-label">Card Code / PIN (Required)</label>
-                            <input type="text" name="cardCode" className="form-input" required placeholder="Exact code to redeem" style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }} />
-                            <p className={styles.helpText}>Enter the exact alphanumeric code. This is strictly checked for duplicates.</p>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Serial Number (Optional)</label>
-                            <input type="text" name="serialNumber" className="form-input" placeholder="Often found near the barcode" />
-                        </div>
+                        {totalPayout > 0 && (
+                            <div style={{ padding: "1.5rem", backgroundColor: "var(--primary-light, #f0fdf4)", borderRadius: "12px", border: "2px solid var(--primary)", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div>
+                                    <div style={{ fontSize: '0.9rem', opacity: 0.8, fontWeight: 500 }}>Total Estimated Payout ({cards.length} cards)</div>
+                                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)' }}>GH₵ {totalPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                </div>
+                                {payoutMethod === "CRYPTO" && (
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '0.9rem', opacity: 0.8, fontWeight: 500 }}>Approx. USDT</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>≈ {(totalPayout / usdtRate).toLocaleString(undefined, { minimumFractionDigits: 2 })} USDT</div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <hr className={styles.divider} />
@@ -403,51 +472,43 @@ export default function SellGiftCardPage() {
                     {/* Uploads */}
                     <div className={styles.formSection}>
                         <h3>3. Evidence & Media</h3>
+                        <p style={{ fontSize: '0.9rem', opacity: 0.7, marginBottom: '1rem' }}>Upload images (front/back) and receipts for all cards listed above.</p>
                         <div className="form-group">
-                            <label className="form-label">Upload Card Images & Receipt</label>
                             <div className={styles.fileUpload}>
-                                <input type="file" multiple accept="image/*" onChange={handleFileChange} className={styles.fileInput} />
-                                <div className={styles.fileLabel}>
+                                <input type="file" id="images" multiple accept="image/*" onChange={handleFileChange} className={styles.fileInput} />
+                                <label htmlFor="images" className={styles.fileLabel}>
                                     {filePreviews.length > 0 ? (
                                         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                            {filePreviews.map((preview, index) => (
-                                                <img key={index} src={preview} alt={`preview ${index}`} style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
+                                            {filePreviews.map((preview: string, index: number) => (
+                                                <img key={index} src={preview} alt="preview" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
                                             ))}
                                         </div>
                                     ) : (
                                         <>
                                             <span style={{ fontSize: '2rem' }}>📸</span>
-                                            <p>Click to browse or drag and drop images here.</p>
-                                            <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>Front, back, and receipt required for physical cards.</p>
+                                            <p>Click to upload proof for all cards</p>
                                         </>
                                     )}
-                                </div>
+                                </label>
                             </div>
                         </div>
 
                         <div className="form-group">
                             <label className="form-label">Additional Notes (Optional)</label>
-                            <textarea name="notes" className="form-textarea" rows={3} placeholder="Any extra information the admin should know..."></textarea>
+                            <textarea name="notes" className="form-textarea" rows={3} placeholder="Any extra info..."></textarea>
                         </div>
                     </div>
 
                     <div className={styles.consentBox}>
                         <label className={styles.checkboxLabel}>
                             <input type="checkbox" required className={styles.checkbox} />
-                            <span>I confirm I am the rightful owner of this gift card, it has not been used, and all details provided are accurate.</span>
+                            <span>I confirm I own these cards and all details are accurate.</span>
                         </label>
                     </div>
 
-                    {payoutMethod === 'CRYPTO' && (
-                        <div style={{ backgroundColor: '#fff1f2', border: '1px solid #fecdd3', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem', color: '#9f1239', fontSize: '0.9rem' }}>
-                            <strong>⚠️ Final Warning:</strong> Please double-check your crypto details. Once sent by the admin, payments are irreversible.
-                        </div>
-                    )}
-
-
                     <div className={styles.actions}>
-                        <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading}>
-                            {loading ? "Processing Securely..." : "Submit Gift Card"}
+                        <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={loading} style={{ width: '100%', padding: '1.25rem' }}>
+                            {loading ? "Processing Securely..." : `Submit ${cards.length} Trade${cards.length > 1 ? 's' : ''}`}
                         </button>
                     </div>
                 </form>

@@ -32,8 +32,8 @@ export default function SidebarNotifications() {
 
         fetchPending();
 
-        // Refresh every 30 seconds
-        const interval = setInterval(fetchPending, 30000);
+        // Refresh every 5 minutes in dev, 30s in prod
+        const interval = setInterval(fetchPending, process.env.NODE_ENV === 'development' ? 300000 : 30000);
         return () => clearInterval(interval);
     }, []);
 

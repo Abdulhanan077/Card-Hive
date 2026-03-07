@@ -4,14 +4,30 @@ import Link from "next/link";
 
 export default async function AdminDashboardHome() {
     try {
-        const totalTrades = await prisma.trade.count();
-        const pendingTrades = await prisma.trade.count({ where: { status: "PENDING" } });
-        const underReviewTrades = await prisma.trade.count({ where: { status: "UNDER_REVIEW" } });
-        const paidTrades = await prisma.trade.count({ where: { status: { in: ["PAID", "COMPLETED"] } } });
-        const rejectedTrades = await prisma.trade.count({ where: { status: "REJECTED" } });
+        // Consolidate status counts into a single query if possible, 
+        // but for safety in dev with low connection limits, we use sequential hits 
+        // or a simpler grouped count.
+        const statusCounts: any[] = await prisma.$queryRaw`
+            SELECT status, COUNT(*)::int as count 
+            FROM "Trade" 
+            GROUP BY status
+        `;
+
+        const counts: Record<string, number> = statusCounts.reduce((acc: Record<string, number>, curr: any) => {
+            acc[curr.status] = curr.count;
+            return acc;
+        }, {});
+
+        const totalTrades = Object.values(counts).reduce((a, b) => a + b, 0);
+        const pendingTrades = counts["PENDING"] || 0;
+        const underReviewTrades = counts["UNDER_REVIEW"] || 0;
+        const paidTrades = (counts["PAID"] || 0) + (counts["COMPLETED"] || 0);
+        const rejectedTrades = counts["REJECTED"] || 0;
 
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
+
+        // Sequential to avoid pool exhaustion
         const dailyTrades = await prisma.trade.count({
             where: { createdAt: { gte: startOfToday } }
         });

@@ -80,10 +80,22 @@ export default async function AdminRewardsQueue() {
                                         </span>
                                     </td>
                                     <td>{req.payoutMethod}</td>
-                                    <td style={{ maxWidth: '200px', wordBreak: 'break-all' }}>
+                                    <td style={{ maxWidth: '200px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between' }}>
-                                            <span>{req.payoutDetails}</span>
-                                            <CopyButton textToCopy={req.payoutDetails || ""} />
+                                            <span
+                                                title={req.payoutDetails || ""}
+                                                style={{
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    flex: 1
+                                                }}
+                                            >
+                                                {req.payoutDetails}
+                                            </span>
+                                            <div style={{ flexShrink: 0 }}>
+                                                <CopyButton textToCopy={req.payoutDetails || ""} />
+                                            </div>
                                         </div>
                                     </td>
                                     <td>

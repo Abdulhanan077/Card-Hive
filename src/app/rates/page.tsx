@@ -19,6 +19,7 @@ type Rate = {
 export default function PublicRatesPage() {
     const [rates, setRates] = useState<Rate[]>([]);
     const [loading, setLoading] = useState(true);
+    const [usdtExchangeRate, setUsdtExchangeRate] = useState<number>(15.0);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedBrand, setSelectedBrand] = useState("All Brands");
     const [selectedType, setSelectedType] = useState("All Types");
@@ -28,6 +29,7 @@ export default function PublicRatesPage() {
             .then(res => res.json())
             .then(data => {
                 setRates(data.rates || []);
+                setUsdtExchangeRate(data.usdtExchangeRate || 15.0);
                 setLoading(false);
             })
             .catch(err => {
@@ -144,7 +146,7 @@ export default function PublicRatesPage() {
                                                     <th style={{ padding: '1.25rem 1.5rem' }}>Card Brand</th>
                                                     <th style={{ padding: '1.25rem 1.5rem' }}>Category</th>
                                                     <th style={{ padding: '1.25rem 1.5rem' }}>Type</th>
-                                                    <th style={{ padding: '1.25rem 1.5rem' }}>Rate (GHS/$)</th>
+                                                    <th style={{ padding: '1.25rem 1.5rem' }}>Rate (GHS & USDT)</th>
                                                     <th style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>Action</th>
                                                 </tr>
                                             </thead>
@@ -171,7 +173,10 @@ export default function PublicRatesPage() {
                                                             </span>
                                                         </td>
                                                         <td style={{ padding: '1.25rem 1.5rem', fontSize: '1.125rem', fontWeight: 800, color: 'var(--primary)' }}>
-                                                            {rate.publicRate ?? rate.rate}
+                                                            <div>{rate.publicRate ?? rate.rate} GHS</div>
+                                                            <div style={{ fontSize: '0.8rem', color: '#16a34a', marginTop: '0.2rem' }}>
+                                                                ≈ {((rate.publicRate ?? rate.rate) / usdtExchangeRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                                                            </div>
                                                         </td>
                                                         <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                                                             <Link href="/login" style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>

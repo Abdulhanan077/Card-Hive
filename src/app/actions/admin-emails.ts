@@ -27,7 +27,16 @@ export async function resendTradeReceivedEmail(tradeId: number) {
         include: { user: true }
     });
     if (!trade) throw new Error("Trade not found");
-    await sendTradeSubmittedEmail(trade.user, trade);
+
+    let tradesToSend: any | any[] = trade;
+    if (trade.fullName && trade.fullName.startsWith('BATCH-')) {
+        tradesToSend = await prisma.trade.findMany({
+            where: { fullName: trade.fullName },
+            include: { user: true }
+        });
+    }
+
+    await sendTradeSubmittedEmail(trade.user, tradesToSend);
     return { success: true };
 }
 
@@ -38,8 +47,17 @@ export async function resendTradeStatusEmail(tradeId: number) {
         include: { user: true }
     });
     if (!trade) throw new Error("Trade not found");
+
+    let tradesToSend: any | any[] = trade;
+    if (trade.fullName && trade.fullName.startsWith('BATCH-')) {
+        tradesToSend = await prisma.trade.findMany({
+            where: { fullName: trade.fullName },
+            include: { user: true }
+        });
+    }
+
     // We don't have the "oldStatus" easily, so we just pass a placeholder or same
-    await sendTradeStatusUpdateEmail(trade.user, trade, trade.status, trade.status);
+    await sendTradeStatusUpdateEmail(trade.user, tradesToSend, trade.status, trade.status);
     return { success: true };
 }
 
@@ -51,7 +69,16 @@ export async function resendPaymentSentEmailAction(tradeId: number) {
     });
     if (!trade) throw new Error("Trade not found");
     if (trade.status !== "PAID") throw new Error("Trade must be in PAID status to resend payment email");
-    await sendPaymentSentEmail(trade.user, trade);
+
+    let tradesToSend: any | any[] = trade;
+    if (trade.fullName && trade.fullName.startsWith('BATCH-')) {
+        tradesToSend = await prisma.trade.findMany({
+            where: { fullName: trade.fullName },
+            include: { user: true }
+        });
+    }
+
+    await sendPaymentSentEmail(trade.user, tradesToSend);
     return { success: true };
 }
 

@@ -13,13 +13,17 @@ function SubmitButton() {
     );
 }
 
-export default function StatusControlsClient({ action, children }: { action: (formData: FormData) => Promise<void>, children: React.ReactNode }) {
+export default function StatusControlsClient({ action, children }: { action: (formData: FormData) => Promise<any>, children: React.ReactNode }) {
     const { showNotification } = useNotification();
 
     const formAction = async (formData: FormData) => {
         try {
-            await action(formData);
-            showNotification('SUCCESS', 'Trade status updated successfully!');
+            const result = await action(formData) as any;
+            if (result && result.success === false) {
+                showNotification('ERROR', result.message || 'Failed to update trade status.');
+            } else {
+                showNotification('SUCCESS', 'Trade status updated successfully!');
+            }
         } catch (error: any) {
             console.error("Update failed:", error);
             showNotification('ERROR', error.message || 'Failed to update trade status.');

@@ -14,16 +14,47 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
     const trade = await prisma.trade.findUnique({
         where: { tradeId: params.id },
         include: {
-            messages: {
-                include: { sender: true },
-                orderBy: { createdAt: "asc" }
-            }
+            // messages: { ... } - REPLACED BY RAW SQL BELOW
         }
     });
 
     if (!trade) {
         return notFound();
     }
+
+    // Manual RAW SQL fetch for messages to include fileUrl and fileType (which Prisma Client doesn't know about yet)
+    // We explicitly alias every column to ensure the resulting object has the expected keys
+    const rawMessages = await prisma.$queryRaw<any[]>`
+        SELECT 
+            m.id as id, 
+            m."tradeId" as "tradeId", 
+            m."senderId" as "senderId", 
+            m.content as content, 
+            m."isRead" as "isRead", 
+            m."readAt" as "readAt", 
+            m."fileUrl" as "fileUrl", 
+            m."fileType" as "fileType", 
+            m."createdAt" as "createdAt",
+            json_build_object('id', u.id, 'username', u.username, 'role', u.role) as sender
+        FROM "Message" m
+        JOIN "User" u ON m."senderId" = u.id
+        WHERE m."tradeId" = ${trade.id}
+        ORDER BY m."createdAt" ASC
+    `;
+
+    // Map raw DB results into normalized message objects
+    const messages = rawMessages.map(m => ({
+        id: m.id,
+        tradeId: m.tradeId,
+        senderId: m.senderId,
+        content: m.content || "",
+        isRead: Boolean(m.isRead),
+        readAt: m.readAt ? new Date(m.readAt) : null,
+        fileUrl: m.fileUrl || null,
+        fileType: m.fileType || null,
+        createdAt: new Date(m.createdAt),
+        sender: m.sender
+    }));
 
     // Mark admin messages as read when user views their trade
     await prisma.message.updateMany({
@@ -46,6 +77,17 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
         return redirect("/user/trades");
     }
 
+    // If it's a batch, fetch all members
+    let batchTrades: any[] = [];
+    if (trade.fullName && trade.fullName.startsWith('BATCH-')) {
+        batchTrades = await prisma.trade.findMany({
+            where: { fullName: trade.fullName },
+            orderBy: { id: "asc" }
+        });
+    } else {
+        batchTrades = [trade as any];
+    }
+
     return (
         <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem" }}>
 
@@ -54,7 +96,9 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
                     &larr; Back
                 </Link>
                 <div>
-                    <h1 className="dashboard-title" style={{ margin: 0 }}>Trade: {trade.tradeId}</h1>
+                    <h1 className="dashboard-title" style={{ margin: 0 }}>
+                        {trade.fullName && trade.fullName.startsWith('BATCH-') ? `Batch Trade: ${trade.fullName}` : `Trade: ${trade.tradeId}`}
+                    </h1>
                     <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginTop: "0.5rem" }}>
                         <span className={`badge badge-${trade.status.toLowerCase()}`}>
                             {trade.status.replace("_", " ")}
@@ -67,43 +111,56 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
             <div className="grid grid-cols-2 chat-layout" style={{ gap: "2rem", height: "calc(100vh - 250px)", minHeight: "600px" }}>
 
                 {/* Left Column: Trade Details Summary */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", overflowY: "auto", paddingRight: "0.5rem" }}>
 
                     <div className="card">
                         <h3 style={{ marginBottom: "1rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>
-                            Gift Card Details
+                            {batchTrades.length > 1 ? `Batch Items (${batchTrades.length})` : 'Gift Card Details'}
                         </h3>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "0.75rem" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                <span style={{ opacity: 0.8 }}>Brand</span>
-                                <strong>{trade.cardBrand}</strong>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                <span style={{ opacity: 0.8 }}>Value</span>
-                                <strong>{trade.faceValue} {trade.currency}</strong>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                <span style={{ opacity: 0.8 }}>Type</span>
-                                <span>{trade.cardType}</span>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                <span style={{ opacity: 0.8 }}>Region</span>
-                                <span>{trade.cardCountry}</span>
-                            </div>
 
-                            {trade.calculatedPayout && (
-                                <div style={{ marginTop: "1rem", backgroundColor: "var(--bg-alt)", padding: "1rem", borderRadius: "var(--radius-md)", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                                    <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>Estimated Payout</span>
-                                    <strong style={{ fontSize: "1.25rem", color: "var(--primary)", marginTop: "0.25rem" }}>
-                                        GH₵ {trade.calculatedPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                    </strong>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                            {batchTrades.map((t: any, idx) => (
+                                <div key={t.id} style={{
+                                    padding: "1rem",
+                                    backgroundColor: "var(--bg-alt)",
+                                    borderRadius: "var(--radius-md)",
+                                    border: t.tradeId === trade.tradeId ? "1px solid var(--primary)" : "1px solid transparent"
+                                }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", marginBottom: "0.5rem" }}>
+                                        <span>#{idx + 1}: {t.cardBrand}</span>
+                                        <span className={`badge badge-${t.status.toLowerCase()}`} style={{ fontSize: "0.7rem" }}>
+                                            {t.status.replace("_", " ")}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", fontSize: "0.85rem" }}>
+                                        <div>
+                                            <span style={{ opacity: 0.7 }}>Value:</span> {t.faceValue} {t.currency}
+                                        </div>
+                                        <div>
+                                            <span style={{ opacity: 0.7 }}>Type:</span> {t.cardType}
+                                        </div>
+                                        <div style={{ gridColumn: "span 2", marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px solid var(--border)", color: "var(--primary)", fontWeight: "bold" }}>
+                                            Payout: GH₵ {t.calculatedPayout?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        </div>
+                                    </div>
                                 </div>
-                            )}
-
+                            ))}
                         </div>
+
+                        {batchTrades.length > 1 && (
+                            <div style={{ marginTop: "1.5rem", padding: "1rem", backgroundColor: "var(--primary-light)", borderRadius: "var(--radius-md)", textAlign: "center", color: "var(--primary)" }}>
+                                <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>Total Estimated Payout</div>
+                                <strong style={{ fontSize: "1.5rem" }}>
+                                    GH₵ {batchTrades.reduce((sum: number, t: any) => sum + (t.status !== 'REJECTED' ? (t.calculatedPayout || 0) : 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </strong>
+                                <p style={{ fontSize: "0.7rem", marginTop: "0.5rem", opacity: 0.7 }}>
+                                    (Excludes rejected cards)
+                                </p>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="card" style={{ flex: 1 }}>
+                    <div className="card">
                         <h3 style={{ marginBottom: "1rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>
                             Payout Target
                         </h3>
@@ -121,22 +178,6 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
                                     </div>
                                     <code style={{ fontWeight: "bold" }}>{trade.cryptoReceiverId}</code>
                                 </div>
-                                {(trade.cryptoTxHash || trade.cryptoTxNote) && (
-                                    <div style={{ marginTop: "1rem", borderTop: "1px dashed var(--border)", paddingTop: "0.75rem" }}>
-                                        {trade.cryptoTxHash && (
-                                            <div style={{ marginBottom: "0.5rem" }}>
-                                                <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>Transaction Reference:</div>
-                                                <div style={{ fontSize: "0.85rem", fontWeight: "bold", wordBreak: "break-all" }}>{trade.cryptoTxHash}</div>
-                                            </div>
-                                        )}
-                                        {trade.cryptoTxNote && (
-                                            <div>
-                                                <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>Admin Note:</div>
-                                                <div style={{ fontSize: "0.85rem", fontStyle: "italic" }}>{trade.cryptoTxNote}</div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
                             </div>
                         ) : (
                             <div>
@@ -157,7 +198,7 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
 
                     <ChatBox
                         tradeId={trade.id}
-                        messages={trade.messages as any}
+                        messages={messages}
                         currentUserId={currentUserId}
                         currentUsername={session.user.name || "User"}
                         path={`/user/trades/${trade.tradeId}`}

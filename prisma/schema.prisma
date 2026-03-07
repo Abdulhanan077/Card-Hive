@@ -99,6 +99,7 @@ model PasswordResetOTP {
 model Trade {
   id                Int       @id @default(autoincrement())
   tradeId           String    @unique // e.g., GC-2026-0001
+  batchId           String?   // For grouping multiple cards submitted together
   userId            Int
   user              User      @relation(fields: [userId], references: [id])
   fullName          String?
@@ -170,6 +171,9 @@ model Message {
   content   String
   isRead    Boolean  @default(false)
   readAt    DateTime?
+  fileUrl   String?
+  fileType  String? // IMAGE or FILE
+  isEdited  Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 

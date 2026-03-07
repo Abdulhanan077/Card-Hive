@@ -16,17 +16,20 @@ type Rate = {
 export default function RatesCalculator() {
     const [rates, setRates] = useState<Rate[]>([]);
     const [loading, setLoading] = useState(true);
+    const [usdtExchangeRate, setUsdtExchangeRate] = useState<number>(15.0);
     const [selectedBrand, setSelectedBrand] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedType, setSelectedType] = useState("Physical");
     const [amount, setAmount] = useState<string>("");
     const [result, setResult] = useState<number | null>(null);
+    const [amountError, setAmountError] = useState<string>("");
 
     useEffect(() => {
         fetch("/api/rates")
             .then(res => res.json())
             .then(data => {
                 setRates(data.rates || []);
+                setUsdtExchangeRate(data.usdtExchangeRate || 15.0);
                 setLoading(false);
             })
             .catch(err => {
@@ -51,17 +54,54 @@ export default function RatesCalculator() {
 
     useEffect(() => {
         if (selectedBrand && selectedCategory && amount && !isNaN(parseFloat(amount))) {
-            const rateRecord = rates.find(r => r.cardBrand === selectedBrand && r.cardCountry === selectedCategory && (r.cardType === selectedType || (!r.cardType && selectedType === "Physical")));
-            if (rateRecord) {
-                const multiplier = rateRecord.publicRate ?? rateRecord.rate;
-                setResult(parseFloat(amount) * multiplier);
-            } else {
+            const value = parseFloat(amount);
+            let hasError = false;
+            let errorMessage = "";
+
+            // Range checks
+            const matchRange = selectedCategory.match(/\(\$(\d+)\s*-\s*\$(\d+)\)/) || selectedCategory.match(/\((\d+)\s*-\s*(\d+)\)/);
+            const matchMin = selectedCategory.match(/\(\$(\d+)\+\)/) || selectedCategory.match(/\((\d+)\+\)/);
+            const matchExact = selectedCategory.match(/\(\$?(\d+)\)/);
+
+            if (matchRange) {
+                const min = parseFloat(matchRange[1]);
+                const max = parseFloat(matchRange[2]);
+                if (value < min || value > max) {
+                    hasError = true;
+                    errorMessage = `Amount must be between ${min} and ${max} for this category.`;
+                }
+            } else if (matchMin) {
+                const min = parseFloat(matchMin[1]);
+                if (value < min) {
+                    hasError = true;
+                    errorMessage = `Amount must be at least ${min} for this category.`;
+                }
+            } else if (matchExact) {
+                const exact = parseFloat(matchExact[1]);
+                if (value !== exact) {
+                    hasError = true;
+                    errorMessage = `Amount must be exactly ${exact} for this category.`;
+                }
+            }
+
+            if (hasError) {
+                setAmountError(errorMessage);
                 setResult(null);
+            } else {
+                setAmountError("");
+                const rateRecord = rates.find(r => r.cardBrand === selectedBrand && r.cardCountry === selectedCategory && (r.cardType === selectedType || (!r.cardType && selectedType === "Physical")));
+                if (rateRecord) {
+                    const multiplier = rateRecord.publicRate ?? rateRecord.rate;
+                    setResult(value * multiplier);
+                } else {
+                    setResult(null);
+                }
             }
         } else {
+            setAmountError("");
             setResult(null);
         }
-    }, [selectedBrand, selectedCategory, amount, rates]);
+    }, [selectedBrand, selectedCategory, amount, rates, selectedType]);
 
     return (
         <div className="calculator-container animate-in">
@@ -292,6 +332,7 @@ export default function RatesCalculator() {
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
                         />
+                        {amountError && <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginTop: "0.5rem" }}>{amountError}</div>}
                     </div>
                 </div>
             </div>
@@ -308,6 +349,11 @@ export default function RatesCalculator() {
                         <span style={{ opacity: 0.3 }}>0.00</span>
                     )}
                 </div>
+                {result !== null && usdtExchangeRate > 0 && (
+                    <div style={{ color: '#16a34a', fontWeight: 'bold', fontSize: '1.1rem', marginTop: '0.25rem' }}>
+                        ≈ {(result / usdtExchangeRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                    </div>
+                )}
                 <p style={{ fontSize: '0.8rem', opacity: 0.5, marginTop: '0.5rem' }}>
                     * Rates are dynamic and subject to change.
                 </p>

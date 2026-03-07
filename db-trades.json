@@ -1,0 +1,72 @@
+[
+  {
+    "id": 18,
+    "tradeId": "GC-2026-000018",
+    "fullName": "BATCH-1772816647592-5",
+    "cardBrand": "Razer Gold",
+    "createdAt": "2026-03-06T17:04:12.062Z"
+  },
+  {
+    "id": 17,
+    "tradeId": "GC-2026-000017",
+    "fullName": "BATCH-1772816647592-5",
+    "cardBrand": "Vanilla Visa",
+    "createdAt": "2026-03-06T17:04:08.814Z"
+  },
+  {
+    "id": 16,
+    "tradeId": "GC-2026-000016",
+    "fullName": "BATCH-1772815458906-2",
+    "cardBrand": "Razer Gold",
+    "createdAt": "2026-03-06T16:44:27.316Z"
+  },
+  {
+    "id": 15,
+    "tradeId": "GC-2026-000015",
+    "fullName": "BATCH-1772815458906-2",
+    "cardBrand": "Walmart",
+    "createdAt": "2026-03-06T16:44:24.035Z"
+  },
+  {
+    "id": 14,
+    "tradeId": "GC-2026-000014",
+    "fullName": "BATCH-1772815458906-2",
+    "cardBrand": "Razer Gold",
+    "createdAt": "2026-03-06T16:44:20.105Z"
+  },
+  {
+    "id": 13,
+    "tradeId": "GC-2026-000013",
+    "fullName": null,
+    "cardBrand": "Walmart",
+    "createdAt": "2026-03-05T22:24:14.019Z"
+  },
+  {
+    "id": 12,
+    "tradeId": "GC-2026-000012",
+    "fullName": null,
+    "cardBrand": "Amazon",
+    "createdAt": "2026-03-05T21:01:06.892Z"
+  },
+  {
+    "id": 11,
+    "tradeId": "GC-2026-000011",
+    "fullName": null,
+    "cardBrand": "Google Play",
+    "createdAt": "2026-03-04T23:24:58.913Z"
+  },
+  {
+    "id": 10,
+    "tradeId": "GC-2026-000010",
+    "fullName": null,
+    "cardBrand": "Xbox",
+    "createdAt": "2026-03-04T19:27:12.864Z"
+  },
+  {
+    "id": 9,
+    "tradeId": "GC-2026-000009",
+    "fullName": null,
+    "cardBrand": "Walmart",
+    "createdAt": "2026-03-04T16:53:01.624Z"
+  }
+]

@@ -7,10 +7,11 @@ import { authOptions } from "@/lib/auth";
 import CopyButton from "@/components/CopyButton";
 import { calculateVipTier } from "@/lib/vipTiers";
 import DownloadButton from "./DownloadButton";
-import { sendTradeStatusUpdateEmail, sendPaymentSentEmail } from "@/lib/email";
 import ResendEmailButtons from "./ResendEmailButtons";
 import SafeImage from "@/app/components/SafeImage";
 import StatusControlsClient from "./StatusControlsClient";
+import RejectCardButton from "./RejectCardButton";
+import { updateBatchStatusAction } from "@/app/actions/admin-trade-actions";
 
 export default async function TradeDetailView(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -18,10 +19,7 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
         where: { tradeId: params.id },
         include: {
             user: true,
-            messages: {
-                include: { sender: true },
-                orderBy: { createdAt: "asc" }
-            }
+            // messages: { ... } - REPLACED BY RAW SQL BELOW
         }
     });
 
@@ -29,134 +27,124 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
         return notFound();
     }
 
-    // Mark user messages as read when admin views the trade
-    await prisma.message.updateMany({
+    // Manual RAW SQL fetch for messages to include fileUrl and fileType (which Prisma Client doesn't know about yet)
+    // We explicitly alias every column to ensure the resulting object has the expected keys
+    const rawMessages = await prisma.$queryRaw<any[]>`
+        SELECT 
+            m.id as id, 
+            m."tradeId" as "tradeId", 
+            m."senderId" as "senderId", 
+            m.content as content, 
+            m."isRead" as "isRead", 
+            m."readAt" as "readAt", 
+            m."fileUrl" as "fileUrl", 
+            m."fileType" as "fileType", 
+            m."isEdited" as "isEdited",
+            m."createdAt" as "createdAt",
+            json_build_object('id', u.id, 'username', u.username, 'role', u.role) as sender
+        FROM "Message" m
+        JOIN "User" u ON m."senderId" = u.id
+        WHERE m."tradeId" = ${trade.id}
+        ORDER BY m."createdAt" ASC
+    `;
+
+    // Map raw DB results into normalized message objects
+    const messages = rawMessages.map(m => ({
+        id: m.id,
+        tradeId: m.tradeId,
+        senderId: m.senderId,
+        content: m.content || "",
+        isRead: Boolean(m.isRead),
+        readAt: m.readAt ? new Date(m.readAt) : null,
+        fileUrl: m.fileUrl || null,
+        fileType: m.fileType || null,
+        isEdited: Boolean(m.isEdited),
+        createdAt: new Date(m.createdAt),
+        sender: m.sender
+    }));
+
+    // Fetch batch trades if applicable (include user for each card)
+    let batchTrades: any[] = [];
+    if (trade && trade.fullName && trade.fullName.startsWith('BATCH-')) {
+        batchTrades = await prisma.trade.findMany({
+            where: { fullName: trade.fullName },
+            include: { user: true }, // Ensure user is included for batch members
+            orderBy: { createdAt: 'asc' }
+        });
+    } else {
+        // If it's not a batch, treat the current trade as a batch of one
+        batchTrades = [trade as any];
+    }
+
+    // The original `tradeWithBatchId` was used to access `batchId`.
+    // Now we'll use `trade.fullName` to determine if it's a batch and for batch-related operations.
+    const isBatchTrade = trade.fullName && trade.fullName.startsWith('BATCH-');
+    const batchIdentifier = isBatchTrade ? trade.fullName : undefined;
+
+
+    // Mark user messages as read only if there are unread ones
+    const unreadCount = await prisma.message.count({
         where: {
-            tradeId: trade.id,
+            tradeId: { in: batchTrades.map((t: any) => t.id) },
             isRead: false,
-            sender: {
-                role: "USER"
-            }
-        },
-        data: {
-            isRead: true,
-            readAt: new Date()
+            sender: { role: "USER" }
         }
     });
+
+    if (unreadCount > 0) {
+        await prisma.message.updateMany({
+            where: {
+                tradeId: { in: batchTrades.map((t: any) => t.id) },
+                isRead: false,
+                sender: { role: "USER" }
+            },
+            data: { isRead: true, readAt: new Date() }
+        });
+    }
 
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return redirect("/login");
     const currentUserId = parseInt(session.user.id);
 
-    // Duplicate explicit check
+    // Duplicate explicit check (per card)
     const duplicateWarnings = await prisma.trade.findMany({
         where: {
-            cardCodeHash: trade.cardCodeHash,
-            id: { not: trade.id }
+            cardCodeHash: { in: batchTrades.map((t: any) => t.cardCodeHash) },
+            id: { notIn: batchTrades.map((t: any) => t.id) }
         }
-    });
+    } as any);
 
     const parsedImages: string[] = JSON.parse(trade.imageUrls || "[]");
 
-    async function updateStatusAction(formData: FormData) {
+    const handleUpdateBatchStatus = async (formData: FormData) => {
         "use server";
-        if (!trade) return;
-
-        const status = formData.get("status") as string;
-        const paymentReference = formData.get("paymentReference") as string;
-        const adminNotes = formData.get("adminNotes") as string;
-
-        const data: any = { status, adminNotes };
-
-        if (status === "PAID" && trade!.status !== "PAID") {
-            data.paymentReference = paymentReference;
-            data.paidAt = new Date();
-
-            // Crypto fields
-            const cryptoTxHash = formData.get("cryptoTxHash") as string;
-            const cryptoTxNote = formData.get("cryptoTxNote") as string;
-            if (trade!.payoutMethod === "CRYPTO") {
-                data.cryptoTxHash = cryptoTxHash;
-                data.cryptoTxNote = cryptoTxNote;
-            }
-
-            // Reward System Logic: Award points immediately when Admin pays
-            const newCompletedCount = (trade!.user as any).completedTradesCount + 1;
-            const vipTier = calculateVipTier(newCompletedCount);
-            const traderBonus = 2 * vipTier.multiplier;
-
-            await prisma.user.update({
-                where: { id: trade!.userId },
-                data: {
-                    rewardBalance: { increment: traderBonus },
-                    completedTradesCount: { increment: 1 }
-                }
-            });
-
-            if ((trade!.user as any).referredBy) {
-                await prisma.user.update({
-                    where: { id: (trade!.user as any).referredBy },
-                    data: { rewardBalance: { increment: 2 } }
-                });
-            }
-
-        } else if (status !== "PAID" && status !== "COMPLETED") {
-            data.paymentReference = null;
-            data.paidAt = null;
-        }
-
-        const updatedTrade = await prisma.trade.update({
-            where: { id: trade!.id },
-            data,
-            include: { user: true }
-        });
-
-        if (updatedTrade.user.emailNotificationsEnabled && trade!.status !== status) {
-            sendTradeStatusUpdateEmail(
-                { email: updatedTrade.user.email, username: updatedTrade.user.username },
-                updatedTrade,
-                trade!.status,
-                status
-            );
-
-            if (status === "PAID") {
-                sendPaymentSentEmail(
-                    { email: updatedTrade.user.email, username: updatedTrade.user.username },
-                    updatedTrade
-                );
-            }
-        }
-
-        revalidatePath(`/admin/trades/${params.id}`);
-        revalidatePath(`/admin/trades`);
-        revalidatePath(`/admin`);
-    }
+        return updateBatchStatusAction(formData, params.id, trade.fullName, trade.tradeId);
+    };
 
     const rawSettings: any = await prisma.$queryRawUnsafe(`SELECT "usdtExchangeRate" FROM "Settings" LIMIT 1`);
     const usdtRate = rawSettings && rawSettings.length > 0 ? rawSettings[0].usdtExchangeRate : 15.0;
 
+    const activeBatchTrades = batchTrades.filter(t => t.status !== "REJECTED");
+    const totalExpectedPayout = activeBatchTrades.reduce((sum, t) => sum + (t.calculatedPayout || 0), 0);
+
     return (
         <>
             <div className="dashboard-header" style={{ marginBottom: "2rem" }}>
-                <h1 className="dashboard-title">Trade Workspace: {trade.tradeId}</h1>
-                <p className="dashboard-subtitle">Review payload, check security warnings, process payment, and chat with the seller.</p>
+                <h1 className="dashboard-title">
+                    {isBatchTrade ? `Batch Workspace: ${batchIdentifier}` : `Trade Workspace: ${trade.tradeId}`}
+                </h1>
+                <p className="dashboard-subtitle">Review multiple cards, reject bad ones, and process batch payment.</p>
             </div>
 
             {duplicateWarnings.length > 0 && (
                 <div style={{ backgroundColor: "#fef2f2", color: "var(--danger)", padding: "1.5rem", borderRadius: "var(--radius-md)", border: "1px solid #fca5a5", marginBottom: "2rem" }}>
                     <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <span>⚠️</span> Security Warning: Duplicate Hash Detected!
+                        <span>⚠️</span> Security Warning: Duplicate Code Detected in System!
                     </h3>
-                    <p style={{ marginTop: "0.5rem" }}>
-                        The exact card code hash for this trade is shared with {duplicateWarnings.length} other trade(s) in the system.
-                    </p>
-                    <ul style={{ marginTop: "1rem", paddingLeft: "1.5rem" }}>
+                    <ul style={{ marginTop: "1rem" }}>
                         {duplicateWarnings.map(dw => (
                             <li key={dw.id}>
-                                <a href={`/admin/trades/${dw.tradeId}`} style={{ textDecoration: "underline", fontWeight: 600 }}>
-                                    {dw.tradeId}
-                                </a>
-                                {" "} - Status: <span className={`badge badge-${dw.status.toLowerCase()}`}>{dw.status}</span>
+                                Card in {dw.tradeId} matches code hash in <a href={`/admin/trades/${dw.tradeId}`} className="underline">{dw.tradeId}</a> ({dw.status})
                             </li>
                         ))}
                     </ul>
@@ -165,208 +153,145 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
 
             <div className="grid grid-cols-2 chat-layout" style={{ gap: "2rem", alignItems: "start", height: "calc(100vh - 200px)", minHeight: "800px" }}>
 
-                {/* Left Column: Details & Controls */}
+                {/* Left Column */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", overflowY: "auto", paddingRight: "1rem" }}>
 
-                    {/* Controls & Payout Info */}
-                    <div className="card" style={{ borderColor: 'var(--primary)', position: "sticky", top: 0, zIndex: 10 }}>
-                        <div style={{ marginBottom: "1.5rem", paddingBottom: "1.5rem", borderBottom: "1px solid var(--border)" }}>
-                            <h3 style={{ marginBottom: "1rem" }}>Submitter & Payout Info</h3>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                                <div><small>Username</small><div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>@{trade.user.username}</div></div>
-                                <div><small>Account Email</small><div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>{trade.user.email}</div></div>
-                                <div style={{ gridColumn: "1 / -1", backgroundColor: "var(--primary-light)", padding: "1rem", borderRadius: "var(--radius-md)", marginTop: "0.5rem" }}>
-                                    <small style={{ color: "var(--primary-hover)", fontWeight: 600, textTransform: "uppercase" }}>PAYOUT DESTINATION</small>
-                                    <div style={{ fontSize: "1.2rem", fontWeight: "bold", color: "var(--foreground)", display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.5rem" }}>
-                                        {trade.payoutMethod === 'CRYPTO' ? (
-                                            <>
-                                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                                    {trade.cryptoCoin} ({trade.cryptoNetwork}) - {trade.cryptoExchange}
-                                                </div>
-                                                {trade.cryptoReceiverId && (
-                                                    <div style={{ padding: "0.5rem", backgroundColor: "white", borderRadius: "4px", fontSize: "0.9rem", color: "var(--primary)", display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-                                                        <span style={{ opacity: 0.7 }}>{trade.cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Wallet:' : 'Exchange ID:'}</span>
-                                                        <strong style={{ wordBreak: "break-all" }}>{trade.cryptoReceiverId}</strong>
-                                                        <CopyButton textToCopy={trade.cryptoReceiverId} label={trade.cryptoReceiverIdType === 'WALLET_ADDRESS' ? "Copy Wallet" : "Copy ID"} />
-                                                    </div>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <>
-                                                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                                                        <span>{trade.payoutNetwork} - {trade.payoutPhoneNumber}</span>
-                                                        <CopyButton textToCopy={trade.payoutPhoneNumber} label="Copy Number" />
-                                                    </div>
-                                                    {trade.payoutAccountName && (
-                                                        <div style={{ fontSize: "0.95rem", color: "var(--text-muted)", fontWeight: 500, display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                                                            Account Name: <span style={{ color: "var(--foreground)" }}>{trade.payoutAccountName}</span>
-                                                            <CopyButton textToCopy={trade.payoutAccountName} label="Copy Name" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
+                    {/* Itemized Cards List */}
+                    <div className="card shadow-sm">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                            <h2 style={{ margin: 0 }}>Itemized Cards ({batchTrades.length})</h2>
+                            <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>
+                                Total Batch Payout GH₵ <strong>{totalExpectedPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong>
                             </div>
                         </div>
 
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                            <h3 style={{ margin: 0 }}>Status Controls</h3>
-                            <span className={`badge badge-${trade.status.toLowerCase()}`} style={{ fontSize: "1rem", padding: "0.5rem 1rem" }}>
-                                {trade.status.replace("_", " ")}
-                            </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {batchTrades.map((t: any, idx) => (
+                                <div key={t.id} style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '1rem',
+                                    backgroundColor: t.status === 'REJECTED' ? '#fef2f2' : 'var(--bg-alt)',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: t.status === 'REJECTED' ? '2px solid #ef4444' : '1px solid var(--border)',
+                                    opacity: 1
+                                }}>
+                                    <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', opacity: 0.3 }}>{idx + 1}</div>
+                                        <div>
+                                            <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{t.cardBrand}</div>
+                                            <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+                                                {t.cardType} • {t.faceValue} {t.currency} • Est. ₵{t.calculatedPayout?.toFixed(2)}
+                                            </div>
+                                            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', backgroundColor: 'var(--bg)', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                                                <code>{t.cardCode || 'No code provided'}</code>
+                                                <CopyButton textToCopy={t.cardCode} label="" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.5 }}>Item Status</div>
+                                            <div style={{ fontWeight: '600', color: t.status === 'REJECTED' ? '#ef4444' : 'var(--success)' }}>
+                                                {t.status === 'REJECTED' ? 'REJECTED' : 'ACCEPTED'}
+                                            </div>
+                                        </div>
+
+                                        <RejectCardButton
+                                            tradeId={t.id}
+                                            currentStatus={t.status}
+                                            pageTradeId={params.id}
+                                            disabled={trade.status === 'PAID' || trade.status === 'COMPLETED'}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Batch Payout & Global Controls */}
+                    <div className="card" style={{ borderColor: 'var(--primary)', position: "sticky", top: 0, zIndex: 10 }}>
+                        <div style={{ marginBottom: "1.5rem", paddingBottom: "1.5rem", borderBottom: "1px solid var(--border)" }}>
+                            <h3 style={{ marginBottom: "1rem" }}>Batch Payout Summary</h3>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-alt)", padding: "1rem", borderRadius: "12px" }}>
+                                <div>
+                                    <small>TOTAL PAYOUT ({activeBatchTrades.length} accepted cards)</small>
+                                    <div style={{ fontSize: "1.75rem", fontWeight: "bold", color: "var(--primary)" }}>
+                                        GH₵ {totalExpectedPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                                {trade.payoutMethod === "CRYPTO" && (
+                                    <div style={{ textAlign: "right" }}>
+                                        <small>APPROX. USDT</small>
+                                        <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#16a34a" }}>
+                                            ≈ {(totalExpectedPayout / usdtRate).toLocaleString(undefined, { minimumFractionDigits: 2 })} USDT
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ marginTop: "1.5rem" }}>
+                                <small>DESTINATION: </small>
+                                <strong style={{ marginLeft: "0.5rem" }}>
+                                    {trade.payoutMethod === "CRYPTO"
+                                        ? `${trade.cryptoCoin} via ${trade.cryptoNetwork} (${trade.cryptoExchange})`
+                                        : `${trade.payoutNetwork} - ${trade.payoutAccountName ? `${trade.payoutAccountName} - ` : ''}${trade.payoutPhoneNumber}`}
+                                </strong>
+                                {trade.payoutMethod !== "CRYPTO" && (
+                                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+                                        <CopyButton textToCopy={trade.payoutPhoneNumber} label="Copy Phone Number" />
+                                    </div>
+                                )}
+                                {trade.payoutMethod === "CRYPTO" && trade.cryptoReceiverId && (
+                                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+                                        <code style={{ flex: 1, backgroundColor: "var(--bg)", padding: "0.25rem 0.5rem", borderRadius: "4px", fontSize: "0.8rem" }}>{trade.cryptoReceiverId}</code>
+                                        <CopyButton textToCopy={trade.cryptoReceiverId} label="Copy ID" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        <StatusControlsClient action={updateStatusAction}>
+                        <StatusControlsClient action={handleUpdateBatchStatus}>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <select name="status" className="form-select" defaultValue={trade.status} style={{ padding: "0.5rem" }}>
+                                <select name="status" className="form-select" defaultValue={trade.status}>
                                     <option value="PENDING">Pending (Initial)</option>
                                     <option value="UNDER_REVIEW">Under Review</option>
-                                    <option value="PAID">Paid (Awaiting User Confirm)</option>
-                                    <option value="COMPLETED" disabled>Completed (Confirmed by User)</option>
-                                    <option value="REJECTED">Rejected</option>
+                                    <option value="PAID">Mark Accepted Cards as PAID</option>
+                                    <option value="REJECTED" style={{ color: '#ef4444', fontWeight: 'bold' }}>Reject ENTIRE Batch (Careful!)</option>
                                 </select>
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <input
-                                    type="text"
-                                    name="paymentReference"
-                                    className="form-input"
-                                    defaultValue={trade.paymentReference || ""}
-                                    placeholder="Local Payment Ref (Optional)"
-                                    style={{ padding: "0.5rem" }}
-                                />
+                                <input name="paymentReference" className="form-input" placeholder="Payment Ref (e.g. Mobile Money ID)" />
                             </div>
-
-                            {trade.payoutMethod === 'CRYPTO' && (
-                                <div style={{ border: '1px solid #fed7aa', backgroundColor: '#fff7ed', padding: '1rem', borderRadius: '8px', marginTop: '0.5rem' }}>
-                                    <h4 style={{ margin: '0 0 0.75rem 0', color: '#c2410c', fontSize: '0.9rem' }}>Manual Crypto Payout Processing</h4>
-                                    <p style={{ fontSize: '0.8rem', color: '#9a3412', marginBottom: '1rem' }}>
-                                        You must send funds manually from your exchange account. Record the details here.
-                                    </p>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                        <div className="form-group" style={{ marginBottom: 0 }}>
-                                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>TX Hash / Transfer ID</label>
-                                            <input
-                                                type="text"
-                                                name="cryptoTxHash"
-                                                className="form-input"
-                                                defaultValue={trade.cryptoTxHash || ""}
-                                                placeholder="Paste transaction hash here"
-                                                style={{ padding: "0.4rem", fontSize: '0.85rem' }}
-                                            />
-                                        </div>
-                                        <div className="form-group" style={{ marginBottom: 0 }}>
-                                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Internal Note (Optional)</label>
-                                            <input
-                                                type="text"
-                                                name="cryptoTxNote"
-                                                className="form-input"
-                                                defaultValue={trade.cryptoTxNote || ""}
-                                                placeholder="e.g. Sent via NoOnes Pay or Binance Pay"
-                                                style={{ padding: "0.4rem", fontSize: '0.85rem' }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </StatusControlsClient>
-
-                        <ResendEmailButtons tradeId={trade.id} status={trade.status} />
                     </div>
 
-                    {/* Card Info */}
+                    {/* Shared Images */}
                     <div className="card">
-                        <h3 style={{ marginBottom: "1rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem", color: "var(--primary)" }}>
-                            Card Information
-                        </h3>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                            <div><small>Brand</small><div style={{ fontWeight: 600 }}>{trade.cardBrand}</div></div>
-                            <div>
-                                <small>Value</small>
-                                <div style={{ fontWeight: 600 }}>{trade.faceValue} {trade.currency}</div>
-                            </div>
-
-                            {trade.calculatedPayout && (
-                                <div style={{ gridColumn: "1 / -1", backgroundColor: "var(--bg-alt)", padding: "0.75rem", borderRadius: "var(--radius-md)" }}>
-                                    <small>SYSTEM CALCULATED PAYOUT</small>
-                                    <div style={{ fontSize: "1.1rem", fontWeight: "bold", color: "var(--primary)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <span>GH₵ {trade.calculatedPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                        {trade.payoutMethod === 'CRYPTO' && (
-                                            <span style={{ fontSize: "1rem", color: "#16a34a" }}>
-                                                ≈ {(trade.calculatedPayout / usdtRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div><small>Type</small><div>{trade.cardType}</div></div>
-                            <div><small>Region</small><div>{trade.cardCountry}</div></div>
-
-                            <div style={{ gridColumn: "1 / -1", marginTop: "0.5rem", backgroundColor: "var(--surface-hover)", padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
-                                <small style={{ color: "var(--danger)", fontWeight: 700 }}>SECURE DATA (RAW CODE)</small>
-                                <div style={{ marginTop: "0.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-                                        <strong>Code / PIN:</strong>
-                                        <span style={{ fontFamily: "monospace", letterSpacing: "0.05em", fontSize: "1.1em", fontWeight: "bold", wordBreak: "break-all" }}>{trade.cardCode}</span>
-                                        <CopyButton textToCopy={trade.cardCode} />
-                                    </div>
-                                    {trade.serialNumber && (
-                                        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-                                            <strong>Serial Number:</strong>
-                                            <span style={{ fontFamily: "monospace", fontWeight: "bold", wordBreak: "break-all" }}>{trade.serialNumber}</span>
-                                            <CopyButton textToCopy={trade.serialNumber} />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <h3 style={{ marginBottom: "1rem" }}>Uploaded Proof (Shared)</h3>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "1rem" }}>
+                            {parsedImages.map((src, idx) => (
+                                <a key={idx} href={src} target="_blank" rel="noopener noreferrer">
+                                    <SafeImage src={src} alt="proof" style={{ width: "100%", height: "150px", objectFit: "cover", borderRadius: "8px" }} />
+                                </a>
+                            ))}
                         </div>
-                    </div>
-
-
-
-                    {/* Images */}
-                    <div className="card">
-                        <h3 style={{ marginBottom: "1rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>
-                            Uploaded Evidence
-                        </h3>
-                        {parsedImages.length === 0 ? (
-                            <p style={{ opacity: 0.6 }}>No images uploaded.</p>
-                        ) : (
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "1rem" }}>
-                                {parsedImages.map((src, idx) => (
-                                    <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                        <a href={src} target="_blank" rel="noopener noreferrer" style={{ display: "block", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-                                            <SafeImage
-                                                src={src}
-                                                alt={`Evidence ${idx + 1}`}
-                                                style={{ width: "100%", height: "150px", objectFit: "cover" }}
-                                                fallbackText="Image 404/Expired"
-                                            />
-                                        </a>
-                                        <DownloadButton src={src} fileName={`evidence-${trade.tradeId}-${idx + 1}.jpg`} />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
                 </div>
 
-                {/* Right Column: Interactive Chat Box */}
+                {/* Right Column: Chat */}
                 <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-                    <h3 style={{ marginBottom: "1rem" }}>Conversation Thread</h3>
+                    <h3 style={{ marginBottom: "1rem" }}>Batch Conversation</h3>
                     <ChatBox
                         tradeId={trade.id}
-                        messages={trade.messages as any}
+                        messages={messages}
                         currentUserId={currentUserId}
                         currentUsername="Admin"
                         path={`/admin/trades/${trade.tradeId}`}
                     />
                 </div>
-
             </div>
         </>
     );

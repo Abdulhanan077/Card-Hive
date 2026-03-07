@@ -20,28 +20,45 @@ export default async function SuccessPage(props: {
         redirect("/user");
     }
 
+    let batchTrades = [trade];
+    if (trade.fullName && trade.fullName.startsWith('BATCH-')) {
+        batchTrades = await prisma.trade.findMany({
+            where: { fullName: trade.fullName }
+        });
+    }
+
+    const totalValue = batchTrades.reduce((sum, t) => sum + t.faceValue, 0);
+    const brands = Array.from(new Set(batchTrades.map(t => t.cardBrand))).join(', ');
+    const isBatch = batchTrades.length > 1;
+
     return (
         <div style={{ maxWidth: '600px', margin: '4rem auto', textAlign: 'center' }}>
             <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
             <h1 className="dashboard-title">Trade Submitted Successfully!</h1>
             <p className="dashboard-subtitle" style={{ marginBottom: '2.5rem', fontSize: '1.1rem' }}>
-                Your gift card has been securely logged and is now <strong>Pending Review</strong>.
+                Your {isBatch ? `${batchTrades.length} gift cards have` : 'gift card has'} been securely logged and {isBatch ? 'are' : 'is'} now <strong>Pending Review</strong>.
             </p>
 
             <div className="card" style={{ textAlign: 'left', marginBottom: '3rem' }}>
                 <h3 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1rem' }}>
-                    Trade Summary
+                    {isBatch ? 'Batch Summary' : 'Trade Summary'}
                 </h3>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ opacity: 0.7 }}>Trade Reference ID</span>
-                        <strong style={{ color: 'var(--primary)' }}>{trade.tradeId}</strong>
+                        <span style={{ opacity: 0.7 }}>Reference ID</span>
+                        <strong style={{ color: 'var(--primary)' }}>{isBatch ? trade.fullName : trade.tradeId}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ opacity: 0.7 }}>Card Details</span>
-                        <strong>{trade.cardBrand} - {trade.faceValue} {trade.currency}</strong>
+                        <span style={{ opacity: 0.7 }}>{isBatch ? 'Cards Included' : 'Card Details'}</span>
+                        <strong>{isBatch ? `${batchTrades.length} Cards (${brands})` : `${trade.cardBrand} - ${trade.faceValue} ${trade.currency}`}</strong>
                     </div>
+                    {isBatch && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ opacity: 0.7 }}>Total Face Value</span>
+                            <strong>{totalValue} {trade.currency}</strong>
+                        </div>
+                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ opacity: 0.7 }}>Payout Method</span>
                         <strong>

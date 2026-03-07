@@ -15,6 +15,10 @@ export async function GET() {
             whatsappNumber: "233551131139" // Default fallback
         }, { status: 200 });
     } catch (error) {
-        return NextResponse.json({ message: "Failed to fetch settings" }, { status: 500 });
+        console.error("Settings API Error (using fallback):", error);
+        return NextResponse.json({
+            contactEmail: "support@cardhive.com",
+            whatsappNumber: "233551131139" // Default fallback
+        }, { status: 200 });
     }
 }

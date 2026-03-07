@@ -154,32 +154,43 @@ export async function sendPasswordResetEmail(user: { email: string }, token: str
   return sendEmail({ to: user.email, subject: "Reset your Card Hive password", html });
 }
 
-export async function sendTradeSubmittedEmail(user: { email: string; username: string }, trade: any) {
+export async function sendTradeSubmittedEmail(user: { email: string; username: string }, trades: any | any[]) {
+  const tradesArray = Array.isArray(trades) ? trades : [trades];
+  const isBatch = tradesArray.length > 1;
+  const tradeRef = isBatch && tradesArray[0].fullName ? tradesArray[0].fullName : tradesArray[0].tradeId;
+  const totalAmount = tradesArray.reduce((sum, t) => sum + t.faceValue, 0);
+  const currency = tradesArray[0].currency;
+  const brands = Array.from(new Set(tradesArray.map(t => t.cardBrand))).join(', ');
+
   const content = `
     <h1 style="margin-top: 0; color: #111827;">Trade Received! 📥</h1>
-    <p>Hello ${user.username}, we've received your submission for trade <strong>${trade.tradeId}</strong>. Our team is already reviewing it.</p>
+    <p>Hello ${user.username}, we've received your submission for trade <strong>${tradeRef}</strong>. Our team is already reviewing it.</p>
     <div class="card">
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <span style="color: #6b7280;">Trade ID:</span>
-            <span style="font-weight: 600;">${trade.tradeId}</span>
+            <span style="color: #6b7280;">Reference ID:</span>
+            <span style="font-weight: 600;">${tradeRef}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <span style="color: #6b7280;">Card Brand:</span>
-            <span style="font-weight: 600;">${trade.cardBrand}</span>
+            <span style="color: #6b7280;">${isBatch ? 'Cards Included' : 'Card Brand'}:</span>
+            <span style="font-weight: 600;">${isBatch ? `${tradesArray.length} Cards (${brands})` : tradesArray[0].cardBrand}</span>
         </div>
         <div style="display: flex; justify-content: space-between;">
-            <span style="color: #6b7280;">Amount:</span>
-            <span style="font-weight: 600;">${trade.faceValue} ${trade.currency}</span>
+            <span style="color: #6b7280;">${isBatch ? 'Total Value' : 'Amount'}:</span>
+            <span style="font-weight: 600;">${totalAmount} ${currency}</span>
         </div>
     </div>
     <a href="${getAppUrl()}/user/trades" class="button">Track Your Trade</a>
   `;
-  const html = wrapTemplate(content, `Trade ${trade.tradeId} received`);
-  return sendEmail({ to: user.email, subject: `We received your trade ${trade.tradeId}`, html });
+  const html = wrapTemplate(content, `Trade ${tradeRef} received`);
+  return sendEmail({ to: user.email, subject: `We received your trade ${tradeRef}`, html });
 }
 
-export async function sendTradeStatusUpdateEmail(user: { email: string; username: string }, trade: any, oldStatus: string, newStatus: string) {
-  let subject = `Your trade ${trade.tradeId} status has been updated`;
+export async function sendTradeStatusUpdateEmail(user: { email: string; username: string }, trades: any | any[], oldStatus: string, newStatus: string) {
+  const tradesArray = Array.isArray(trades) ? trades : [trades];
+  const isBatch = tradesArray.length > 1;
+  const tradeRef = isBatch && tradesArray[0].fullName ? tradesArray[0].fullName : tradesArray[0].tradeId;
+
+  let subject = `Your trade ${tradeRef} status has been updated`;
   let statusColor = "#3b82f6";
 
   if (newStatus === "APPROVED") statusColor = "#10b981";
@@ -190,26 +201,33 @@ export async function sendTradeStatusUpdateEmail(user: { email: string; username
 
   const content = `
     <h1 style="margin-top: 0; color: #111827;">Status Updated</h1>
-    <p>The status of your trade <strong>${trade.tradeId}</strong> has changed:</p>
+    <p>The status of your trade <strong>${tradeRef}</strong> has changed:</p>
     <div class="card" style="text-align: center;">
         <span style="font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">New Status</span><br>
         <span style="font-size: 24px; font-weight: 700; color: ${statusColor};">${statusText}</span>
     </div>
-    ${newStatus === "REJECTED" && trade.adminNotes ? `
+    ${newStatus === "REJECTED" && tradesArray[0].adminNotes ? `
         <div style="margin-top: 16px; color: #ef4444;">
-            <strong>Note from Admin:</strong> ${trade.adminNotes}
+            <strong>Note from Admin:</strong> ${tradesArray[0].adminNotes}
         </div>
     ` : ''}
     <a href="${getAppUrl()}/user/trades" class="button">View Details</a>
   `;
-  const html = wrapTemplate(content, `Trade ${trade.tradeId} updated to ${statusText}`);
+  const html = wrapTemplate(content, `Trade ${tradeRef} updated to ${statusText}`);
   return sendEmail({ to: user.email, subject, html });
 }
 
-export async function sendPaymentSentEmail(user: { email: string; username: string }, trade: any) {
+export async function sendPaymentSentEmail(user: { email: string; username: string }, trades: any | any[]) {
+  const tradesArray = Array.isArray(trades) ? trades : [trades];
+  const isBatch = tradesArray.length > 1;
+  const tradeRef = isBatch && tradesArray[0].fullName ? tradesArray[0].fullName : tradesArray[0].tradeId;
+  const totalAmount = tradesArray.reduce((sum, t) => sum + t.faceValue, 0);
+  const currency = tradesArray[0].currency;
+  const trade = tradesArray[0];
+
   const content = `
     <h1 style="margin-top: 0; color: #111827;">Payment Sent! 💸</h1>
-    <p>Great news, ${user.username}! Your payment for trade <strong>${trade.tradeId}</strong> has been processed.</p>
+    <p>Great news, ${user.username}! Your payment for trade <strong>${tradeRef}</strong> has been processed.</p>
     <div class="card">
         ${trade.payoutMethod === 'CRYPTO' ? `
             <p><strong>Crypto:</strong> ${trade.cryptoCoin} (${trade.cryptoNetwork})</p>
@@ -218,13 +236,13 @@ export async function sendPaymentSentEmail(user: { email: string; username: stri
             <p><strong>Network:</strong> ${trade.payoutNetwork}</p>
             <p><strong>Phone:</strong> ${trade.payoutPhoneNumber}</p>
         `}
-        <p><strong>Amount:</strong> ${trade.faceValue} ${trade.currency}</p>
+        <p><strong>${isBatch ? 'Total Amount' : 'Amount'}:</strong> ${totalAmount} ${currency}</p>
     </div>
     <p>Please check your wallet/account. It may take a few minutes to reflect.</p>
     <a href="${getAppUrl()}/user/trades" class="button">View History</a>
   `;
-  const html = wrapTemplate(content, `Payment sent for ${trade.tradeId}`);
-  return sendEmail({ to: user.email, subject: `Payment sent for trade ${trade.tradeId}`, html });
+  const html = wrapTemplate(content, `Payment sent for ${tradeRef}`);
+  return sendEmail({ to: user.email, subject: `Payment sent for trade ${tradeRef}`, html });
 }
 
 export async function sendDuplicateCardAttemptEmail(user: { email: string; username: string }, trade: any) {
@@ -257,23 +275,31 @@ export async function sendAdminNewUserEmail(user: { username: string; email: str
   return sendEmail({ to: adminEmail, subject: `New User Registration: @${user.username}`, html });
 }
 
-export async function sendAdminNewTradeEmail(trade: any, user: { username: string; email: string; phoneNumber: string }) {
+export async function sendAdminNewTradeEmail(trades: any | any[], user: { username: string; email: string; phoneNumber: string }) {
   const adminEmail = process.env.EMAIL_ADMIN;
   if (!adminEmail) return;
+  const tradesArray = Array.isArray(trades) ? trades : [trades];
+  const isBatch = tradesArray.length > 1;
+  const tradeRef = isBatch && tradesArray[0].fullName ? tradesArray[0].fullName : tradesArray[0].tradeId;
+  const totalAmount = tradesArray.reduce((sum, t) => sum + t.faceValue, 0);
+  const currency = tradesArray[0].currency;
+  const brands = Array.from(new Set(tradesArray.map(t => t.cardBrand))).join(', ');
+  const trade = tradesArray[0];
 
   const content = `
     <h1 style="margin-top: 0; color: #111827;">New Trade Alert! 🚨</h1>
     <p>A new trade has been submitted by <strong>@${user.username}</strong>.</p>
     <div class="card">
         <h3 style="margin-top: 0;">Trade Info</h3>
-        <p><strong>Brand:</strong> ${trade.cardBrand}</p>
-        <p><strong>Value:</strong> ${trade.faceValue} ${trade.currency}</p>
+        <p><strong>Reference:</strong> ${tradeRef}</p>
+        <p><strong>${isBatch ? 'Cards Included' : 'Brand'}:</strong> ${isBatch ? `${tradesArray.length} Cards (${brands})` : trade.cardBrand}</p>
+        <p><strong>${isBatch ? 'Total Value' : 'Value'}:</strong> ${totalAmount} ${currency}</p>
         <p><strong>Payout:</strong> ${trade.payoutMethod === 'CRYPTO' ? 'Crypto' : trade.payoutNetwork}</p>
     </div>
     <a href="${getAppUrl()}/admin/trades/${trade.tradeId}" class="button">Review Trade</a>
   `;
-  const html = wrapTemplate(content, `Action required: Trade ${trade.tradeId}`);
-  return sendEmail({ to: adminEmail, subject: `New Card Hive trade: ${trade.tradeId}`, html });
+  const html = wrapTemplate(content, `Action required: Trade ${tradeRef}`);
+  return sendEmail({ to: adminEmail, subject: `New Card Hive trade: ${tradeRef}`, html });
 }
 
 export async function sendAdminDuplicateAlert(trade: any, relatedTrades: any[], user: { username: string; email: string }) {

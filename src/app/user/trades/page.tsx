@@ -8,7 +8,16 @@ import ConfirmReceiptButton from "@/components/ConfirmReceiptButton";
 
 type TradeWithCount = Prisma.TradeGetPayload<{
     include: {
-        _count: { select: { messages: true } }
+        _count: {
+            select: {
+                messages: {
+                    where: {
+                        isRead: false,
+                        sender: { role: 'ADMIN' }
+                    }
+                }
+            }
+        }
     }
 }>;
 
@@ -27,13 +36,47 @@ export default async function UserTradesPage(props: {
         whereClause.status = statusFilter;
     }
 
-    const trades = await prisma.trade.findMany({
+    const trades = (await prisma.trade.findMany({
         where: whereClause,
         orderBy: { createdAt: "desc" },
         include: {
             _count: {
-                select: { messages: true }
+                select: {
+                    messages: {
+                        where: {
+                            isRead: false,
+                            sender: { role: 'ADMIN' }
+                        }
+                    }
+                }
             }
+        }
+    })) as any[];
+
+    // Grouping logic for user view
+    const groupedTrades: any[] = [];
+    const processedBatches = new Set();
+
+    trades.forEach(t => {
+        if (!t.fullName || !t.fullName.startsWith('BATCH-')) {
+            groupedTrades.push({ ...t, isBatch: false, cardCount: 1 });
+        } else if (!processedBatches.has(t.fullName)) {
+            const batchMembers = trades.filter(tm => tm.fullName === t.fullName);
+            const totalValue = batchMembers.reduce((sum, tm) => sum + tm.faceValue, 0);
+            const totalPayout = batchMembers.reduce((sum, tm) => sum + (tm.status !== 'REJECTED' ? (tm.calculatedPayout || 0) : 0), 0);
+            const unreadMessages = batchMembers.reduce((sum, tm) => sum + tm._count.messages, 0);
+
+            groupedTrades.push({
+                ...t,
+                isBatch: true,
+                batchId: t.fullName, // Proxy
+                cardCount: batchMembers.length,
+                totalValue,
+                totalPayout,
+                batchUnreadCount: unreadMessages,
+                batchBrands: Array.from(new Set(batchMembers.map(tm => tm.cardBrand))).join(", ")
+            });
+            processedBatches.add(t.fullName);
         }
     });
 
@@ -68,7 +111,7 @@ export default async function UserTradesPage(props: {
             </div>
 
             <div className="table-container">
-                {trades.length === 0 ? (
+                {groupedTrades.length === 0 ? (
                     <div style={{ padding: '3rem', textAlign: 'center', opacity: 0.6 }}>
                         No trades found matching this status.
                     </div>
@@ -76,32 +119,45 @@ export default async function UserTradesPage(props: {
                     <table className="data-table">
                         <thead>
                             <tr>
-                                <th>Trade ID</th>
-                                <th>Submitted On</th>
-                                <th>Brand</th>
-                                <th>Value</th>
-                                <th>Payout</th>
+                                <th>Identification</th>
+                                <th>Submitted</th>
+                                <th>Brands</th>
+                                <th>Quantity</th>
+                                <th>Est. Payout</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {trades.map((trade) => (
+                            {groupedTrades.map((trade) => (
                                 <tr key={trade.id}>
                                     <td style={{ fontWeight: 600, color: "var(--primary)" }}>
-                                        <Link href={`/user/trades/${trade.tradeId}`} style={{ textDecoration: "none" }}>
-                                            {trade.tradeId}
-                                        </Link>
-                                        {trade._count.messages > 0 && (
-                                            <span style={{ marginLeft: "6px", fontSize: "0.75rem", padding: "2px 6px", backgroundColor: "var(--primary)", color: "white", borderRadius: "10px" }}>
-                                                {trade._count.messages} msg
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            {trade.isBatch ? (
+                                                <span title="Batch Submission" style={{ backgroundColor: 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 'bold' }}>BATCH</span>
+                                            ) : (
+                                                <span title="Single Card" style={{ backgroundColor: 'var(--bg-alt)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem' }}>SINGLE</span>
+                                            )}
+                                            <Link href={`/user/trades/${trade.tradeId}`} style={{ textDecoration: "none" }}>
+                                                {trade.isBatch ? trade.batchId : trade.tradeId}
+                                            </Link>
+                                        </div>
+                                        {(trade.isBatch ? trade.batchUnreadCount : trade._count.messages) > 0 && (
+                                            <span style={{ marginTop: "4px", display: "inline-block", fontSize: "0.7rem", padding: "1px 5px", backgroundColor: "var(--primary)", color: "white", borderRadius: "10px" }}>
+                                                {(trade.isBatch ? trade.batchUnreadCount : trade._count.messages)} new messages
                                             </span>
                                         )}
                                     </td>
                                     <td>{new Date(trade.createdAt).toLocaleDateString()}</td>
-                                    <td>{trade.cardBrand} <span style={{ opacity: 0.6, fontSize: '0.85em' }}>({trade.cardType})</span></td>
-                                    <td>{trade.faceValue} {trade.currency}</td>
-                                    <td>{trade.payoutNetwork}</td>
+                                    <td>
+                                        <div style={{ fontSize: '0.9rem', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {trade.isBatch ? trade.batchBrands : trade.cardBrand}
+                                        </div>
+                                    </td>
+                                    <td>{trade.isBatch ? <strong>{trade.cardCount} Cards</strong> : '1 Card'}</td>
+                                    <td style={{ fontWeight: 600, color: "var(--primary)" }}>
+                                        GH₵ {(trade.isBatch ? trade.totalPayout : (trade.calculatedPayout || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </td>
                                     <td>
                                         <span className={`badge badge-${trade.status.toLowerCase()}`}>
                                             {trade.status.replace("_", " ")}
@@ -110,7 +166,7 @@ export default async function UserTradesPage(props: {
                                     <td>
                                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                                             <Link href={`/user/trades/${trade.tradeId}`} className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.85em' }}>
-                                                View
+                                                Details
                                             </Link>
                                             {trade.status === "PAID" && (
                                                 <ConfirmReceiptButton tradeId={trade.tradeId} />

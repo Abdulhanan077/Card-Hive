@@ -68,7 +68,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     </div>
                     <div className="mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <label htmlFor="sidebar-toggle" className="mobile-menu-btn" aria-label="Open menu">☰</label>
-                        <span style={{ fontWeight: 600, color: 'var(--primary)' }}>Card Hive</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <img src="/logo.png" alt="Card Hive Logo" style={{ height: '24px', width: 'auto' }} />
+                            <span style={{ fontWeight: 600, color: 'var(--primary)' }}>Card Hive</span>
+                        </div>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>

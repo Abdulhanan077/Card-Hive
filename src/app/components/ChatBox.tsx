@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { postMessage, markMessageAsRead, triggerTypingIndicator } from "../actions/chat";
+import { IoCheckmark, IoCheckmarkDone, IoImageOutline, IoDocumentAttachOutline, IoSend, IoEllipsisHorizontal, IoPencilOutline, IoTrashOutline, IoClose } from "react-icons/io5";
 import { pusherClient } from "@/lib/pusher";
-import { IoCheckmark, IoCheckmarkDone } from "react-icons/io5";
+import { postMessage, markMessageAsRead, triggerTypingIndicator, uploadChatFileAction, deleteMessageAction, editMessageAction } from "../actions/chat";
 
 interface Message {
     id: number;
@@ -11,6 +11,9 @@ interface Message {
     createdAt: Date;
     isRead: boolean;
     sender: { id: number; username: string; role: string };
+    fileUrl?: string;
+    fileType?: 'IMAGE' | 'FILE';
+    isEdited?: boolean;
 }
 
 export default function ChatBox({
@@ -29,9 +32,15 @@ export default function ChatBox({
     const [messages, setMessages] = useState<Message[]>(initialMessages);
     const [content, setContent] = useState("");
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [typingUser, setTypingUser] = useState<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editContent, setEditContent] = useState("");
+    const [showMenuId, setShowMenuId] = useState<number | null>(null);
 
     // Update messages when initialMessages change (e.g. on navigation)
     useEffect(() => {
@@ -63,6 +72,14 @@ export default function ChatBox({
             setMessages((prev) => prev.map(m => m.id === data.messageId ? { ...m, isRead: true } : m));
         });
 
+        channel.bind("message-updated", (data: { messageId: number, content: string }) => {
+            setMessages((prev) => prev.map(m => m.id === data.messageId ? { ...m, content: data.content, isEdited: true } : m));
+        });
+
+        channel.bind("message-deleted", (data: { messageId: number }) => {
+            setMessages((prev) => prev.filter(m => m.id !== data.messageId));
+        });
+
         channel.bind("typing", (data: { username: string }) => {
             if (data.username !== currentUsername) {
                 setTypingUser(data.username);
@@ -81,13 +98,13 @@ export default function ChatBox({
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages.length, typingUser]);
 
-    const handleSend = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!content.trim()) return;
+    const handleSend = async (e?: React.FormEvent, fileUrl?: string, fileType?: 'IMAGE' | 'FILE') => {
+        if (e) e.preventDefault();
+        if (!content.trim() && !fileUrl) return;
 
         setLoading(true);
         try {
-            await postMessage(tradeId, content, path);
+            await postMessage(tradeId, content, path, fileUrl, fileType);
             setContent("");
         } catch (err) {
             console.error("Failed to send message", err);
@@ -96,22 +113,102 @@ export default function ChatBox({
         }
     };
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        setUploading(true);
+        try {
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append("file", file);
+                const result = await uploadChatFileAction(formData);
+                await handleSend(undefined, result.url, result.type as any);
+            }
+        } catch (err) {
+            console.error("Upload failed", err);
+            alert("Failed to upload one or more files. Please try again.");
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setContent(e.target.value);
-        // Trigger typing indicator (throttled/debounced if needed, but simple for now)
-        // We need the current user's username here. For now, we'll use "Someone" or let it be.
-        // Usually, session is passed down. For simplicity, we trigger it.
         triggerTypingIndicator(tradeId, currentUsername);
     };
 
+    const handleDelete = async (messageId: number) => {
+        if (!confirm("Are you sure you want to delete this message?")) return;
+        try {
+            await deleteMessageAction(messageId, tradeId);
+        } catch (err) {
+            console.error("Failed to delete message", err);
+            alert("Failed to delete message");
+        }
+    };
+
+    const startEditing = (msg: Message) => {
+        setEditingId(msg.id);
+        setEditContent(msg.content);
+        setShowMenuId(null);
+    };
+
+    const cancelEditing = () => {
+        setEditingId(null);
+        setEditContent("");
+    };
+
+    const handleUpdate = async (messageId: number) => {
+        if (!editContent.trim()) return;
+        setLoading(true);
+        try {
+            await editMessageAction(messageId, tradeId, editContent);
+            setEditingId(null);
+            setEditContent("");
+        } catch (err) {
+            console.error("Failed to update message", err);
+            alert("Failed to update message");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: "400px", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", overflow: "hidden", backgroundColor: "var(--surface)" }}>
+        <div style={{
+            display: "flex",
+            flexDirection: "column",
+            height: "700px", // Fixed height for stability
+            border: "1px solid var(--border)",
+            borderRadius: "16px",
+            overflow: "hidden",
+            backgroundColor: "white",
+            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)"
+        }}>
+            {/* Header / Info bar (optional) */}
+            <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid var(--border)", backgroundColor: "var(--bg-alt)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>Trade Workspace Chat</span>
+                <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem", opacity: 0.7 }}>
+                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#22c55e" }}></div>
+                    Live
+                </span>
+            </div>
 
             {/* Messages Area */}
-            <div style={{ flex: 1, padding: "1.5rem", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1rem", backgroundColor: "var(--bg-alt)" }}>
+            <div style={{
+                flex: 1,
+                padding: "1.5rem",
+                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
+                gap: "1.25rem",
+                backgroundColor: "#f8fafc"
+            }}>
                 {messages.length === 0 ? (
-                    <div style={{ textAlign: "center", opacity: 0.5, marginTop: "2rem" }}>
-                        No messages yet. Start the conversation!
+                    <div style={{ textAlign: "center", opacity: 0.5, marginTop: "4rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+                        <div style={{ fontSize: "3rem" }}>💬</div>
+                        <p>No messages yet. Send a greeting or upload a file.</p>
                     </div>
                 ) : (
                     messages.map((msg) => {
@@ -121,61 +218,204 @@ export default function ChatBox({
                         return (
                             <div key={msg.id} style={{
                                 alignSelf: isMe ? "flex-end" : "flex-start",
-                                maxWidth: "75%",
+                                maxWidth: "80%",
                                 display: "flex",
-                                flexDirection: "column"
+                                flexDirection: "column",
+                                gap: "4px"
                             }}>
                                 <div style={{
-                                    fontSize: "0.8rem",
-                                    marginBottom: "0.25rem",
-                                    marginLeft: "0.5rem",
-                                    opacity: 0.7,
+                                    fontSize: "0.75rem",
+                                    opacity: 0.6,
+                                    margin: isMe ? "0 8px 0 0" : "0 0 0 8px",
                                     alignSelf: isMe ? "flex-end" : "flex-start",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px"
                                 }}>
-                                    {isAdminMsg && <span style={{ color: "var(--danger)", fontWeight: "bold", marginRight: "4px" }}>🛡️ Admin</span>}
-                                    {isMe ? "You" : `@${msg.sender.username}`} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                                <div style={{
-                                    backgroundColor: isMe ? "var(--primary)" : "var(--surface-hover)",
-                                    color: isMe ? "white" : "var(--foreground)",
-                                    padding: "0.75rem 1rem",
-                                    paddingRight: isMe ? "2rem" : "1rem",
-                                    borderRadius: "1rem",
-                                    borderBottomRightRadius: isMe ? "0" : "1rem",
-                                    borderBottomLeftRadius: !isMe ? "0" : "1rem",
-                                    wordWrap: "break-word",
-                                    position: "relative",
-                                    marginBottom: "0.2rem"
-                                }}>
-                                    {msg.content}
-                                    {isMe && (
-                                        <span style={{
-                                            position: "absolute",
-                                            bottom: "0.4rem",
-                                            right: "0.5rem",
+                                    {!isMe && (
+                                        <div style={{
+                                            width: "20px",
+                                            height: "20px",
+                                            borderRadius: "50%",
+                                            backgroundColor: isAdminMsg ? "#ef4444" : "#3b82f6",
+                                            color: "white",
                                             display: "flex",
                                             alignItems: "center",
-                                            height: "12px"
+                                            justifyContent: "center",
+                                            fontSize: "10px",
+                                            fontWeight: "bold"
                                         }}>
-                                            {msg.isRead ? (
-                                                <IoCheckmarkDone size={16} color="#4ade80" />
-                                            ) : (
-                                                <IoCheckmark size={16} color="rgba(255,255,255,0.6)" />
-                                            )}
-                                        </span>
+                                            {isAdminMsg ? "A" : "U"}
+                                        </div>
                                     )}
+                                    {isMe ? "Sent" : `@${msg.sender.username}`} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                                <div
+                                    onMouseEnter={() => setShowMenuId(msg.id)}
+                                    onMouseLeave={() => setShowMenuId(null)}
+                                    style={{
+                                        backgroundColor: isMe ? "#3b82f6" : "white",
+                                        color: isMe ? "white" : "#1e293b",
+                                        padding: "0.75rem 1rem",
+                                        borderRadius: "16px",
+                                        borderBottomRightRadius: isMe ? "4px" : "16px",
+                                        borderBottomLeftRadius: !isMe ? "4px" : "16px",
+                                        boxShadow: isMe ? "0 4px 15px -3px rgba(59, 130, 246, 0.3)" : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+                                        wordWrap: "break-word",
+                                        position: "relative",
+                                        border: isMe ? "none" : "1px solid #e2e8f0",
+                                        group: "true" // For hover effects if needed
+                                    }}
+                                >
+                                    {/* Edit/Delete Menu */}
+                                    {isMe && showMenuId === msg.id && !editingId && (
+                                        <div style={{
+                                            position: "absolute",
+                                            top: "-32px",
+                                            right: "0",
+                                            display: "flex",
+                                            gap: "2px",
+                                            backgroundColor: "white",
+                                            padding: "3px",
+                                            borderRadius: "10px",
+                                            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                                            border: "1px solid #e2e8f0",
+                                            zIndex: 50,
+                                            animation: "fadeIn 0.2s ease-out"
+                                        }}>
+                                            <button
+                                                onClick={() => startEditing(msg)}
+                                                style={{
+                                                    background: "none",
+                                                    border: "none",
+                                                    cursor: "pointer",
+                                                    color: "#64748b",
+                                                    padding: "6px",
+                                                    borderRadius: "6px",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    transition: "background 0.2s"
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f1f5f9"}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                                                title="Edit Message"
+                                            >
+                                                <IoPencilOutline size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(msg.id)}
+                                                style={{
+                                                    background: "none",
+                                                    border: "none",
+                                                    cursor: "pointer",
+                                                    color: "#ef4444",
+                                                    padding: "6px",
+                                                    borderRadius: "6px",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    transition: "background 0.2s"
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#fee2e2"}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                                                title="Delete Message"
+                                            >
+                                                <IoTrashOutline size={16} />
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {msg.fileUrl && (
+                                        <div style={{ marginBottom: msg.content ? "0.75rem" : "0" }}>
+                                            {msg.fileType === 'IMAGE' ? (
+                                                <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
+                                                    <img
+                                                        src={msg.fileUrl}
+                                                        alt="Attachment"
+                                                        style={{
+                                                            maxWidth: "100%",
+                                                            borderRadius: "8px",
+                                                            display: "block",
+                                                            border: isMe ? "2px solid rgba(255,255,255,0.2)" : "1px solid #e2e8f0"
+                                                        }}
+                                                    />
+                                                </a>
+                                            ) : (
+                                                <a
+                                                    href={msg.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: "8px",
+                                                        padding: "0.5rem",
+                                                        backgroundColor: isMe ? "rgba(255,255,255,0.1)" : "#f1f5f9",
+                                                        borderRadius: "8px",
+                                                        color: "inherit",
+                                                        textDecoration: "none",
+                                                        fontSize: "0.85rem"
+                                                    }}
+                                                >
+                                                    <IoDocumentAttachOutline size={20} />
+                                                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                        View Document
+                                                    </span>
+                                                </a>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {editingId === msg.id ? (
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: "200px" }}>
+                                            <input
+                                                type="text"
+                                                value={editContent}
+                                                onChange={(e) => setEditContent(e.target.value)}
+                                                autoFocus
+                                                style={{
+                                                    width: "100%",
+                                                    padding: "4px 8px",
+                                                    borderRadius: "4px",
+                                                    border: "1px solid #3b82f6",
+                                                    color: "black"
+                                                }}
+                                            />
+                                            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                                                <button onClick={cancelEditing} style={{ fontSize: "0.7rem", color: isMe ? "#e2e8f0" : "#64748b", background: "none", border: "none", cursor: "pointer" }}>Cancel</button>
+                                                <button onClick={() => handleUpdate(msg.id)} style={{ fontSize: "0.7rem", fontWeight: "bold", color: "white", backgroundColor: "#22c55e", border: "none", borderRadius: "4px", padding: "2px 8px", cursor: "pointer" }}>Save</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {msg.content && <p style={{ margin: 0, lineHeight: 1.5 }}>{msg.content}</p>}
+                                            {msg.isEdited && (
+                                                <span style={{ fontSize: "0.6rem", opacity: 0.6, fontStyle: "italic", marginLeft: "4px" }}>(edited)</span>
+                                            )}
+                                        </>
+                                    )}
+
+                                    <div style={{
+                                        display: "flex",
+                                        justifyContent: "flex-end",
+                                        alignItems: "center",
+                                        gap: "4px",
+                                        marginTop: "4px",
+                                        height: "12px",
+                                        opacity: 0.8
+                                    }}>
+                                        {isMe && (
+                                            msg.isRead ? <IoCheckmarkDone size={14} /> : <IoCheckmark size={14} />
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         );
                     })
                 )}
                 {typingUser && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '0.5rem', opacity: 0.7, marginBottom: '0.5rem' }}>
-                        <div style={{ fontSize: "0.85rem", fontStyle: "italic" }}>
-                            {typingUser} is typing
-                        </div>
-                        <div className="typing-dots">
-                            <span></span><span></span><span></span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '0.5rem', opacity: 0.7 }}>
+                        <div style={{ fontSize: "0.75rem", fontWeight: 500 }}>
+                            {typingUser} is typing...
                         </div>
                     </div>
                 )}
@@ -183,20 +423,81 @@ export default function ChatBox({
             </div>
 
             {/* Input Area */}
-            <form onSubmit={handleSend} style={{ padding: "1rem", borderTop: "1px solid var(--border)", display: "flex", gap: "0.5rem", backgroundColor: "var(--surface)" }}>
-                <input
-                    type="text"
-                    value={content}
-                    onChange={handleInputChange}
-                    placeholder="Type your message..."
-                    className="form-input"
-                    style={{ flex: 1, marginBottom: 0 }}
-                    required
-                />
-                <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: "0.5rem 1.5rem" }}>
-                    {loading ? "..." : "Send"}
-                </button>
-            </form>
+            <div style={{ padding: "1rem", borderTop: "1px solid var(--border)", backgroundColor: "white" }}>
+                <form onSubmit={handleSend} style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileUpload}
+                            style={{ display: "none" }}
+                            accept="image/*,application/pdf"
+                            multiple
+                        />
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading || loading}
+                            style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                opacity: (uploading || loading) ? 0.5 : 1,
+                                color: "var(--primary)",
+                                padding: "8px",
+                                borderRadius: "50%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "#eff6ff",
+                                transition: "all 0.2s"
+                            }}
+                            title="Attach Image or File"
+                        >
+                            {uploading ? "..." : <IoImageOutline size={20} />}
+                        </button>
+                    </div>
+
+                    <div style={{ flex: 1, position: "relative" }}>
+                        <input
+                            type="text"
+                            value={content}
+                            onChange={handleInputChange}
+                            placeholder="Write a message..."
+                            className="form-input"
+                            style={{
+                                width: "100%",
+                                marginBottom: 0,
+                                borderRadius: "12px",
+                                paddingRight: "3rem",
+                                border: "1px solid #e2e8f0",
+                                backgroundColor: "#f8fafc"
+                            }}
+                            disabled={loading}
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading || uploading || !content.trim()}
+                        style={{
+                            backgroundColor: (loading || uploading || !content.trim()) ? "#cbd5e1" : "#3b82f6",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "12px",
+                            height: "42px",
+                            width: "42px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            transition: "all 0.2s"
+                        }}
+                    >
+                        <IoSend size={18} />
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }
