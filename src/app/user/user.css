@@ -1,7 +1,7 @@
 .dashboard-layout {
     display: flex;
-    min-height: calc(100vh - 72px);
-    /* Assuming header is around 72px */
+    height: 100vh;
+    overflow: hidden;
     background-color: var(--background);
 }
 
@@ -11,6 +11,28 @@
     border-right: 1px solid var(--border);
     padding: 2rem 1.5rem;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Modern Sidebar Scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(var(--primary-rgb), 0.2);
+    border-radius: 20px;
+}
+
+.sidebar:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(var(--primary-rgb), 0.4);
 }
 
 .sidebar-header {

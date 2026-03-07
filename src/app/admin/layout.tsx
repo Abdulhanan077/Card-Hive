@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <input type="checkbox" id="sidebar-toggle" />
             <label htmlFor="sidebar-toggle" className="sidebar-overlay"></label>
 
-            <aside className="sidebar" style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <aside className="sidebar">
                 <div className="sidebar-header" style={{ borderColor: 'var(--primary)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ color: 'var(--primary)' }}>Admin Portal</h3>
