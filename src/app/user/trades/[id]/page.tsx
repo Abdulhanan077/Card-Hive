@@ -182,6 +182,11 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
                         ) : (
                             <div>
                                 <div style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{trade.payoutNetwork}</div>
+                                {trade.payoutAccountName && (
+                                    <div style={{ fontSize: "1rem", opacity: 0.8, marginTop: "0.25rem" }}>
+                                        {trade.payoutAccountName}
+                                    </div>
+                                )}
                                 <div style={{ color: "var(--primary)", fontSize: "1.2rem", marginTop: "0.25rem" }}>{trade.payoutPhoneNumber}</div>
                             </div>
                         )}
