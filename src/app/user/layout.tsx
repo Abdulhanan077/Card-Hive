@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
@@ -14,6 +15,23 @@ export default async function UserLayout({ children }: { children: React.ReactNo
     if (!session) {
         redirect("/login");
     }
+
+    const userId = parseInt(session.user.id);
+
+    // Fetch Lifetime Stats
+    const stats = await prisma.trade.groupBy({
+        by: ['status'],
+        where: { userId },
+        _count: { _all: true },
+        _sum: { calculatedPayout: true, faceValue: true }
+    });
+
+    const totalTrades = stats.reduce((acc, s) => acc + s._count._all, 0);
+    const successfulTrades = stats.filter(s => s.status === 'PAID' || s.status === 'COMPLETED').reduce((acc, s) => acc + s._count._all, 0);
+    const rejectedTrades = stats.filter(s => s.status === 'REJECTED').reduce((acc, s) => acc + s._count._all, 0);
+
+    const totalCedis = stats.filter(s => s.status === 'PAID' || s.status === 'COMPLETED').reduce((acc, s) => acc + (s._sum.calculatedPayout || 0), 0);
+    const totalDollars = stats.filter(s => (s.status === 'PAID' || s.status === 'COMPLETED')).reduce((acc, s) => acc + (s._sum.faceValue || 0), 0);
 
     return (
         <div className="dashboard-layout">
@@ -39,7 +57,36 @@ export default async function UserLayout({ children }: { children: React.ReactNo
                     <Link href="/user/settings" className="sidebar-link">Settings</Link>
                     <Link href="/user/security" className="sidebar-link">Security & Sessions</Link>
 
-                    <div style={{ marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                    {/* Lifetime Statistics Section */}
+                    <div className="sidebar-stats-section">
+                        <h4 className="stats-header">Lifetime Statistics</h4>
+                        <div className="stats-grid">
+                            <div className="stat-item">
+                                <span className="stat-label">Total Trades</span>
+                                <span className="stat-value">{totalTrades}</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-label">Successful</span>
+                                <span className="stat-value text-success">{successfulTrades}</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-label">Rejected</span>
+                                <span className="stat-value text-danger">{rejectedTrades}</span>
+                            </div>
+                        </div>
+                        <div className="stats-money">
+                            <div className="money-item">
+                                <span className="money-label">Total Received (₵)</span>
+                                <span className="money-value">₵ {totalCedis.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="money-item">
+                                <span className="money-label">Total Volume ($)</span>
+                                <span className="money-value">$ {totalDollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
                         <LogoutButton />
                     </div>
                 </nav>
