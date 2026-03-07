@@ -1,0 +1,1 @@
+﻿src/app/components/ChatBox.tsx(267,41): error TS2353: Object literal may only specify known properties, and 'group' does not exist in type 'Properties<string | number, string & {}>'.

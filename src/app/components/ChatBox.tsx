@@ -263,8 +263,7 @@ export default function ChatBox({
                                         boxShadow: isMe ? "0 4px 15px -3px rgba(59, 130, 246, 0.3)" : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
                                         wordWrap: "break-word",
                                         position: "relative",
-                                        border: isMe ? "none" : "1px solid #e2e8f0",
-                                        group: "true" // For hover effects if needed
+                                        border: isMe ? "none" : "1px solid #e2e8f0"
                                     }}
                                 >
                                     {/* Edit/Delete Menu */}
