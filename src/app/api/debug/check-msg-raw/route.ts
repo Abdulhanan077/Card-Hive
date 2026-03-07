@@ -13,7 +13,7 @@ export async function GET() {
 
         const first = raw[0];
         const keys = Object.keys(first);
-        const types = {};
+        const types: Record<string, string> = {};
         keys.forEach(k => types[k] = typeof first[k]);
 
         return NextResponse.json({
