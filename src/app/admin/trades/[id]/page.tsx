@@ -210,6 +210,7 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
 
                                         <RejectCardButton
                                             tradeId={t.id}
+                                            workspaceId={trade.id}
                                             currentStatus={t.status}
                                             pageTradeId={params.id}
                                             disabled={trade.status === 'PAID' || trade.status === 'COMPLETED'}

@@ -2,18 +2,19 @@
 
 import { useNotification } from "@/context/NotificationContext";
 import { toggleCardStatusAction } from "@/app/actions/admin-trade-actions";
-import { uploadChatFileAction } from "@/app/actions/chat";
+import { uploadChatFileAction, postMessage } from "@/app/actions/chat";
 import { useState, useRef } from "react";
 import { IoCloudUploadOutline, IoCloseOutline } from "react-icons/io5";
 
 interface Props {
     tradeId: number;
+    workspaceId: number;
     currentStatus: string;
     pageTradeId: string;
     disabled: boolean;
 }
 
-export default function RejectCardButton({ tradeId, currentStatus, pageTradeId, disabled }: Props) {
+export default function RejectCardButton({ tradeId, workspaceId, currentStatus, pageTradeId, disabled }: Props) {
     const { showNotification } = useNotification();
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
@@ -56,7 +57,8 @@ export default function RejectCardButton({ tradeId, currentStatus, pageTradeId, 
             for (const file of files) {
                 const formData = new FormData();
                 formData.append("file", file);
-                uploadResults.push(await uploadChatFileAction(formData));
+                const res = await uploadChatFileAction(formData);
+                uploadResults.push(res);
             }
 
             // 2. Call rejection action with the first proof
@@ -71,11 +73,14 @@ export default function RejectCardButton({ tradeId, currentStatus, pageTradeId, 
             // 3. Post additional proofs if any
             if (uploadResults.length > 1) {
                 for (let i = 1; i < uploadResults.length; i++) {
-                    await uploadChatFileAction(new FormData()); // Dummy call not needed, we have results
-                    // Actually we should just call postMessage directly but it's internal to toggleCardStatusAction
-                    // For now, let's just use the first one for status and post others to chat
-                    // However, toggleCardStatusAction already posts the first one.
-                    // We need to import postMessage or loop here.
+                    const res = uploadResults[i];
+                    await postMessage(
+                        workspaceId,
+                        `Additional Evidence for item #${tradeId}`,
+                        `/admin/trades/${pageTradeId}`,
+                        res.url,
+                        'IMAGE'
+                    );
                 }
             }
 
