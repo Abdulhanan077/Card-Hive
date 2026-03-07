@@ -27,6 +27,7 @@ export default async function UserLayout({ children }: { children: React.ReactNo
     });
 
     const totalTrades = stats.reduce((acc, s) => acc + s._count._all, 0);
+    const pendingTrades = stats.filter(s => s.status === 'PENDING' || s.status === 'UNDER_REVIEW' || s.status === 'REVIEWING').reduce((acc, s) => acc + s._count._all, 0);
     const successfulTrades = stats.filter(s => s.status === 'PAID' || s.status === 'COMPLETED').reduce((acc, s) => acc + s._count._all, 0);
     const rejectedTrades = stats.filter(s => s.status === 'REJECTED').reduce((acc, s) => acc + s._count._all, 0);
 
@@ -64,6 +65,10 @@ export default async function UserLayout({ children }: { children: React.ReactNo
                             <div className="stat-item">
                                 <span className="stat-label">Total Trades</span>
                                 <span className="stat-value">{totalTrades}</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-label">Pending</span>
+                                <span className="stat-value text-warning">{pendingTrades}</span>
                             </div>
                             <div className="stat-item">
                                 <span className="stat-label">Successful</span>
