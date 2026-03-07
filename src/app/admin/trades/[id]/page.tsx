@@ -169,32 +169,41 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                             {batchTrades.map((t: any, idx) => (
                                 <div key={t.id} style={{
                                     display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: '1rem',
+                                    flexDirection: 'column',
+                                    gap: '1rem',
+                                    padding: '1.25rem',
                                     backgroundColor: t.status === 'REJECTED' ? '#fef2f2' : 'var(--bg-alt)',
                                     borderRadius: 'var(--radius-md)',
                                     border: t.status === 'REJECTED' ? '2px solid #ef4444' : '1px solid var(--border)',
                                     opacity: 1
                                 }}>
-                                    <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', opacity: 0.3 }}>{idx + 1}</div>
-                                        <div>
-                                            <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{t.cardBrand}</div>
-                                            <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>
-                                                {t.cardType} • {t.faceValue} {t.currency} • Est. ₵{t.calculatedPayout?.toFixed(2)}
+                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', opacity: 0.3, marginTop: '2px' }}>{idx + 1}</div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)' }}>{t.cardBrand}</div>
+                                            <div style={{ fontSize: '0.9rem', opacity: 0.8, marginTop: '2px' }}>
+                                                {t.cardType} • {t.faceValue} {t.currency} • <strong>Est. ₵{t.calculatedPayout?.toFixed(2)}</strong>
                                             </div>
-                                            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', backgroundColor: 'var(--bg)', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border)' }}>
-                                                <code>{t.cardCode || 'No code provided'}</code>
-                                                <CopyButton textToCopy={t.cardCode} label="" />
+                                            <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', backgroundColor: 'var(--bg)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <code style={{ wordBreak: 'break-all' }}>{t.cardCode || 'No code provided'}</code>
+                                                <div style={{ flexShrink: 0 }}>
+                                                    <CopyButton textToCopy={t.cardCode} label="" />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.5 }}>Item Status</div>
-                                            <div style={{ fontWeight: '600', color: t.status === 'REJECTED' ? '#ef4444' : 'var(--success)' }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        paddingTop: '1rem',
+                                        borderTop: '1px solid var(--border)',
+                                        marginTop: '0.5rem'
+                                    }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.5, letterSpacing: '0.5px' }}>Item Status</div>
+                                            <div style={{ fontWeight: '700', fontSize: '0.9rem', color: t.status === 'REJECTED' ? '#ef4444' : 'var(--success)' }}>
                                                 {t.status === 'REJECTED' ? 'REJECTED' : 'ACCEPTED'}
                                             </div>
                                         </div>
