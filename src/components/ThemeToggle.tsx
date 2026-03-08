@@ -4,7 +4,12 @@ import { useTheme } from "@/context/ThemeContext";
 import { HiSun, HiMoon } from "react-icons/hi";
 
 export default function ThemeToggle() {
-    const { theme, toggleTheme } = useTheme();
+    const { theme, toggleTheme, mounted } = useTheme();
+
+    // Prevent hydration mismatch by returning a placeholder until mounted
+    if (!mounted) {
+        return <div className="theme-toggle-btn-placeholder" style={{ opacity: 0 }}></div>;
+    }
 
     return (
         <button

@@ -9,19 +9,15 @@ type Theme = "light" | "dark";
 interface ThemeContextType {
     theme: Theme;
     toggleTheme: () => void;
+    mounted: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const { data: session, status, update: updateSession } = useSession();
-    // Initialize from localStorage immediately if possible
-    const [theme, setTheme] = useState<Theme>(() => {
-        if (typeof window !== 'undefined') {
-            return (localStorage.getItem("theme") as Theme) || "light";
-        }
-        return "light";
-    });
+    // Start with a consistent initial state to avoid hydration mismatch
+    const [theme, setTheme] = useState<Theme>("light");
     const [mounted, setMounted] = useState(false);
 
     // Sync from session only when it's fresh or first loaded
@@ -30,14 +26,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const savedTheme = localStorage.getItem("theme") as Theme | null;
 
         if (status === "authenticated" && sessionTheme) {
-            // Only overwrite local if they differ and it's likely a fresh login
-            // For refresh stability, we trust localStorage more as it updates instantly
             if (sessionTheme !== savedTheme) {
                 setTheme(sessionTheme);
                 document.documentElement.setAttribute("data-theme", sessionTheme);
                 localStorage.setItem("theme", sessionTheme);
+            } else {
+                setTheme(sessionTheme);
             }
         } else if (savedTheme) {
+            setTheme(savedTheme);
             document.documentElement.setAttribute("data-theme", savedTheme);
         }
         setMounted(true);
@@ -61,7 +58,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext.Provider value={{ theme, toggleTheme, mounted }}>
             {children}
         </ThemeContext.Provider>
     );
