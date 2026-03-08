@@ -379,10 +379,10 @@
 }
 
 .money-item {
-    background: linear-gradient(135deg, var(--primary-light), white);
+    background: linear-gradient(135deg, var(--primary-light), var(--surface));
     padding: 0.75rem;
     border-radius: 8px;
-    border: 1px solid var(--primary-border);
+    border: 1px solid var(--border);
 }
 
 .money-label {

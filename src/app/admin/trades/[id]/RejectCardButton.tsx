@@ -131,12 +131,13 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
                     padding: '1rem'
                 }}>
                     <div style={{
-                        backgroundColor: 'white',
+                        backgroundColor: 'var(--surface)',
                         padding: '1.5rem',
                         borderRadius: '12px',
                         width: '100%',
                         maxWidth: '450px',
-                        boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)'
+                        boxShadow: 'var(--shadow-lg)',
+                        border: '1px solid var(--border)'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Confirm Rejection</h3>
@@ -152,12 +153,12 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
                             <div
                                 onClick={() => fileInputRef.current?.click()}
                                 style={{
-                                    border: '2px dashed #e2e8f0',
+                                    border: '2px dashed var(--border)',
                                     borderRadius: '8px',
                                     padding: '1.5rem',
                                     textAlign: 'center',
                                     cursor: 'pointer',
-                                    backgroundColor: '#f8fafc',
+                                    backgroundColor: 'var(--bg-alt)',
                                     transition: 'all 0.2s'
                                 }}
                             >
@@ -190,14 +191,17 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
                                 placeholder="E.g. Already redeemed, Invalid code..."
+                                className="form-input"
                                 style={{
                                     width: '100%',
                                     borderRadius: '8px',
-                                    border: '1px solid #e2e8f0',
+                                    border: '1px solid var(--border)',
                                     padding: '0.75rem',
                                     fontSize: '0.85rem',
                                     minHeight: '80px',
-                                    resize: 'vertical'
+                                    resize: 'vertical',
+                                    backgroundColor: 'var(--background)',
+                                    color: 'var(--foreground)'
                                 }}
                             />
                         </div>
@@ -210,8 +214,9 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
                                     flex: 1,
                                     padding: '0.75rem',
                                     borderRadius: '8px',
-                                    border: '1px solid #e2e8f0',
-                                    backgroundColor: 'white',
+                                    border: '1px solid var(--border)',
+                                    backgroundColor: 'var(--surface)',
+                                    color: 'var(--foreground)',
                                     cursor: 'pointer',
                                     fontSize: '0.9rem'
                                 }}
@@ -226,8 +231,8 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
                                     padding: '0.75rem',
                                     borderRadius: '8px',
                                     border: 'none',
-                                    backgroundColor: (loading || files.length === 0) ? '#cbd5e1' : '#ef4444',
-                                    color: 'white',
+                                    backgroundColor: (loading || files.length === 0) ? 'var(--border)' : '#ef4444',
+                                    color: (loading || files.length === 0) ? 'var(--text-muted)' : 'white',
                                     fontWeight: 600,
                                     cursor: 'pointer',
                                     fontSize: '0.9rem',

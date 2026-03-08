@@ -75,6 +75,17 @@ export async function trackSession() {
         deviceString = `${browser.name || "Unknown"} on ${os.name || "Unknown"} ${device.model ? `(${device.model})` : ""}`;
     } catch (e) { }
 
+    // Check if session was updated recently to prevent excessive DB calls
+    const existingSession = await prisma.session.findUnique({
+        where: { sessionToken: currentToken },
+        select: { lastActive: true }
+    });
+
+    if (existingSession && existingSession.lastActive) {
+        const diff = Date.now() - new Date(existingSession.lastActive).getTime();
+        if (diff < 60000) return { success: true, throttled: true };
+    }
+
     await prisma.session.upsert({
         where: { sessionToken: currentToken },
         update: {

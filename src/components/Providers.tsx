@@ -2,13 +2,16 @@
 
 import { SessionProvider } from "next-auth/react";
 import { NotificationProvider } from "@/context/NotificationContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
     return (
         <SessionProvider>
-            <NotificationProvider>
-                {children}
-            </NotificationProvider>
+            <ThemeProvider>
+                <NotificationProvider>
+                    {children}
+                </NotificationProvider>
+            </ThemeProvider>
         </SessionProvider>
     );
 }

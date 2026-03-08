@@ -497,7 +497,14 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                                             </span>
                                         </td>
                                         <td style={{ padding: "0.75rem" }}>
-                                            <span style={{ backgroundColor: rate.cardType === 'E-code' ? 'var(--blue-light, #e0f2fe)' : 'var(--green-light, #dcfce7)', color: rate.cardType === 'E-code' ? 'var(--blue-dark, #0284c7)' : 'var(--green-dark, #166534)', padding: "0.2rem 0.4rem", borderRadius: "4px", fontSize: "0.85em" }}>
+                                            <span style={{
+                                                backgroundColor: rate.cardType === 'E-code' ? 'var(--info-light)' : 'var(--success-light)',
+                                                color: rate.cardType === 'E-code' ? 'var(--info)' : 'var(--success)',
+                                                padding: "0.2rem 0.6rem",
+                                                borderRadius: "4px",
+                                                fontSize: "0.85em",
+                                                fontWeight: 600
+                                            }}>
                                                 {rate.cardType || "Physical"}
                                             </span>
                                         </td>

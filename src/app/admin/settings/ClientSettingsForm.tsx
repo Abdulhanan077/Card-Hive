@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { saveSettings } from "./actions";
 import { useNotification } from "@/context/NotificationContext";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function ClientSettingsForm({ settings }: { settings: any }) {
     const { showNotification } = useNotification();
@@ -27,6 +28,18 @@ export default function ClientSettingsForm({ settings }: { settings: any }) {
 
     return (
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <div className="card" style={{ padding: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>🌓</span> Application Appearance
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                    Personalize your dashboard theme.
+                </p>
+                <div style={{ maxWidth: '300px' }}>
+                    <ThemeToggle />
+                </div>
+            </div>
+
             <div className="form-group">
                 <label className="form-label">Site Name</label>
                 <input
@@ -91,7 +104,7 @@ export default function ClientSettingsForm({ settings }: { settings: any }) {
 
             <div className="form-group" style={{ marginTop: "1rem" }}>
                 <label className="form-label" style={{ color: "var(--primary)", fontWeight: 600 }}>USDT Exchange Rate (GHS per 1 USDT)</label>
-                <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "0.5rem" }}>The rate used to calculate estimated payouts for Crypto (USDT) method.</p>
+                <p style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "0.5rem" }}>The rate used to convert GHS payouts to USDT. (e.g. 15.0)</p>
                 <input
                     type="number"
                     step="0.1"

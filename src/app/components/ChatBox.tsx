@@ -183,8 +183,8 @@ export default function ChatBox({
             border: "1px solid var(--border)",
             borderRadius: "16px",
             overflow: "hidden",
-            backgroundColor: "white",
-            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)"
+            backgroundColor: "var(--surface)",
+            boxShadow: "var(--shadow-md)"
         }}>
             {/* Header / Info bar (optional) */}
             <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid var(--border)", backgroundColor: "var(--bg-alt)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -203,7 +203,7 @@ export default function ChatBox({
                 display: "flex",
                 flexDirection: "column",
                 gap: "1.25rem",
-                backgroundColor: "#f8fafc"
+                backgroundColor: "var(--background)"
             }}>
                 {messages.length === 0 ? (
                     <div style={{ textAlign: "center", opacity: 0.5, marginTop: "4rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
@@ -254,16 +254,16 @@ export default function ChatBox({
                                     onMouseEnter={() => setShowMenuId(msg.id)}
                                     onMouseLeave={() => setShowMenuId(null)}
                                     style={{
-                                        backgroundColor: isMe ? "#3b82f6" : "white",
-                                        color: isMe ? "white" : "#1e293b",
+                                        backgroundColor: isMe ? "var(--primary)" : "var(--surface)",
+                                        color: isMe ? "white" : "var(--foreground)",
                                         padding: "0.75rem 1rem",
                                         borderRadius: "16px",
                                         borderBottomRightRadius: isMe ? "4px" : "16px",
                                         borderBottomLeftRadius: !isMe ? "4px" : "16px",
-                                        boxShadow: isMe ? "0 4px 15px -3px rgba(59, 130, 246, 0.3)" : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+                                        boxShadow: isMe ? "0 4px 15px -3px rgba(37, 99, 235, 0.3)" : "var(--shadow-sm)",
                                         wordWrap: "break-word",
                                         position: "relative",
-                                        border: isMe ? "none" : "1px solid #e2e8f0"
+                                        border: isMe ? "none" : "1px solid var(--border)"
                                     }}
                                 >
                                     {/* Edit/Delete Menu */}
@@ -422,7 +422,7 @@ export default function ChatBox({
             </div>
 
             {/* Input Area */}
-            <div style={{ padding: "1rem", borderTop: "1px solid var(--border)", backgroundColor: "white" }}>
+            <div style={{ padding: "1rem", borderTop: "1px solid var(--border)", backgroundColor: "var(--surface)" }}>
                 <form onSubmit={handleSend} style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
                     <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
@@ -448,7 +448,7 @@ export default function ChatBox({
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                backgroundColor: "#eff6ff",
+                                backgroundColor: "var(--primary-light)",
                                 transition: "all 0.2s"
                             }}
                             title="Attach Image or File"
@@ -469,8 +469,8 @@ export default function ChatBox({
                                 marginBottom: 0,
                                 borderRadius: "12px",
                                 paddingRight: "3rem",
-                                border: "1px solid #e2e8f0",
-                                backgroundColor: "#f8fafc"
+                                border: "1px solid var(--border)",
+                                backgroundColor: "var(--background)"
                             }}
                             disabled={loading}
                         />

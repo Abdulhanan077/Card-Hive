@@ -122,10 +122,11 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
     };
 
     const rawSettings: any = await prisma.$queryRawUnsafe(`SELECT "usdtExchangeRate" FROM "Settings" LIMIT 1`);
-    const usdtRate = rawSettings && rawSettings.length > 0 ? rawSettings[0].usdtExchangeRate : 15.0;
+    const usdtExchangeRate = rawSettings && rawSettings.length > 0 ? rawSettings[0].usdtExchangeRate : 15.0;
 
     const activeBatchTrades = batchTrades.filter(t => t.status !== "REJECTED");
     const totalExpectedPayout = activeBatchTrades.reduce((sum, t) => sum + (t.calculatedPayout || 0), 0);
+    const totalUsdtPayout = usdtExchangeRate > 0 ? (totalExpectedPayout / usdtExchangeRate) : 0;
 
     return (
         <>
@@ -236,7 +237,7 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                                     <div style={{ textAlign: "right" }}>
                                         <small>APPROX. USDT</small>
                                         <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#16a34a" }}>
-                                            ≈ {(totalExpectedPayout / usdtRate).toLocaleString(undefined, { minimumFractionDigits: 2 })} USDT
+                                            ≈ {totalUsdtPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })} USDT
                                         </div>
                                     </div>
                                 )}

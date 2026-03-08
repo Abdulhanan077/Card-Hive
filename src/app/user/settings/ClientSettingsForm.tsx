@@ -13,6 +13,7 @@ type SettingsUser = {
 
 import { updateEmailPreferences } from "@/app/actions/userSettings";
 import { useNotification } from "@/context/NotificationContext";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
     const { showNotification } = useNotification();
@@ -84,7 +85,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <h2 style={{ fontSize: '1.5rem', margin: 0 }}>{user.username}</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'gray', fontSize: '0.9rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                         <span>✉️</span> {user.email}
                     </div>
 
@@ -105,7 +106,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                 <div style={{ marginLeft: 'auto', alignSelf: 'flex-start' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
                         <span style={{ fontWeight: 'bold' }}>{user.username}</span>
-                        <span style={{ fontSize: '0.8rem', color: 'gray' }}>View Profile</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>View Profile</span>
                     </div>
                 </div>
             </div>
@@ -121,13 +122,13 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <span>👤</span> Profile Information
                         </h3>
-                        <p style={{ fontSize: '0.85rem', color: 'gray', marginBottom: '1.5rem' }}>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
                             Update your account's profile information and email address.
                         </p>
 
                         <form onSubmit={handleSaveInfo} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'gray', fontSize: '0.85rem' }}>
+                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                                     <span>👤</span> Full Name
                                 </label>
                                 <input
@@ -139,7 +140,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                             </div>
 
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'gray', fontSize: '0.85rem' }}>
+                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                                     <span>✉️</span> Email Address
                                 </label>
                                 <input
@@ -154,7 +155,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                                 <button type="submit" className="btn btn-primary" style={{ backgroundColor: '#6366f1', display: 'flex', gap: '0.5rem', alignItems: 'center' }} disabled={loadingInfo}>
                                     <span>💾</span> {loadingInfo ? "Saving..." : "Save Changes"}
                                 </button>
-                                <button type="button" className="btn" style={{ color: 'gray', background: 'transparent' }} onClick={() => { setFullName(user.username); setEmail(user.email); }}>
+                                <button type="button" className="btn" style={{ color: 'var(--text-muted)', background: 'transparent' }} onClick={() => { setFullName(user.username); setEmail(user.email); }}>
                                     <span>⊗</span> Cancel
                                 </button>
                             </div>
@@ -166,13 +167,13 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <span>🔒</span> Update Password
                         </h3>
-                        <p style={{ fontSize: '0.85rem', color: 'gray', marginBottom: '1.5rem' }}>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
                             Ensure your account is using a long, random password to stay secure.
                         </p>
 
                         <form onSubmit={handleSavePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'gray', fontSize: '0.85rem' }}>
+                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                                     <span>🔓</span> Current Password
                                 </label>
                                 <div style={{ position: 'relative' }}>
@@ -184,12 +185,12 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                                         placeholder="Enter your current password"
                                         required
                                     />
-                                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'gray', cursor: 'pointer' }}>👁️</span>
+                                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', cursor: 'pointer' }}>👁️</span>
                                 </div>
                             </div>
 
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'gray', fontSize: '0.85rem' }}>
+                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                                     <span>🗝️</span> New Password
                                 </label>
                                 <div style={{ position: 'relative' }}>
@@ -201,7 +202,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                                         placeholder="Enter your new password"
                                         required
                                     />
-                                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'gray', cursor: 'pointer' }}>👁️</span>
+                                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', cursor: 'pointer' }}>👁️</span>
                                 </div>
                             </div>
 
@@ -213,19 +214,30 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                         </form>
                     </div>
 
+                    {/* Appearance Settings */}
+                    <div className="card" style={{ padding: '2rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span>🌓</span> Appearance
+                        </h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                            Customize how the application looks for you.
+                        </p>
+                        <ThemeToggle />
+                    </div>
+
                     {/* Notification Preferences */}
                     <div className="card" style={{ padding: '2rem' }}>
                         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <span>🔔</span> Notification Preferences
                         </h3>
-                        <p style={{ fontSize: '0.85rem', color: 'gray', marginBottom: '1.5rem' }}>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
                             Choose what kind of updates you receive from us.
                         </p>
 
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: 'var(--bg-alt)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
                             <div>
                                 <h4 style={{ margin: 0, fontSize: '0.95rem' }}>Trade Updates</h4>
-                                <p style={{ margin: 0, fontSize: '0.8rem', color: 'gray', marginTop: '0.25rem' }}>Receive email notifications when your trade status changes or payment is sent.</p>
+                                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Receive email notifications when your trade status changes or payment is sent.</p>
                             </div>
                             <label style={{ position: 'relative', display: 'inline-block', width: '50px', height: '26px' }}>
                                 <input
@@ -237,7 +249,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                                 />
                                 <span style={{
                                     position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0,
-                                    backgroundColor: emailNotifications ? '#10b981' : '#ccc',
+                                    backgroundColor: emailNotifications ? '#10b981' : 'var(--border)',
                                     transition: '.4s', borderRadius: '34px',
                                     opacity: updatingPrefs ? 0.6 : 1
                                 }}>
@@ -261,9 +273,9 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                         <h4 style={{ fontSize: '1rem', marginBottom: '1.5rem' }}>Account Overview</h4>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e5e7eb', paddingBottom: '0.75rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                    <span style={{ fontSize: '0.75rem', color: 'gray' }}>Member Since</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Member Since</span>
                                     <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>{user.memberSince}</span>
                                 </div>
                                 <span style={{ color: '#3b82f6', fontSize: '1.2rem' }}>📅</span>
@@ -271,7 +283,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e5e7eb', paddingBottom: '0.75rem' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                    <span style={{ fontSize: '0.75rem', color: 'gray' }}>Email Status</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Email Status</span>
                                     <span style={{ fontWeight: '600', fontSize: '0.9rem', color: '#10b981' }}>Verified</span>
                                 </div>
                                 <span style={{ backgroundColor: '#10b981', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>✓</span>
@@ -279,7 +291,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                    <span style={{ fontSize: '0.75rem', color: 'gray' }}>Referral Code</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Referral Code</span>
                                     <span style={{ color: '#db2777', fontWeight: 'bold', fontSize: '0.9rem' }}>{user.referralCode}</span>
                                 </div>
                                 <span style={{ color: '#3b82f6', fontSize: '1.2rem' }}>🏷️</span>
@@ -288,12 +300,12 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                     </div>
 
                     {/* Security Tips */}
-                    <div className="card" style={{ padding: '1.5rem', backgroundColor: '#f9fafb' }}>
-                        <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1f2937' }}>
+                    <div className="card" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-alt)' }}>
+                        <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'inherit' }}>
                             <span style={{ color: '#3b82f6' }}>🛡️</span> Security Tips
                         </h4>
 
-                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem', color: '#4b5563' }}>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                             <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                                 <span style={{ color: '#10b981' }}>✓</span> Use a strong, unique password
                             </li>

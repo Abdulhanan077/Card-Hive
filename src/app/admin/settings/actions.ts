@@ -16,27 +16,19 @@ export async function saveSettings(formData: FormData) {
 
 
     const refBonusStr = formData.get("referralBonusPercentage") as string;
-    if (refBonusStr) {
-        data.referralBonusPercentage = parseFloat(refBonusStr);
-    }
+    const refBonus = refBonusStr ? parseFloat(refBonusStr) : undefined;
 
     const rewardPtsGhsStr = formData.get("rewardPointsToGhs") as string;
-    if (rewardPtsGhsStr) {
-        data.rewardPointsToGhs = parseFloat(rewardPtsGhsStr);
-    }
+    const rewardPtsGhs = rewardPtsGhsStr ? parseFloat(rewardPtsGhsStr) : undefined;
 
     const usdtRateStr = formData.get("usdtExchangeRate") as string;
-    if (usdtRateStr) {
-        data.usdtExchangeRate = parseFloat(usdtRateStr);
-    }
+    const usdtRate = usdtRateStr ? parseFloat(usdtRateStr) : undefined;
+
+
 
     const existingSettings = await prisma.settings.findFirst();
 
     if (existingSettings) {
-        // Save the rate via raw SQL to bypass Prisma Client filtering out unknown fields
-        const usdtRate = data.usdtExchangeRate;
-        delete data.usdtExchangeRate;
-
         if (Object.keys(data).length > 0) {
             await prisma.settings.update({
                 where: { id: existingSettings.id },
@@ -47,18 +39,29 @@ export async function saveSettings(formData: FormData) {
         if (usdtRate !== undefined) {
             await prisma.$executeRawUnsafe(`UPDATE "Settings" SET "usdtExchangeRate" = ${usdtRate} WHERE id = ${existingSettings.id}`);
         }
+        if (refBonus !== undefined) {
+            await prisma.$executeRawUnsafe(`UPDATE "Settings" SET "referralBonusPercentage" = ${refBonus} WHERE id = ${existingSettings.id}`);
+        }
+        if (rewardPtsGhs !== undefined) {
+            await prisma.$executeRawUnsafe(`UPDATE "Settings" SET "rewardPointsToGhs" = ${rewardPtsGhs} WHERE id = ${existingSettings.id}`);
+        }
 
     } else {
-        const usdtRate = data.usdtExchangeRate;
-        delete data.usdtExchangeRate;
-
         const created = await prisma.settings.create({ data });
         if (usdtRate !== undefined) {
             await prisma.$executeRawUnsafe(`UPDATE "Settings" SET "usdtExchangeRate" = ${usdtRate} WHERE id = ${created.id}`);
         }
+        if (refBonus !== undefined) {
+            await prisma.$executeRawUnsafe(`UPDATE "Settings" SET "referralBonusPercentage" = ${refBonus} WHERE id = ${created.id}`);
+        }
+        if (rewardPtsGhs !== undefined) {
+            await prisma.$executeRawUnsafe(`UPDATE "Settings" SET "rewardPointsToGhs" = ${rewardPtsGhs} WHERE id = ${created.id}`);
+        }
     }
 
     revalidatePath("/admin/settings");
+    revalidatePath("/rates");
+    revalidatePath("/user/sell");
     revalidatePath("/");
 
     return { success: true };

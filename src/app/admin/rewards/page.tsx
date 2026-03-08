@@ -109,7 +109,7 @@ export default async function AdminRewardsQueue() {
                                                     <button type="submit" className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Pay</button>
                                                 </form>
                                                 <form action={processRedemptionAction.bind(null, req.id, "REJECTED")}>
-                                                    <button type="submit" className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', backgroundColor: '#fef2f2', color: 'var(--danger)', border: '1px solid currentColor' }}>Reject</button>
+                                                    <button type="submit" className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', backgroundColor: 'var(--danger-light)', color: 'var(--danger)', border: '1px solid currentColor' }}>Reject</button>
                                                 </form>
                                             </div>
                                         ) : (

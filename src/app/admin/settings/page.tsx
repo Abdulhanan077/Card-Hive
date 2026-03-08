@@ -6,9 +6,9 @@ export default async function AdminSettingsPage() {
     const settings: any = await prisma.settings.findFirst();
 
     if (settings) {
-        const rawSettings: any = await prisma.$queryRawUnsafe(`SELECT "usdtExchangeRate" FROM "Settings" WHERE id = ${settings.id} LIMIT 1`);
+        const rawSettings: any = await prisma.$queryRawUnsafe(`SELECT "cryptoServiceFee" FROM "Settings" WHERE id = ${settings.id} LIMIT 1`);
         if (rawSettings && rawSettings.length > 0) {
-            settings.usdtExchangeRate = rawSettings[0].usdtExchangeRate;
+            settings.cryptoServiceFee = rawSettings[0].cryptoServiceFee;
         }
     }
 

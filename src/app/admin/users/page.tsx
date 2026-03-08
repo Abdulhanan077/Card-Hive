@@ -143,8 +143,8 @@ export default async function AdminUsersList(props: {
                 </form>
             </div>
 
-            <div className="flex flex-mobile-col" style={{ gap: '2rem', alignItems: 'flex-start' }}>
-                <div className="card" style={{ flexShrink: 0, width: '100%', maxWidth: '350px', height: 'fit-content', position: 'sticky', top: '2rem' }}>
+            <div className="flex flex-mobile-col" style={{ gap: '2rem', alignItems: 'flex-start', position: 'relative', flexWrap: 'wrap' }}>
+                <div className="card sticky-desktop" style={{ flexShrink: 0, width: '100%', maxWidth: '350px', height: 'fit-content' }}>
                     <h3 style={{ marginBottom: "1.5rem" }}>User Action Panel</h3>
 
                     <form className="form-group" style={{ marginBottom: "2rem" }}>

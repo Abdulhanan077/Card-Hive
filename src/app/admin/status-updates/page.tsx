@@ -139,7 +139,8 @@ export default function AdminStatusUpdatesPage() {
                                 placeholder="Important update for our users..."
                                 required
                                 rows={4}
-                                style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--background)', resize: 'vertical' }}
+                                className="form-input"
+                                style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--background)', color: 'var(--foreground)', resize: 'vertical' }}
                             />
                         </div>
 
@@ -149,7 +150,8 @@ export default function AdminStatusUpdatesPage() {
                                 type="file"
                                 accept="image/*"
                                 onChange={handleImageChange}
-                                style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}
+                                className="form-input"
+                                style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--background)', color: 'var(--foreground)' }}
                             />
                         </div>
 

@@ -26,25 +26,20 @@ export default async function UserDashboardHome() {
 
     const userId = parseInt(session.user.id);
 
-    // Fetch single necessary stats
-    const userData = await prisma.user.findUnique({
-        where: { id: userId }
-    });
-
-    const recentTrades = await prisma.trade.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        take: 3
-    });
-
-    // Fetch site settings for support links
-    const settings = await prisma.settings.findFirst();
-
-    // Fetch top rates to display dynamically
-    const topRates = await prisma.cardRate.findMany({
-        take: 5,
-        orderBy: { rate: 'desc' }
-    });
+    // Fetch data in parallel to reduce connection holding time
+    const [userData, recentTrades, settings, topRates] = await Promise.all([
+        prisma.user.findUnique({ where: { id: userId } }),
+        prisma.trade.findMany({
+            where: { userId },
+            orderBy: { createdAt: "desc" },
+            take: 3
+        }),
+        prisma.settings.findFirst(),
+        prisma.cardRate.findMany({
+            take: 5,
+            orderBy: { rate: 'desc' }
+        })
+    ]);
 
     return (
         <div className="modern-dashboard">

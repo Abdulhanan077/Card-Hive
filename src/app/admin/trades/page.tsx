@@ -149,8 +149,8 @@ export default async function AdminTradesList(props: {
                         <tbody>
                             {groupedTrades.map((trade) => (
                                 <tr key={trade.id} style={{
-                                    backgroundColor: trade.status === 'REJECTED' ? '#fff5f5' : 'inherit',
-                                    borderLeft: trade.status === 'REJECTED' ? '4px solid #ef4444' : 'none'
+                                    backgroundColor: trade.status === 'REJECTED' ? 'var(--danger-light)' : 'inherit',
+                                    borderLeft: trade.status === 'REJECTED' ? '4px solid var(--danger)' : 'none'
                                 }}>
                                     <td style={{ fontWeight: 600 }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
