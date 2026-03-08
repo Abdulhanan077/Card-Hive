@@ -5,13 +5,6 @@ import Link from "next/link";
 export default async function AdminSettingsPage() {
     const settings: any = await prisma.settings.findFirst();
 
-    if (settings) {
-        const rawSettings: any = await prisma.$queryRawUnsafe(`SELECT "cryptoServiceFee" FROM "Settings" WHERE id = ${settings.id} LIMIT 1`);
-        if (rawSettings && rawSettings.length > 0) {
-            settings.cryptoServiceFee = rawSettings[0].cryptoServiceFee;
-        }
-    }
-
     return (
         <>
             <div className="dashboard-header" style={{ marginBottom: "2rem" }}>
