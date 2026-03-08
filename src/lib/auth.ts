@@ -118,13 +118,19 @@ export const authOptions: NextAuthOptions = {
         }),
     ],
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }) {
             if (user) {
                 token.id = user.id;
                 token.username = user.username;
                 token.role = user.role;
                 token.theme = (user as any).theme;
             }
+
+            // Handle manual session updates (e.g., theme toggle)
+            if (trigger === "update" && session?.theme) {
+                token.theme = session.theme;
+            }
+
             return token;
         },
         async session({ session, token }) {
