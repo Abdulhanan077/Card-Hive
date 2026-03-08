@@ -100,6 +100,7 @@ export const authOptions: NextAuthOptions = {
                         username: user.username,
                         email: user.email,
                         role: user.role,
+                        theme: user.theme,
                     };
                 } catch (err: any) {
                     // Log the real error for the developer
@@ -122,6 +123,7 @@ export const authOptions: NextAuthOptions = {
                 token.id = user.id;
                 token.username = user.username;
                 token.role = user.role;
+                token.theme = (user as any).theme;
             }
             return token;
         },
@@ -132,6 +134,7 @@ export const authOptions: NextAuthOptions = {
                     id: token.id as string,
                     username: token.username as string,
                     role: token.role as string,
+                    theme: token.theme as string,
                 };
             }
             return session;
