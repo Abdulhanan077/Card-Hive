@@ -26,20 +26,18 @@ export default async function UserDashboardHome() {
 
     const userId = parseInt(session.user.id);
 
-    // Fetch data in parallel to reduce connection holding time
-    const [userData, recentTrades, settings, topRates] = await Promise.all([
-        prisma.user.findUnique({ where: { id: userId } }),
-        prisma.trade.findMany({
-            where: { userId },
-            orderBy: { createdAt: "desc" },
-            take: 3
-        }),
-        prisma.settings.findFirst(),
-        prisma.cardRate.findMany({
-            take: 5,
-            orderBy: { rate: 'desc' }
-        })
-    ]);
+    // Fetch data sequentially to avoid connection pool exhaustion
+    const userData = await prisma.user.findUnique({ where: { id: userId } });
+    const recentTrades = await prisma.trade.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 3
+    });
+    const settings = await prisma.settings.findFirst();
+    const topRates = await prisma.cardRate.findMany({
+        take: 5,
+        orderBy: { rate: 'desc' }
+    });
 
     return (
         <div className="modern-dashboard">

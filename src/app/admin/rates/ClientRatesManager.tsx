@@ -50,11 +50,18 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
     const CURRENCIES = ["USD", "GBP", "EUR", "CAD", "AUD", "Global"];
     const PRICE_TAGS = [
         "Any Amount",
-        "$10 - $49",
-        "$50 - $99",
-        "$100 - $299",
-        "$300 - $499",
-        "$500+",
+        "10 - 49",
+        "50",
+        "51 - 99",
+        "100",
+        "101 - 199",
+        "200",
+        "201 - 299",
+        "300",
+        "301 - 399",
+        "400",
+        "401 - 499",
+        "500+",
     ];
 
     const formatCategory = (curr: string, tag: string) => {

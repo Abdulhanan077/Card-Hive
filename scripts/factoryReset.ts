@@ -48,6 +48,9 @@ async function factoryReset() {
         const loginCount = await prisma.loginEvent.deleteMany({});
         console.log(`Deleted ${loginCount.count} login event records.`);
 
+        const statusUpdateCount = await prisma.statusUpdate.deleteMany({});
+        console.log(`Deleted ${statusUpdateCount.count} status update records.`);
+
         const regOtpCount = await prisma.registrationOTP.deleteMany({});
         console.log(`Deleted ${regOtpCount.count} registration OTP records.`);
 

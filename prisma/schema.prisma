@@ -229,7 +229,7 @@ enum CryptoCoin {
 
 enum CryptoNetwork {
   TRC20
-  ERC20
+  BEP20
   BTC_MAINNET
 }
 

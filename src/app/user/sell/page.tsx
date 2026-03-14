@@ -276,7 +276,7 @@ export default function SellGiftCardPage() {
                                         <label className="form-label">Network</label>
                                         <select name="cryptoNetwork" className="form-select" required value={cryptoNetwork} onChange={(e) => setCryptoNetwork(e.target.value)}>
                                             <option value="TRC20">TRC20 (Tron)</option>
-                                            <option value="ERC20">ERC20 (Ethereum)</option>
+                                            <option value="BEP20">BEP20 (Binance)</option>
                                         </select>
                                     </div>
                                 </div>
