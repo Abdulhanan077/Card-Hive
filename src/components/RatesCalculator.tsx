@@ -154,7 +154,7 @@ export default function RatesCalculator() {
                     position: relative;
                 }
 
-                .calc-select, .calc-input {
+                :global(.calc-select), .calc-input {
                     width: 100%;
                     padding: 1rem;
                     border-radius: var(--radius-lg);
@@ -166,13 +166,13 @@ export default function RatesCalculator() {
                     transition: var(--transition);
                 }
 
-                .calc-select:focus, .calc-input:focus {
+                :global(.calc-select):focus, .calc-input:focus {
                     outline: none;
                     border-color: var(--primary);
                     box-shadow: 0 0 0 4px var(--primary-light);
                 }
 
-                .calc-select:disabled {
+                :global(.calc-select).disabled, :global(.calc-select):disabled {
                     opacity: 0.5;
                     cursor: not-allowed;
                 }
