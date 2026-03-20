@@ -13,7 +13,13 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    datasources: {
+        db: {
+            url: process.env.POSTGRES_URL_NON_POOLING,
+        },
+    },
+});
 
 async function factoryReset() {
     console.log("--------------------------------------------------");

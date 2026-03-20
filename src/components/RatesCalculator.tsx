@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { FaCalculator, FaArrowRight, FaSyncAlt } from "react-icons/fa";
 import Link from "next/link";
+import { sortCategories, validateCategoryAmount } from "@/lib/categoryUtils";
+import SearchableCategorySelect from "@/components/SearchableCategorySelect";
 
 type Rate = {
     id: number;
@@ -43,7 +45,7 @@ export default function RatesCalculator() {
         rates
             .filter(r => r.cardBrand === selectedBrand && (r.cardType === selectedType || (!r.cardType && selectedType === "Physical")))
             .map(r => r.cardCountry)
-    )).sort();
+    )).sort(sortCategories);
 
     // Auto-select category when lists change to prevent invalid state
     useEffect(() => {
@@ -59,29 +61,10 @@ export default function RatesCalculator() {
             let errorMessage = "";
 
             // Range checks
-            const matchRange = selectedCategory.match(/\(\$(\d+)\s*-\s*\$(\d+)\)/) || selectedCategory.match(/\((\d+)\s*-\s*(\d+)\)/);
-            const matchMin = selectedCategory.match(/\(\$(\d+)\+\)/) || selectedCategory.match(/\((\d+)\+\)/);
-            const matchExact = selectedCategory.match(/\(\$?(\d+)\)/);
-
-            if (matchRange) {
-                const min = parseFloat(matchRange[1]);
-                const max = parseFloat(matchRange[2]);
-                if (value < min || value > max) {
-                    hasError = true;
-                    errorMessage = `Amount must be between ${min} and ${max} for this category.`;
-                }
-            } else if (matchMin) {
-                const min = parseFloat(matchMin[1]);
-                if (value < min) {
-                    hasError = true;
-                    errorMessage = `Amount must be at least ${min} for this category.`;
-                }
-            } else if (matchExact) {
-                const exact = parseFloat(matchExact[1]);
-                if (value !== exact) {
-                    hasError = true;
-                    errorMessage = `Amount must be exactly ${exact} for this category.`;
-                }
+            const validationError = validateCategoryAmount(value, selectedCategory);
+            if (validationError) {
+                hasError = true;
+                errorMessage = validationError;
             }
 
             if (hasError) {
@@ -309,17 +292,14 @@ export default function RatesCalculator() {
 
                 <div className="form-group">
                     <label className="field-label">Category / Country</label>
-                    <select
+                    <SearchableCategorySelect
                         className="calc-select"
                         value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        onChange={(val) => setSelectedCategory(val)}
                         disabled={!selectedBrand}
-                    >
-                        <option value="">{selectedBrand ? `Choose Category for ${selectedType}...` : "Select Brand First"}</option>
-                        {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
+                        categories={categories}
+                        placeholder={selectedBrand ? `Choose Category for ${selectedType}...` : "Select Brand First"}
+                    />
                 </div>
 
                 <div className="form-group">

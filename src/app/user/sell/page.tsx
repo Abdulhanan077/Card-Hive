@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./sell.module.css";
 import { useNotification } from "@/context/NotificationContext";
+import { sortCategories, validateCategoryAmount } from "@/lib/categoryUtils";
+import SearchableCategorySelect from "@/components/SearchableCategorySelect";
 
 interface CardEntry {
     id: string;
@@ -101,27 +103,7 @@ export default function SellGiftCardPage() {
                     updatedCard.estimatedPayout = null;
                 } else {
                     // Validate face value against category
-                    const matchRange = updatedCard.cardCategory.match(/\(\$(\d+)\s*-\s*\$(\d+)\)/) || updatedCard.cardCategory.match(/\((\d+)\s*-\s*(\d+)\)/);
-                    const matchMin = updatedCard.cardCategory.match(/\(\$(\d+)\+\)/) || updatedCard.cardCategory.match(/\((\d+)\+\)/);
-                    const matchExact = updatedCard.cardCategory.match(/\(\$?(\d+)\)/);
-
-                    if (matchRange) {
-                        const min = parseFloat(matchRange[1]);
-                        const max = parseFloat(matchRange[2]);
-                        if (value < min || value > max) {
-                            updatedCard.faceValueError = `Amount must be between ${min} and ${max} for this category.`;
-                        }
-                    } else if (matchMin) {
-                        const min = parseFloat(matchMin[1]);
-                        if (value < min) {
-                            updatedCard.faceValueError = `Amount must be at least ${min} for this category.`;
-                        }
-                    } else if (matchExact) {
-                        const exact = parseFloat(matchExact[1]);
-                        if (value !== exact) {
-                            updatedCard.faceValueError = `Amount must be exactly ${exact} for this category.`;
-                        }
-                    }
+                    updatedCard.faceValueError = validateCategoryAmount(value, updatedCard.cardCategory);
 
                     const activeRate = rates.find(r =>
                         r.cardBrand === updatedCard.cardBrand &&
@@ -129,7 +111,7 @@ export default function SellGiftCardPage() {
                         (r.cardType === updatedCard.cardType || (!r.cardType && updatedCard.cardType === "Physical"))
                     );
 
-                    if (activeRate) {
+                    if (activeRate && !updatedCard.faceValueError) {
                         updatedCard.estimatedPayout = value * activeRate.rate;
                     } else {
                         updatedCard.estimatedPayout = null;
@@ -333,7 +315,7 @@ export default function SellGiftCardPage() {
                                 rates
                                     .filter((r: { cardBrand: string, cardType?: string }) => r.cardBrand === card.cardBrand && (r.cardType === card.cardType || (!r.cardType && card.cardType === "Physical")))
                                     .map((r: { cardCountry: string }) => r.cardCountry)
-                            ));
+                            )).sort(sortCategories);
 
                             return (
                                 <div key={card.id} className={styles.cardItem} style={{ border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem', position: 'relative', backgroundColor: 'var(--bg)' }}>
@@ -382,25 +364,21 @@ export default function SellGiftCardPage() {
                                     <div className={styles.grid2}>
                                         <div className="form-group">
                                             <label className="form-label">Currency & Category</label>
-                                            <select
-                                                className="form-select"
-                                                required
-                                                value={card.cardCategory}
-                                                onChange={(e) => updateCard(card.id, { cardCategory: e.target.value })}
-                                                disabled={!card.cardBrand || availableCategories.length === 0}
-                                            >
-                                                {card.cardBrand && availableCategories.length === 0 ? (
-                                                    <option value="">No rates available</option>
-                                                ) : (
-                                                    <>
-                                                        <option value="">Select Category...</option>
-                                                        {availableCategories.map(cat => (
-                                                            <option key={cat} value={cat}>{cat}</option>
-                                                        ))}
-                                                        {card.cardBrand === "Other" && <option value="Manual">Manual Entry</option>}
-                                                    </>
-                                                )}
-                                            </select>
+                                            {card.cardBrand && availableCategories.length === 0 && card.cardBrand !== "Other" ? (
+                                                <select className="form-select" disabled>
+                                                    <option>No rates available</option>
+                                                </select>
+                                            ) : (
+                                                <SearchableCategorySelect
+                                                    className="form-select"
+                                                    required={true}
+                                                    value={card.cardCategory}
+                                                    onChange={(val) => updateCard(card.id, { cardCategory: val })}
+                                                    categories={card.cardBrand === "Other" ? [...availableCategories, "Manual Entry"] : availableCategories}
+                                                    placeholder="Select Category..."
+                                                    disabled={!card.cardBrand}
+                                                />
+                                            )}
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">Exact Face Value Amount</label>
