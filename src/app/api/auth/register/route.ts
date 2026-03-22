@@ -92,16 +92,16 @@ export async function POST(req: Request) {
                     role,
                     referralCode,
                     emailVerified: new Date(),
-                    rewardBalance: referredById ? 10 : 0, // Referee gets 10 pts if referred
+                    rewardBalance: referredById ? 5 : 0, // Referee gets 5 pts if referred
                     ...(referredById && { referredBy: referredById })
                 },
             });
 
-            // Referrer gets 20 pts
+            // Referrer gets 10 pts
             if (referredById) {
                 await tx.user.update({
                     where: { id: referredById },
-                    data: { rewardBalance: { increment: 20 } }
+                    data: { rewardBalance: { increment: 10 } }
                 });
             }
 
