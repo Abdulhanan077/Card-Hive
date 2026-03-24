@@ -67,6 +67,8 @@ export default function SafeImage({ src, alt, className, style, width, height, f
                 alt={alt}
                 className={className}
                 style={{ ...style, display: isLoading ? 'none' : 'block' }}
+                loading="lazy"
+                decoding="async"
                 onError={() => setHasError(true)}
                 onLoad={() => setIsLoading(false)}
             />
