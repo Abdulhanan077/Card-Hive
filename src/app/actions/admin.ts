@@ -26,3 +26,15 @@ export async function getPendingAdminTradesAction() {
         user: { username: t.user.username }
     }));
 }
+
+export async function getPendingTradesCountAction() {
+    return await prisma.trade.count({
+        where: { status: { in: ["PENDING", "UNDER_REVIEW"] } }
+    });
+}
+
+export async function getPendingRewardsCountAction() {
+    return await prisma.rewardRedemption.count({
+        where: { status: "PENDING" }
+    });
+}

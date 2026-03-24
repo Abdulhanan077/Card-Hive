@@ -56,6 +56,16 @@ export const authOptions: NextAuthOptions = {
                                 { email: { equals: credentials.username, mode: 'insensitive' } },
                             ],
                         },
+                        select: {
+                            id: true,
+                            username: true,
+                            email: true,
+                            password: true,
+                            role: true,
+                            status: true,
+                            emailVerified: true,
+                            theme: true,
+                        }
                     });
 
                     if (!user) {
@@ -106,13 +116,22 @@ export const authOptions: NextAuthOptions = {
                     // Log the real error for the developer
                     console.error("Login authorization error:", err);
 
+                    // Check for database connectivity issues specifically (Neon, timeouts, etc.)
+                    const isPrismaError = err?.message?.includes('Prisma') || err?.code?.startsWith('P');
+                    const isTimeout = err?.message?.includes('Timed out') || err?.message?.includes('timeout') || err?.code === 'P1002' || err?.code === 'P1008';
+
+                    if (isPrismaError || isTimeout) {
+                        console.error("DEBUG: Database connectivity issue detected during login.");
+                        throw new Error("System is temporarily unable to reach the database. Please try again shortly.");
+                    }
+
                     // If it's one of our thrown errors, re-throw its message
-                    if (err instanceof Error && !err.message.includes('Prisma') && !err.message.includes('Timed out')) {
+                    if (err instanceof Error) {
                         throw err;
                     }
 
-                    // Otherwise, provide a generic user-friendly message for database/internal errors
-                    throw new Error("System is temporarily unavailable. Please try again later.");
+                    // Otherwise, provide a generic user-friendly message for internal errors
+                    throw new Error("An unexpected login error occurred. Please try again later.");
                 }
             },
         }),
@@ -124,6 +143,22 @@ export const authOptions: NextAuthOptions = {
                 token.username = user.username;
                 token.role = user.role;
                 token.theme = (user as any).theme;
+                token.status = (user as any).status;
+            }
+
+            // Periodically re-verify status from DB to enforce administrative blocks
+            // This ensures that even if a user is already logged in, they will be 
+            // locked out once their status is changed to BLOCKED in the database.
+            if (token?.id) {
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: parseInt(token.id as string) },
+                    select: { status: true }
+                });
+                
+                if (!dbUser || dbUser.status === 'BLOCKED') {
+                    // Return null or an invalid token to clear the session
+                    return null as any;
+                }
             }
 
             // Handle manual session updates (e.g., theme toggle)

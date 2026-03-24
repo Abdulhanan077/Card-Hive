@@ -8,7 +8,12 @@ export default async function AdminRewardsQueue() {
         orderBy: { createdAt: "desc" }
     });
 
-    const settings = await prisma.settings.findFirst();
+    let settings = null;
+    try {
+        settings = await prisma.settings.findFirst();
+    } catch (e) {
+        console.error("Admin Rewards Queue: Could not fetch settings", e);
+    }
     const rate = settings?.rewardPointsToGhs || 100.0;
 
     async function processRedemptionAction(id: number, status: string) {

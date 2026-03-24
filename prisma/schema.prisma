@@ -2,13 +2,14 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model User {
@@ -28,6 +29,7 @@ model User {
   referrer      User?    @relation("Referrals", fields: [referredBy], references: [id])
   referrals     User[]   @relation("Referrals")
   rewardBalance Float    @default(0.0)
+  referralPointsEarned Float @default(0.0) // Points this user has generated for their referrer
   completedTradesCount Int @default(0)
   
   // Login Trackers
@@ -35,12 +37,14 @@ model User {
   lastIp        String?
   lastDevice    String?
   
-  trades        Trade[]
-  messages      Message[] @relation("UserMessages")
-  redemptions   RewardRedemption[]
-  accounts      Account[]
-  sessions      Session[]
-  loginEvents   LoginEvent[]
+  trades                  Trade[]
+  messages                Message[] @relation("UserMessages")
+  redemptions             RewardRedemption[]
+  accounts                Account[]
+  sessions                Session[]
+  loginEvents             LoginEvent[]
+  leaderboardAdjustments  LeaderboardAdjustment[]
+  leaderboardHistory      LeaderboardHistory[]
 
   theme         String   @default("light")
   createdAt     DateTime @default(now())
@@ -190,6 +194,42 @@ model RewardRedemption {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model LeaderboardAdjustment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points    Float
+  reason    String?
+  boardType String   // WHALE, SPEED, REFERRAL, or ALL
+  month     Int
+  year      Int
+  createdAt DateTime @default(now())
+}
+
+model LeaderboardRewardConfig {
+  id          Int      @id @default(autoincrement())
+  type        String   // RANK or MILESTONE
+  boardType   String   // WHALE, SPEED, REFERRAL
+  key         String   // e.g. "1st", "10_trades", "30000_volume"
+  points      Float
+  description String?
+  isActive    Boolean  @default(true)
+}
+
+model LeaderboardHistory {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  boardType     String
+  rank          Int
+  value         Float    // The metric value (volume, trades, etc.)
+  pointsAwarded Float
+  month         Int
+  year          Int
+  createdAt     DateTime @default(now())
+}
+
 model StatusUpdate {
   id        Int      @id @default(autoincrement())
   imageUrl  String?
@@ -246,4 +286,3 @@ enum CryptoReceiverIdType {
   WALLET_ADDRESS
   EXCHANGE_ID
 }
-

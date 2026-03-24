@@ -90,12 +90,14 @@ export default async function AdminDashboardHome() {
 
         return (
             <>
-                <div className="dashboard-header">
-                    <h1 className="dashboard-title">Admin Dashboard</h1>
-                    <p className="dashboard-subtitle">Platform overview and actionable metrics.</p>
+                <div className="dashboard-header flex-mobile-col">
+                    <div>
+                        <h1 className="dashboard-title">Admin Dashboard</h1>
+                        <p className="dashboard-subtitle">Platform overview and actionable metrics.</p>
+                    </div>
                 </div>
 
-                <div className="summary-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                <div className="summary-cards responsive-grid">
                     <div className="summary-card">
                         <div className="summary-label">Total Trades Lifetime</div>
                         <div className="summary-value" style={{ fontSize: getFontSize(totalTrades) }}>{totalTrades}</div>

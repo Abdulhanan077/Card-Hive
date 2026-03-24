@@ -1,32 +1,58 @@
 "use client";
 
-import { useState } from "react";
-import { addOrUpdateRateAction, deleteRateAction, bulkAddOrUpdateRatesAction, deleteAllRatesAction } from "@/app/actions/rates";
-import { useNotification } from "@/context/NotificationContext";
+import { useState, useMemo } from "react";
+import { toast } from "react-hot-toast";
+import SearchableCategorySelect from "@/components/SearchableCategorySelect";
+import { 
+    addOrUpdateRateAction, 
+    deleteRateAction, 
+    bulkAddOrUpdateRatesAction, 
+    deleteAllRatesAction 
+} from "@/app/actions/rates";
+
+const POPULAR_BRANDS = [
+    "Amazon", "Apple/iTunes", "ebay", "Google Play", "Nordstrom",
+    "Razer Gold", "Sephora", "Steam", "Vanilla Visa", "Walmart", "Amex", 
+    "Footlocker", "Macy's", "Nike", "Xbox", "PlayStation", "Roblox", "Target", 
+    "JCPenney", "GameStop", "Best Buy"
+].sort();
+
+const BRAND_OPTIONS = [
+    ...POPULAR_BRANDS.map(b => ({ value: b, label: b })),
+    { value: "Other", label: "+ Enter Custom Brand" }
+];
+
+const CURRENCIES = ["Global", "USD", "GBP", "EUR", "AUD", "CAD", "CHF"];
+const CURRENCY_OPTIONS = CURRENCIES.map(c => ({ value: c, label: c }));
+
+const PRICE_TAGS = [
+    "Any Amount", "10-49", "50", "51-99", "100", "101-149", "150", "151-199", "200", 
+    "201-249", "250", "251-299", "300", "301-349", "350", "351-399", "400", "401-449", "450", "451-499", "500+"
+];
+const PRICE_TAG_OPTIONS = [
+    ...PRICE_TAGS.map(t => ({ value: t, label: t })),
+    { value: "Other", label: "+ Custom" }
+];
+
+const CARD_TYPE_OPTIONS = [
+    { value: "Physical", label: "Physical" },
+    { value: "E-code", label: "E-code" }
+];
 
 type Rate = {
     id: number;
     cardBrand: string;
-    cardCountry: string;
+    cardCountry: string; // Used for face value/price tag in this context
     cardType: string;
     rate: number;
     publicRate: number | null;
-    updatedAt: Date;
 };
 
-const POPULAR_BRANDS = [
-    "Apple/iTunes", "Amazon", "Steam", "Razer Gold", "Google Play",
-    "PlayStation", "Xbox", "Roblox", "Sephora", "Nordstrom",
-    "Nike", "Vanilla Visa", "Amex", "Target", "Walmart",
-    "eBay", "Macy's", "JCPenney", "GameStop", "Best Buy"
-];
-
 export default function ClientRatesManager({ initialRates }: { initialRates: Rate[] }) {
-    const { showNotification } = useNotification();
     const [rates, setRates] = useState<Rate[]>(initialRates);
     const [loading, setLoading] = useState(false);
 
-    // Single Form State
+    // Form states
     const [cardBrand, setCardBrand] = useState("");
     const [isCustomBrand, setIsCustomBrand] = useState(false);
     const [currency, setCurrency] = useState("USD");
@@ -36,9 +62,9 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
     const [rateMultiplier, setRateMultiplier] = useState("");
     const [publicRateMultiplier, setPublicRateMultiplier] = useState("");
     const [isPublicSame, setIsPublicSame] = useState(true);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
-    // Bulk Form State
-    const [bulkBrands, setBulkBrands] = useState<string[]>(POPULAR_BRANDS);
+    // Bulk states
     const [bulkCurrency, setBulkCurrency] = useState("USD");
     const [bulkPriceTag, setBulkPriceTag] = useState("Any Amount");
     const [isBulkCustomPrice, setIsBulkCustomPrice] = useState(false);
@@ -46,263 +72,374 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
     const [bulkRateMultiplier, setBulkRateMultiplier] = useState("");
     const [bulkPublicRateMultiplier, setBulkPublicRateMultiplier] = useState("");
     const [isBulkPublicSame, setIsBulkPublicSame] = useState(true);
+    const [bulkBrands, setBulkBrands] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
 
-    const CURRENCIES = ["USD", "GBP", "EUR", "CAD", "AUD", "Global"];
-    const PRICE_TAGS = [
-        "Any Amount",
-        "10 - 49",
-        "50",
-        "51 - 99",
-        "100",
-        "101 - 199",
-        "200",
-        "201 - 299",
-        "300",
-        "301 - 399",
-        "400",
-        "401 - 499",
-        "500+",
-    ];
-
-    const formatCategory = (curr: string, tag: string) => {
-        if (tag === "Any Amount") return curr;
-        return `${curr} (${tag})`;
+    // Helper to format cardCountry (Category) string
+    const formatCardCountry = (curr: string, tag: string) => {
+        if (tag === "Any Amount") return tag;
+        if (curr === "Global") return `Global (${tag})`;
+        // Check if there's a symbol to use
+        const symbol = curr === 'USD' ? '$' : curr === 'GBP' ? '£' : curr === 'EUR' ? '€' : '';
+        return `${curr} (${symbol}${tag})`;
     };
-
-    const parseCategory = (savedCountry: string) => {
-        let curr = "USD";
-        let tag = "Any Amount";
-
-        for (const c of CURRENCIES) {
-            if (savedCountry.startsWith(c)) {
-                curr = c;
-                const match = savedCountry.match(/\((.*?)\)/);
-                if (match && match[1]) {
-                    tag = match[1];
-                }
-                break;
-            }
-        }
-        return { curr, tag };
-    };
-
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!cardBrand || !currency || !rateMultiplier) return;
-
         setLoading(true);
+
+        const formattedCountry = formatCardCountry(currency, priceTag);
+
         try {
-            const combinedCategory = formatCategory(currency, priceTag);
-            const finalPublicRate = isPublicSame ? parseFloat(rateMultiplier) : parseFloat(publicRateMultiplier);
-            await addOrUpdateRateAction(cardBrand, combinedCategory, cardType, parseFloat(rateMultiplier), finalPublicRate);
-            showNotification('SUCCESS', `Rate for ${cardBrand} (${combinedCategory} - ${cardType}) updated successfully.`);
-            setTimeout(() => window.location.reload(), 1000);
-        } catch (error) {
-            console.error(error);
-            showNotification('ERROR', "Failed to save rate configuration.");
+            await addOrUpdateRateAction(
+                cardBrand,
+                formattedCountry,
+                cardType,
+                parseFloat(rateMultiplier),
+                isPublicSame ? undefined : parseFloat(publicRateMultiplier)
+            );
+
+            toast.success(editingId ? "Rate updated!" : "Rate added!");
+            
+            // Refresh local list (since it's a server component parent, we might need to manually update state if not re-fetching)
+            // For now, we update local state for immediate feedback
+            const newRate: Rate = {
+                id: editingId || Date.now(),
+                cardBrand,
+                cardCountry: formattedCountry,
+                cardType,
+                rate: parseFloat(rateMultiplier),
+                publicRate: isPublicSame ? null : parseFloat(publicRateMultiplier)
+            };
+
+            if (editingId) {
+                setRates(rates.map(r => r.id === editingId ? newRate : r));
+            } else {
+                setRates([...rates, newRate]);
+            }
+
+            // Reset form
+            setCardBrand("");
+            setRateMultiplier("");
+            setPublicRateMultiplier("");
+            setIsPublicSame(true);
+            setEditingId(null);
+        } catch (err: any) {
+            toast.error(err.message || "Failed to save rate.");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleEdit = (rate: Rate) => {
-        const { curr, tag } = parseCategory(rate.cardCountry);
+    const handleBulkSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (bulkBrands.length === 0) return;
+        setLoading(true);
 
-        setCardBrand(rate.cardBrand);
-        setIsCustomBrand(!POPULAR_BRANDS.includes(rate.cardBrand));
-        setCurrency(curr);
-        setPriceTag(tag);
-        setIsCustomPrice(!PRICE_TAGS.includes(tag));
-        setCardType(rate.cardType || "Physical");
-        setRateMultiplier(rate.rate.toString());
-        if (rate.publicRate !== null) {
-            setPublicRateMultiplier(rate.publicRate.toString());
-            setIsPublicSame(rate.publicRate === rate.rate);
-        } else {
-            setPublicRateMultiplier("");
-            setIsPublicSame(true);
+        const formattedCountry = formatCardCountry(bulkCurrency, bulkPriceTag);
+
+        try {
+            await bulkAddOrUpdateRatesAction(
+                bulkBrands,
+                formattedCountry,
+                bulkCardType,
+                parseFloat(bulkRateMultiplier),
+                isBulkPublicSame ? undefined : parseFloat(bulkPublicRateMultiplier)
+            );
+
+            toast.success(`Updated ${bulkBrands.length} brands!`);
+            
+            // Update local state for all selected brands
+            const updatedRates = [...rates];
+            bulkBrands.forEach(brand => {
+                const newRate: Rate = {
+                    id: Math.random(), // fallback ID
+                    cardBrand: brand,
+                    cardCountry: formattedCountry,
+                    cardType: bulkCardType,
+                    rate: parseFloat(bulkRateMultiplier),
+                    publicRate: isBulkPublicSame ? null : parseFloat(bulkPublicRateMultiplier)
+                };
+                
+                const existingIdx = updatedRates.findIndex(r => r.cardBrand === brand && r.cardCountry === formattedCountry && r.cardType === bulkCardType);
+                if (existingIdx >= 0) updatedRates[existingIdx] = { ...updatedRates[existingIdx], ...newRate };
+                else updatedRates.push(newRate);
+            });
+            setRates(updatedRates);
+            setBulkBrands([]);
+        } catch (err: any) {
+            toast.error(err.message || "Bulk update failed.");
+        } finally {
+            setLoading(false);
         }
-
-        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm("Are you sure you want to completely remove this rate?")) return;
-
+        if (!confirm("Delete this rate?")) return;
         setLoading(true);
         try {
             await deleteRateAction(id);
-            showNotification('SUCCESS', "Rate removed successfully.");
-            setTimeout(() => window.location.reload(), 1000);
-        } catch (error) {
-            console.error(error);
-            showNotification('ERROR', "Failed to delete rate.");
+            setRates(rates.filter(r => r.id !== id));
+            toast.success("Rate deleted.");
+        } catch (err) {
+            toast.error("Delete failed.");
         } finally {
             setLoading(false);
         }
     };
 
     const handleDeleteAll = async () => {
-        if (!confirm("Are you sure you want to completely remove ALL active rates? This action cannot be undone.")) return;
-
+        if (!confirm("Are you sure you want to REMOVE ALL RATES? This will clear the entire rates table!")) return;
         setLoading(true);
         try {
             await deleteAllRatesAction();
-            showNotification('SUCCESS', "All active rates have been removed.");
-            setTimeout(() => window.location.reload(), 1000);
-        } catch (error) {
-            console.error(error);
-            showNotification('ERROR', "Failed to delete all rates.");
+            setRates([]);
+            toast.success("All rates removed.");
+        } catch (err) {
+            toast.error("Failed to clear rates.");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleToggleBulkBrand = (brand: string) => {
-        setBulkBrands(prev =>
-            prev.includes(brand)
-                ? prev.filter(b => b !== brand)
-                : [...prev, brand]
+    const filteredRates = useMemo(() => {
+        if (!searchQuery.trim()) return rates;
+        const q = searchQuery.toLowerCase();
+        return rates.filter(r => 
+            r.cardBrand.toLowerCase().includes(q) || 
+            r.cardCountry.toLowerCase().includes(q)
         );
-    };
+    }, [rates, searchQuery]);
 
-    const handleBulkSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (bulkBrands.length === 0 || !bulkCurrency || !bulkRateMultiplier) return;
-
-        setLoading(true);
-        try {
-            const combinedCategory = formatCategory(bulkCurrency, bulkPriceTag);
-            const finalPublicRate = isBulkPublicSame ? parseFloat(bulkRateMultiplier) : parseFloat(bulkPublicRateMultiplier);
-            await bulkAddOrUpdateRatesAction(bulkBrands, combinedCategory, bulkCardType, parseFloat(bulkRateMultiplier), finalPublicRate);
-            showNotification('SUCCESS', `Bulk configuration applied to ${bulkBrands.length} brands (${bulkCardType}).`);
-            setTimeout(() => window.location.reload(), 1000);
-        } catch (error) {
-            console.error(error);
-            showNotification('ERROR', "Failed to apply bulk configuration.");
-        } finally {
-            setLoading(false);
+    const handleEdit = (rate: Rate) => {
+        setEditingId(rate.id);
+        setCardBrand(rate.cardBrand);
+        
+        // Try to parse back price tag from cardCountry (e.g., "USD ($100)" -> "100")
+        const match = rate.cardCountry.match(/\((?:\$|£|€)?([\d+-]+)\)/);
+        if (match) {
+            setPriceTag(match[1]);
+            setIsCustomPrice(!PRICE_TAGS.includes(match[1]));
+            
+            // Extract currency too
+            const curr = rate.cardCountry.split(' ')[0];
+            if (CURRENCIES.includes(curr)) setCurrency(curr);
+        } else {
+            setPriceTag(rate.cardCountry);
+            setIsCustomPrice(!PRICE_TAGS.includes(rate.cardCountry));
         }
+
+        setCardType(rate.cardType);
+        setRateMultiplier(rate.rate.toString());
+        setPublicRateMultiplier(rate.publicRate?.toString() || "");
+        setIsPublicSame(rate.publicRate === null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     return (
-        <div className="chat-layout" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "2rem", alignItems: "start" }}>
+        <div className="rates-manager-container">
+            <style jsx>{`
+                .rates-manager-container {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 2rem;
+                    padding: 1rem;
+                }
+                @media (min-width: 1024px) {
+                    .rates-manager-container {
+                        grid-template-columns: 400px 1fr;
+                        align-items: start;
+                    }
+                    .rates-table-section {
+                        position: sticky;
+                        top: 2rem;
+                    }
+                }
+                .form-section {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2rem;
+                }
+                .rates-table-section {
+                    min-width: 0;
+                }
+                .active-rates-card {
+                    background: var(--surface);
+                    border-radius: 8px;
+                    border: 1px solid var(--border);
+                    box-shadow: var(--shadow-sm);
+                    display: flex;
+                    flex-direction: column;
+                    max-height: calc(100vh - 6rem);
+                }
+                .table-header-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 1.25rem;
+                    border-bottom: 1px solid var(--border);
+                    background: var(--surface);
+                    z-index: 5;
+                }
+                .rates-table thead th {
+                    position: sticky;
+                    top: 0;
+                    z-index: 2;
+                    background: var(--bg-alt);
+                }
+                .btn-remove-all {
+                    background: var(--danger);
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    font-weight: 600;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                .btn-remove-all:hover {
+                    background-color: #e53e3e;
+                }
+                .table-container {
+                    overflow-y: auto;
+                    flex: 1;
+                }
+                .rates-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 0.9rem;
+                }
+                .rates-table th {
+                    background: var(--bg-alt);
+                    padding: 0.75rem 1rem;
+                    text-align: left;
+                    font-weight: 600;
+                    color: var(--text-muted);
+                    border-bottom: 1px solid var(--border);
+                }
+                .rates-table td {
+                    padding: 1rem;
+                    border-bottom: 1px solid var(--border);
+                    color: var(--foreground);
+                }
+                .rate-badge {
+                    font-weight: 700;
+                    font-size: 1rem;
+                }
+                .action-link {
+                    background: none;
+                    border: none;
+                    color: var(--primary);
+                    padding: 0;
+                    cursor: pointer;
+                    font-size: 0.85rem;
+                }
+                .action-link:hover {
+                    text-decoration: underline;
+                }
+                .action-link.remove {
+                    color: var(--danger);
+                }
+                .type-tag {
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    padding: 0.15rem 0.5rem;
+                    border-radius: 4px;
+                    background: var(--info-light);
+                    color: var(--info);
+                    margin-left: 0.5rem;
+                }
+                .type-tag.ecode {
+                    background: rgba(107, 70, 193, 0.1);
+                    color: #9f7aea;
+                }
+            `}</style>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+            <div className="form-section">
                 {/* Add/Update Rate Form */}
                 <div className="card">
                     <h3 style={{ marginBottom: "1.5rem" }}>Add or Update Rate</h3>
                     <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                         <div className="form-group" style={{ marginBottom: 0 }}>
                             <label className="form-label">Card Brand</label>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                <select
-                                    value={isCustomBrand ? "Other" : cardBrand}
-                                    onChange={(e) => {
-                                        if (e.target.value === "Other") {
-                                            setIsCustomBrand(true);
-                                            setCardBrand("");
-                                        } else {
-                                            setIsCustomBrand(false);
-                                            setCardBrand(e.target.value);
-                                        }
-                                    }}
-                                    className="form-select"
-                                    required={!isCustomBrand}
-                                >
-                                    <option value="" disabled>Select popular brand...</option>
-                                    {POPULAR_BRANDS.map(b => (
-                                        <option key={b} value={b}>{b}</option>
-                                    ))}
-                                    <option value="Other" style={{ fontWeight: "bold" }}>+ Enter Custom Brand</option>
-                                </select>
+                            <SearchableCategorySelect
+                                value={isCustomBrand ? "Other" : cardBrand}
+                                onChange={(val) => {
+                                    if (val === "Other") {
+                                        setIsCustomBrand(true);
+                                        setCardBrand("");
+                                    } else {
+                                        setIsCustomBrand(false);
+                                        setCardBrand(val);
+                                    }
+                                }}
+                                categories={BRAND_OPTIONS}
+                                className="form-select"
+                                required={!isCustomBrand}
+                                placeholder="Select popular brand..."
+                            />
+                            {isCustomBrand && (
+                                <input
+                                    type="text"
+                                    value={cardBrand}
+                                    onChange={(e) => setCardBrand(e.target.value)}
+                                    className="form-input"
+                                    style={{ marginTop: '0.5rem' }}
+                                    placeholder="Type brand name..."
+                                    required={isCustomBrand}
+                                    autoFocus
+                                />
+                            )}
+                        </div>
 
-                                {isCustomBrand && (
-                                    <input
-                                        type="text"
-                                        value={cardBrand}
-                                        onChange={(e) => setCardBrand(e.target.value)}
-                                        className="form-input"
-                                        placeholder="Type custom brand name here..."
-                                        required={isCustomBrand}
-                                        autoFocus
-                                    />
+                        <div className="grid-2">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Currency</label>
+                                <SearchableCategorySelect
+                                    value={currency}
+                                    onChange={(val) => setCurrency(val)}
+                                    categories={CURRENCY_OPTIONS}
+                                    className="form-select"
+                                    required
+                                    showSearch={false}
+                                />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Price Tag (Face Value)</label>
+                                <SearchableCategorySelect
+                                    value={isCustomPrice ? "Other" : priceTag}
+                                    onChange={(val) => {
+                                        if (val === "Other") { setIsCustomPrice(true); setPriceTag(""); }
+                                        else { setIsCustomPrice(false); setPriceTag(val); }
+                                    }}
+                                    categories={PRICE_TAG_OPTIONS}
+                                    className="form-select"
+                                    required={!isCustomPrice}
+                                    showSearch={true}
+                                />
+                                {isCustomPrice && (
+                                    <input type="text" value={priceTag} onChange={(e) => setPriceTag(e.target.value)} className="form-input" style={{ marginTop: '0.5rem' }} placeholder="e.g. 50" required autoFocus />
                                 )}
                             </div>
                         </div>
 
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                        <div className="grid-2">
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Currency</label>
-                                <select
-                                    value={currency}
-                                    onChange={(e) => setCurrency(e.target.value)}
+                                <label className="form-label">Card Type</label>
+                                <SearchableCategorySelect
+                                    value={cardType}
+                                    onChange={(val) => setCardType(val)}
+                                    categories={CARD_TYPE_OPTIONS}
                                     className="form-select"
                                     required
-                                >
-                                    {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                                    showSearch={false}
+                                />
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Price Tag (Face Value)</label>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <select
-                                        value={isCustomPrice ? "Other" : priceTag}
-                                        onChange={(e) => {
-                                            if (e.target.value === "Other") {
-                                                setIsCustomPrice(true);
-                                                setPriceTag("");
-                                            } else {
-                                                setIsCustomPrice(false);
-                                                setPriceTag(e.target.value);
-                                            }
-                                        }}
-                                        className="form-select"
-                                        required={!isCustomPrice}
-                                    >
-                                        {PRICE_TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-                                        <option value="Other" style={{ fontWeight: "bold" }}>+ Enter Custom Amount</option>
-                                    </select>
-                                    {isCustomPrice && (
-                                        <input
-                                            type="text"
-                                            value={priceTag}
-                                            onChange={(e) => setPriceTag(e.target.value)}
-                                            className="form-input"
-                                            placeholder="e.g. 50, 100, 10-50"
-                                            required={isCustomPrice}
-                                            autoFocus
-                                        />
-                                    )}
-                                </div>
+                                <label className="form-label">Trading Payout Rate (multiplier)</label>
+                                <input type="number" step="any" value={rateMultiplier} onChange={(e) => setRateMultiplier(e.target.value)} className="form-input" placeholder="e.g. 10.5" required />
                             </div>
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Card Type</label>
-                            <select
-                                value={cardType}
-                                onChange={(e) => setCardType(e.target.value)}
-                                className="form-select"
-                                required
-                            >
-                                <option value="Physical">Physical Card</option>
-                                <option value="E-code">E-code (Digital)</option>
-                            </select>
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Trading Payout Rate (multiplier)</label>
-                            <input
-                                type="number"
-                                step="any"
-                                value={rateMultiplier}
-                                onChange={(e) => setRateMultiplier(e.target.value)}
-                                className="form-input"
-                                placeholder="e.g. 10.5"
-                                required
-                            />
                         </div>
 
                         <div className="form-group" style={{ marginBottom: 0 }}>
@@ -313,243 +450,169 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                                     Same as Trading
                                 </label>
                             </div>
-                            <input
-                                type="number"
-                                step="any"
-                                value={isPublicSame ? rateMultiplier : publicRateMultiplier}
-                                onChange={(e) => setPublicRateMultiplier(e.target.value)}
-                                className="form-input"
-                                placeholder="Public display rate"
-                                disabled={isPublicSame}
-                                required={!isPublicSame}
-                            />
+                            <input type="number" step="any" value={isPublicSame ? rateMultiplier : publicRateMultiplier} onChange={(e) => setPublicRateMultiplier(e.target.value)} className="form-input" placeholder="Public display rate" disabled={isPublicSame} required={!isPublicSame} />
                         </div>
 
-                        <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-                            <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={loading}>
-                                {loading ? "Saving..." : "Save Rate Config"}
-                            </button>
-                            <button type="button" className="btn btn-secondary" onClick={() => { setCardBrand(""); setIsCustomBrand(false); setCurrency("USD"); setPriceTag("Any Amount"); setIsCustomPrice(false); setCardType("Physical"); setRateMultiplier(""); setPublicRateMultiplier(""); setIsPublicSame(true); }} disabled={loading}>
-                                Clear
-                            </button>
+                        <div className="flex" style={{ gap: "0.75rem", marginTop: "0.5rem" }}>
+                            <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={loading}>Save Rate Config</button>
+                            <button type="button" className="btn btn-secondary" onClick={() => { setCardBrand(""); setRateMultiplier(""); setEditingId(null); }} disabled={loading}>Clear</button>
                         </div>
                     </form>
                 </div>
 
-                {/* Bulk Update Rate Form */}
+                {/* Bulk Configure Rates card */}
                 <div className="card">
-                    <h3 style={{ marginBottom: "1.5rem" }}>Bulk Configure Rates</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "1.5rem" }}>
+                        <h3 style={{ margin: 0 }}>Bulk Configure Rates</h3>
+                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                            <button type="button" onClick={() => setBulkBrands(POPULAR_BRANDS)} className="action-link" style={{ fontSize: '0.8rem' }}>Select All</button>
+                            <span style={{ opacity: 0.3 }}>|</span>
+                            <button type="button" onClick={() => setBulkBrands([])} className="action-link" style={{ fontSize: '0.8rem' }}>Clear All</button>
+                        </div>
+                    </div>
                     <form onSubmit={handleBulkSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                        <div className="grid-2">
                             <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label className="form-label">Currency</label>
-                                <select
+                                <SearchableCategorySelect
                                     value={bulkCurrency}
-                                    onChange={(e) => setBulkCurrency(e.target.value)}
+                                    onChange={(val) => setBulkCurrency(val)}
+                                    categories={CURRENCY_OPTIONS}
                                     className="form-select"
                                     required
-                                >
-                                    {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                                    showSearch={false}
+                                />
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Price Tag (Face Value)</label>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                    <select
-                                        value={isBulkCustomPrice ? "Other" : bulkPriceTag}
-                                        onChange={(e) => {
-                                            if (e.target.value === "Other") {
-                                                setIsBulkCustomPrice(true);
-                                                setBulkPriceTag("");
-                                            } else {
-                                                setIsBulkCustomPrice(false);
-                                                setBulkPriceTag(e.target.value);
-                                            }
-                                        }}
-                                        className="form-select"
-                                        required={!isBulkCustomPrice}
-                                    >
-                                        {PRICE_TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-                                        <option value="Other" style={{ fontWeight: "bold" }}>+ Enter Custom Amount</option>
-                                    </select>
-                                    {isBulkCustomPrice && (
-                                        <input
-                                            type="text"
-                                            value={bulkPriceTag}
-                                            onChange={(e) => setBulkPriceTag(e.target.value)}
-                                            className="form-input"
-                                            placeholder="e.g. 50, 100, 10-50"
-                                            required={isBulkCustomPrice}
-                                            autoFocus
-                                        />
-                                    )}
-                                </div>
+                                <label className="form-label">Price Tag</label>
+                                <SearchableCategorySelect
+                                    value={bulkPriceTag}
+                                    onChange={(val) => setBulkPriceTag(val)}
+                                    categories={PRICE_TAG_OPTIONS.filter(o => o.value !== "Other")}
+                                    className="form-select"
+                                    required
+                                />
                             </div>
                         </div>
-
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Card Type</label>
-                            <select
-                                value={bulkCardType}
-                                onChange={(e) => setBulkCardType(e.target.value)}
-                                className="form-select"
-                                required
-                            >
-                                <option value="Physical">Physical Card</option>
-                                <option value="E-code">E-code (Digital)</option>
-                            </select>
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Trading Payout Rate (multiplier)</label>
-                            <input
-                                type="number"
-                                step="any"
-                                value={bulkRateMultiplier}
-                                onChange={(e) => setBulkRateMultiplier(e.target.value)}
-                                className="form-input"
-                                placeholder="e.g. 10.5"
-                                required
-                            />
+                        <div className="grid-2">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Card Type</label>
+                                <SearchableCategorySelect
+                                    value={bulkCardType}
+                                    onChange={(val) => setBulkCardType(val)}
+                                    categories={CARD_TYPE_OPTIONS}
+                                    className="form-select"
+                                    required
+                                    showSearch={false}
+                                />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Trading Payout Rate (multiplier)</label>
+                                <input type="number" step="any" value={bulkRateMultiplier} onChange={(e) => setBulkRateMultiplier(e.target.value)} className="form-input" placeholder="e.g. 10.5" required />
+                            </div>
                         </div>
 
                         <div className="form-group" style={{ marginBottom: 0 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                                <label className="form-label">Public Display Rate</label>
+                                <label className="form-label">Public Display Rate (Bulk)</label>
                                 <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
                                     <input type="checkbox" checked={isBulkPublicSame} onChange={(e) => setIsBulkPublicSame(e.target.checked)} />
                                     Same as Trading
                                 </label>
                             </div>
-                            <input
-                                type="number"
-                                step="any"
-                                value={isBulkPublicSame ? bulkRateMultiplier : bulkPublicRateMultiplier}
-                                onChange={(e) => setBulkPublicRateMultiplier(e.target.value)}
-                                className="form-input"
-                                placeholder="Public display rate"
-                                disabled={isBulkPublicSame}
-                                required={!isBulkPublicSame}
-                            />
+                            <input type="number" step="any" value={isBulkPublicSame ? bulkRateMultiplier : bulkPublicRateMultiplier} onChange={(e) => setBulkPublicRateMultiplier(e.target.value)} className="form-input" placeholder="Public display rate" disabled={isBulkPublicSame} required={!isBulkPublicSame} />
                         </div>
-
-                        <div className="form-group">
-                            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span>Brands to Apply To</span>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button type="button" onClick={() => setBulkBrands(POPULAR_BRANDS)} style={{ fontSize: '0.8em', color: 'var(--primary)', textDecoration: 'underline' }}>Select All</button>
-                                    <button type="button" onClick={() => setBulkBrands([])} style={{ fontSize: '0.8em', color: 'var(--danger)', textDecoration: 'underline' }}>Clear All</button>
-                                </div>
-                            </label>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", maxHeight: "250px", overflowY: "auto", padding: "0.5rem", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", backgroundColor: "var(--background)" }}>
+                        <div style={{ position: 'relative' }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "0.5rem", maxHeight: "150px", overflowY: "auto", padding: "0.75rem", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", backgroundColor: 'var(--bg-alt)' }}>
                                 {POPULAR_BRANDS.map(brand => (
-                                    <label key={brand} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", cursor: "pointer" }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={bulkBrands.includes(brand)}
-                                            onChange={() => handleToggleBulkBrand(brand)}
-                                        />
+                                    <label key={brand} style={{ fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", padding: '0.25rem' }}>
+                                        <input type="checkbox" checked={bulkBrands.includes(brand)} onChange={(e) => {
+                                            if (e.target.checked) setBulkBrands([...bulkBrands, brand]);
+                                            else setBulkBrands(bulkBrands.filter(b => b !== brand));
+                                        }} />
                                         {brand}
                                     </label>
                                 ))}
                             </div>
-                            <small style={{ opacity: 0.6, fontSize: "0.8em" }}>{bulkBrands.length} brands selected.</small>
+                            <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', opacity: 0.6 }}>
+                                {bulkBrands.length} brands selected
+                            </div>
                         </div>
-
-                        <button type="submit" className="btn btn-primary" style={{ marginTop: "0.5rem" }} disabled={loading || bulkBrands.length === 0}>
-                            {loading ? "Saving..." : "Apply Bulk Config"}
-                        </button>
+                        <button type="submit" className="btn btn-primary" disabled={loading || bulkBrands.length === 0}>Apply Bulk Config</button>
                     </form>
                 </div>
-
             </div>
 
-            {/* Current Rates Table */}
-            <div className="card" style={{ height: "calc(100% - 2rem)", maxHeight: "800px", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-                <div style={{ position: "sticky", top: 0, backgroundColor: "var(--background)", zIndex: 10, paddingBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                    <h3 style={{ margin: 0 }}>Active Rates</h3>
-                    {rates.length > 0 && (
-                        <button
-                            onClick={handleDeleteAll}
-                            disabled={loading}
-                            style={{ backgroundColor: "var(--danger)", color: "white", border: "none", padding: "0.5rem 1rem", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: "0.85rem", fontWeight: "bold", marginLeft: "auto" }}
-                        >
-                            Remove All Rates
-                        </button>
-                    )}
-                </div>
-                {rates.length === 0 ? (
-                    <p style={{ opacity: 0.6 }}>No custom rates have been configured yet.</p>
-                ) : (
-                    <div className="table-responsive">
-                        <table className="table data-table w-full" style={{ textAlign: "left", width: "100%" }}>
-                            <thead style={{ position: "sticky", top: "40px", backgroundColor: "var(--bg-alt)", zIndex: 10 }}>
+            <div className="rates-table-section">
+                <div className="active-rates-card">
+                    <div className="table-header-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3 style={{ margin: 0 }}>Active Rates ({filteredRates.length})</h3>
+                            <button onClick={handleDeleteAll} disabled={loading} className="btn-remove-all">Remove All Rates</button>
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search by Brand or Category..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="form-input"
+                            style={{ 
+                                padding: '0.6rem 1rem', 
+                                border: '1px solid var(--border)', 
+                                borderRadius: '6px',
+                                fontSize: '0.9rem',
+                                backgroundColor: 'var(--bg-alt)' 
+                            }}
+                        />
+                    </div>
+
+                    <div className="table-container">
+                        <table className="rates-table">
+                            <thead>
                                 <tr>
                                     <th>Brand</th>
                                     <th>Currency / Category</th>
-                                    <th>Type</th>
                                     <th>Trading Rate</th>
                                     <th>Public Rate</th>
-                                    <th style={{ textAlign: "right", paddingRight: "1rem" }}>Actions</th>
+                                    <th style={{ textAlign: "right" }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {rates.map(rate => (
-                                    <tr key={rate.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                                        <td style={{ fontWeight: 600, padding: "0.75rem" }}>{rate.cardBrand}</td>
-                                        <td style={{ padding: "0.75rem" }}>
-                                            <span style={{ backgroundColor: "var(--bg-alt)", padding: "0.25rem 0.5rem", borderRadius: "var(--radius-sm)", fontSize: "0.9em" }}>
-                                                {rate.cardCountry}
+                                {filteredRates.length === 0 ? (
+                                    <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', opacity: 0.5 }}>{searchQuery ? "No matching rates found." : "No custom rates configured."}</td></tr>
+                                ) : filteredRates.map(rate => (
+                                    <tr key={rate.id}>
+                                        <td style={{ fontWeight: 600 }}>
+                                            {rate.cardBrand}
+                                            <span className={`type-tag ${rate.cardType === 'E-code' ? 'ecode' : ''}`}>
+                                                {rate.cardType === 'E-code' ? 'E' : 'P'}
                                             </span>
                                         </td>
-                                        <td style={{ padding: "0.75rem" }}>
-                                            <span style={{
-                                                backgroundColor: rate.cardType === 'E-code' ? 'var(--info-light)' : 'var(--success-light)',
-                                                color: rate.cardType === 'E-code' ? 'var(--info)' : 'var(--success)',
-                                                padding: "0.2rem 0.6rem",
-                                                borderRadius: "4px",
-                                                fontSize: "0.85em",
-                                                fontWeight: 600
-                                            }}>
-                                                {rate.cardType || "Physical"}
+                                        <td>
+                                            {rate.cardCountry}
+                                        </td>
+                                        <td>
+                                            <span className="rate-badge" style={{ color: 'var(--info)' }}>{rate.rate}x</span>
+                                        </td>
+                                        <td>
+                                            <span className="rate-badge" style={{ color: (rate.publicRate !== null && rate.publicRate !== rate.rate) ? 'var(--warning)' : 'inherit' }}>
+                                                {rate.publicRate !== null ? rate.publicRate : rate.rate}x
                                             </span>
                                         </td>
-                                        <td style={{ color: "var(--primary)", fontWeight: 700, padding: "0.75rem" }}>{rate.rate}x</td>
-                                        <td style={{ padding: "0.75rem" }}>
-                                            {rate.publicRate !== null ? (
-                                                <span style={{ color: rate.publicRate !== rate.rate ? "#d97706" : "inherit", fontWeight: rate.publicRate !== rate.rate ? 600 : 400 }}>
-                                                    {rate.publicRate}x
-                                                </span>
-                                            ) : (
-                                                <span style={{ opacity: 0.5 }}>-</span>
-                                            )}
-                                        </td>
-                                        <td style={{ textAlign: "right", padding: "0.75rem", display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-                                            <button
-                                                onClick={() => handleEdit(rate)}
-                                                style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", textDecoration: "underline" }}
-                                                disabled={loading}
-                                            >
-                                                Edit
-                                            </button>
-                                            <span style={{ opacity: 0.3 }}>|</span>
-                                            <button
-                                                onClick={() => handleDelete(rate.id)}
-                                                style={{ background: "none", border: "none", color: "var(--danger)", cursor: "pointer", textDecoration: "underline" }}
-                                                disabled={loading}
-                                            >
-                                                Remove
-                                            </button>
+                                        <td style={{ textAlign: "right" }}>
+                                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                <button onClick={() => handleEdit(rate)} className="action-link">Edit</button>
+                                                <span style={{ opacity: 0.3 }}>|</span>
+                                                <button onClick={() => handleDelete(rate.id)} className="action-link remove">Remove</button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                )}
+                </div>
             </div>
-
         </div>
     );
 }

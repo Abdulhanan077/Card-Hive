@@ -46,6 +46,7 @@ export async function POST(req: Request) {
             where: {
                 OR: [{ email }, { username }],
             },
+            select: { id: true, email: true, username: true }
         });
 
         if (existingUser) {
@@ -59,7 +60,8 @@ export async function POST(req: Request) {
         let referredById = null;
         if (ref) {
             const referrer = await prisma.user.findUnique({
-                where: { referralCode: ref }
+                where: { referralCode: ref },
+                select: { id: true }
             });
             if (referrer) {
                 referredById = referrer.id;
@@ -69,10 +71,16 @@ export async function POST(req: Request) {
         // Generate a unique referral code
         let referralCode = username.substring(0, 4).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
         // Check collision just in case
-        let collision = await prisma.user.findUnique({ where: { referralCode } });
+        let collision = await prisma.user.findUnique({ 
+            where: { referralCode },
+            select: { id: true }
+        });
         while (collision) {
             referralCode = username.substring(0, 4).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-            collision = await prisma.user.findUnique({ where: { referralCode } });
+            collision = await prisma.user.findUnique({ 
+                where: { referralCode },
+                select: { id: true }
+            });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -97,10 +105,14 @@ export async function POST(req: Request) {
                 },
             });
 
-            // Referrer gets 10 pts
+            // Referrer gets 10 pts, track it on the New User (Referee)
             if (referredById) {
                 await tx.user.update({
-                    where: { id: referredById },
+                    where: { id: user.id }, // The New User
+                    data: { referralPointsEarned: 10 }
+                });
+                await tx.user.update({
+                    where: { id: referredById }, // The Referrer
                     data: { rewardBalance: { increment: 10 } }
                 });
             }

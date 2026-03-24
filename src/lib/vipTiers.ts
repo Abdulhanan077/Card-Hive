@@ -8,10 +8,10 @@ export type VipTier = {
 };
 
 export const VIP_TIERS: VipTier[] = [
-    { name: "Bronze", level: 1, multiplier: 1.0, color: "#cd7f32", minTrades: 0, maxTrades: 50 },
-    { name: "Silver", level: 2, multiplier: 1.5, color: "#c0c0c0", minTrades: 51, maxTrades: 100 },
-    { name: "Gold", level: 3, multiplier: 2.0, color: "#ffd700", minTrades: 101, maxTrades: 250 },
-    { name: "Platinum", level: 4, multiplier: 3.0, color: "#e5e4e2", minTrades: 251, maxTrades: null },
+    { name: "Bronze", level: 1, multiplier: 1.0, color: "#D97706", minTrades: 0, maxTrades: 50 },
+    { name: "Silver", level: 2, multiplier: 1.5, color: "#64748B", minTrades: 51, maxTrades: 100 },
+    { name: "Gold", level: 3, multiplier: 2.0, color: "#CA8A04", minTrades: 101, maxTrades: 250 },
+    { name: "Platinum", level: 4, multiplier: 3.0, color: "#0EA5E9", minTrades: 251, maxTrades: null },
 ];
 
 export function calculateVipTier(completedTradesCount: number): VipTier {

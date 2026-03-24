@@ -73,10 +73,10 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
             {/* Top Profile Header Card */}
-            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '2rem', padding: '2rem' }}>
+            <div className="card flex-mobile-col" style={{ display: 'flex', alignItems: 'center', gap: '2rem', padding: '2rem' }}>
                 <div style={{
                     width: '100px', height: '100px', borderRadius: '50%',
-                    backgroundColor: '#1d4ed8', color: 'white',
+                    backgroundColor: 'var(--primary)', color: 'white',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '3rem', fontWeight: 'bold'
                 }}>
@@ -90,10 +90,10 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                     </div>
 
                     <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem' }}>
-                        <span style={{ backgroundColor: '#10b981', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                        <span style={{ backgroundColor: 'var(--success)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
                             ✓ Email Verified
                         </span>
-                        <span style={{ backgroundColor: '#6b7280', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                        <span style={{ backgroundColor: 'var(--text-muted)', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
                             ⛨ Identity Unverified
                         </span>
                     </div>
@@ -103,7 +103,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                     </div>
                 </div>
 
-                <div style={{ marginLeft: 'auto', alignSelf: 'flex-start' }}>
+                <div className="desktop-only" style={{ marginLeft: 'auto', alignSelf: 'flex-start' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
                         <span style={{ fontWeight: 'bold' }}>{user.username}</span>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>View Profile</span>
@@ -112,7 +112,7 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
             </div>
 
             {/* Main Content Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1.5rem', alignItems: 'start' }}>
+            <div className="responsive-grid" style={{ alignItems: 'start' }}>
 
                 {/* Left Column: Forms */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -326,13 +326,13 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
 
             <style dangerouslySetInnerHTML={{
                 __html: `
-                @media (max-width: 800px) {
-                    .card {
-                        flex-direction: column;
-                        align-items: flex-start !important;
+                @media (max-width: 600px) {
+                    .card.flex-mobile-col {
+                        align-items: center !important;
+                        text-align: center;
                     }
-                    div[style*="grid-template-columns"] {
-                        grid-template-columns: 1fr !important;
+                    .card.flex-mobile-col h2 {
+                        text-align: center;
                     }
                 }
             `}} />

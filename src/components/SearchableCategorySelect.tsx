@@ -2,20 +2,42 @@
 
 import { useState, useRef, useEffect } from "react";
 
+export interface CategoryOption {
+  value: string;
+  label: string;
+}
+
 interface Props {
-  categories: string[];
+  categories: (string | CategoryOption)[];
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
   className?: string;
   required?: boolean;
+  showSearch?: boolean;
+  searchPlaceholder?: string;
 }
 
-export default function SearchableCategorySelect({ categories, value, onChange, disabled, placeholder, className, required }: Props) {
+export default function SearchableCategorySelect({ 
+  categories, 
+  value, 
+  onChange, 
+  disabled, 
+  placeholder, 
+  className, 
+  required,
+  showSearch = true,
+  searchPlaceholder = "Type amount or currency..."
+}: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Normalize categories to Level/Option objects
+  const normalizedOptions: CategoryOption[] = categories.map(cat => 
+    typeof cat === 'string' ? { value: cat, label: cat } : cat
+  );
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -27,11 +49,14 @@ export default function SearchableCategorySelect({ categories, value, onChange, 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filtered = categories.filter(cat => {
-    if (cat.toLowerCase().includes(searchTerm.toLowerCase())) return true;
+  const filtered = normalizedOptions.filter(opt => {
+    const searchString = (opt.label + " " + opt.value).toLowerCase();
+    if (searchString.includes(searchTerm.toLowerCase())) return true;
 
+    // Special handling for numeric/currency/range strings (amount filtering)
     const num = parseFloat(searchTerm);
     if (!isNaN(num) && searchTerm.trim() !== "") {
+        const cat = opt.label;
         const matchRange = cat.match(/\((?:\$|£|€)?(\d+)\s*-\s*(?:\$|£|€)?(\d+)\)/);
         const matchMin = cat.match(/\((?:\$|£|€)?(\d+)\+\)/);
         const matchExact = cat.match(/\((?:\$|£|€)?(\d+)\)/);
@@ -46,6 +71,8 @@ export default function SearchableCategorySelect({ categories, value, onChange, 
     }
     return false;
   });
+
+  const selectedOption = normalizedOptions.find(opt => opt.value === value);
 
   return (
     <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
@@ -80,7 +107,7 @@ export default function SearchableCategorySelect({ categories, value, onChange, 
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {value || placeholder || "Select Category..."}
+            {selectedOption ? selectedOption.label : (placeholder || "Select Option...")}
         </span>
         <span style={{ fontSize: '0.8em', opacity: 0.5, marginLeft: '8px', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
       </div>
@@ -91,7 +118,7 @@ export default function SearchableCategorySelect({ categories, value, onChange, 
           top: '100%', 
           left: 0, 
           right: 0, 
-          zIndex: 40,
+          zIndex: 400, // High z-index for admin dashboards
           background: 'var(--background, #ffffff)', 
           border: '1px solid var(--border)', 
           borderRadius: '8px', 
@@ -102,35 +129,37 @@ export default function SearchableCategorySelect({ categories, value, onChange, 
           flexDirection: 'column',
           color: 'var(--foreground)'
         }}>
-          <div style={{ padding: '10px', borderBottom: '1px solid var(--border)' }}>
-            <input 
-              type="text"
-              autoFocus
-              placeholder="Type amount or currency..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                width: '100%', 
-                padding: '10px 12px', 
-                borderRadius: '6px',
-                border: '1px solid var(--border)', 
-                background: 'var(--surface, transparent)',
-                color: 'var(--foreground)',
-                outline: 'none',
-                fontSize: '0.95rem'
-              }}
-            />
-          </div>
+          {showSearch && (
+            <div style={{ padding: '10px', borderBottom: '1px solid var(--border)' }}>
+              <input 
+                type="text"
+                autoFocus
+                placeholder={searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: '100%', 
+                  padding: '10px 12px', 
+                  borderRadius: '6px',
+                  border: '1px solid var(--border)', 
+                  background: 'var(--surface, transparent)',
+                  color: 'var(--foreground)',
+                  outline: 'none',
+                  fontSize: '0.95rem'
+                }}
+              />
+            </div>
+          )}
           <div style={{ overflowY: 'auto', flex: 1, padding: '4px' }}>
             {filtered.length === 0 ? (
-              <div style={{ padding: '12px', textAlign: 'center', opacity: 0.5, fontSize: '0.9rem' }}>No matching categories</div>
+              <div style={{ padding: '12px', textAlign: 'center', opacity: 0.5, fontSize: '0.9rem' }}>No matching results</div>
             ) : (
-                filtered.map(cat => (
+                filtered.map(opt => (
                   <div 
-                    key={cat}
+                    key={opt.value}
                     onClick={() => {
-                        onChange(cat);
+                        onChange(opt.value);
                         setIsOpen(false);
                         setSearchTerm("");
                     }}
@@ -138,21 +167,21 @@ export default function SearchableCategorySelect({ categories, value, onChange, 
                         padding: '12px 14px',
                         cursor: 'pointer',
                         borderRadius: '6px',
-                        background: value === cat ? 'var(--primary)' : 'transparent',
-                        color: value === cat ? '#ffffff' : 'inherit',
-                        fontWeight: value === cat ? 600 : 400,
+                        background: value === opt.value ? 'var(--primary)' : 'transparent',
+                        color: value === opt.value ? '#ffffff' : 'inherit',
+                        fontWeight: value === opt.value ? 600 : 400,
                         transition: 'background 0.1s',
                         marginBottom: '2px',
                         fontSize: '0.95rem'
                     }}
                     onMouseEnter={(e) => {
-                        if (value !== cat) e.currentTarget.style.background = 'var(--primary-light, rgba(0,0,0,0.05))';
+                        if (value !== opt.value) e.currentTarget.style.background = 'var(--primary-light, rgba(0,0,0,0.05))';
                     }}
                     onMouseLeave={(e) => {
-                        if (value !== cat) e.currentTarget.style.background = 'transparent';
+                        if (value !== opt.value) e.currentTarget.style.background = 'transparent';
                     }}
                   >
-                    {cat}
+                    {opt.label}
                   </div>
                 ))
             )}

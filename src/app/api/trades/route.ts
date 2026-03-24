@@ -5,11 +5,11 @@ import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import {
-    sendDuplicateCardAttemptEmail,
-    sendAdminDuplicateAlert,
     sendTradeSubmittedEmail,
     sendAdminNewTradeEmail
 } from "@/lib/email";
+import fs from "fs";
+import path from "path";
 
 const s3Client = new S3Client({
     region: "auto",
@@ -22,9 +22,6 @@ const s3Client = new S3Client({
 
 export async function POST(req: Request) {
     try {
-        console.log("🚀 POST /api/trades started");
-        console.log("DEBUG: DATABASE_URL check:", process.env.DATABASE_URL?.split('@')[1] || "Not found");
-
         const session = await getServerSession(authOptions);
         if (!session?.user) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -39,10 +36,10 @@ export async function POST(req: Request) {
         const payoutAccountName = (formData.get("payoutAccountName") as string) || null;
 
         // Crypto fields
-        const cryptoCoin = formData.get("cryptoCoin") as any;
-        const cryptoNetwork = formData.get("cryptoNetwork") as any;
-        const cryptoExchange = formData.get("cryptoExchange") as any;
-        const cryptoReceiverIdType = formData.get("cryptoReceiverIdType") as any;
+        const cryptoCoin = (formData.get("cryptoCoin") as string) || null;
+        const cryptoNetwork = (formData.get("cryptoNetwork") as string) || null;
+        const cryptoExchange = (formData.get("cryptoExchange") as string) || null;
+        const cryptoReceiverIdType = (formData.get("cryptoReceiverIdType") as string) || null;
         const cryptoReceiverId = formData.get("cryptoReceiverId") as string;
 
         const notes = formData.get("notes") as string;
@@ -53,15 +50,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "No cards provided" }, { status: 400 });
         }
 
-        const cards = JSON.parse(cardsJson) as Array<{
-            cardBrand: string;
-            cardCountry: string;
-            cardType: string;
-            faceValue: number;
-            currency: string;
-            cardCode: string;
-            serialNumber?: string;
-        }>;
+        let cards: any[] = [];
+        try {
+            cards = JSON.parse(cardsJson);
+        } catch (e: any) {
+            return NextResponse.json({ message: "Invalid cards data" }, { status: 400 });
+        }
 
         if (cards.length === 0) {
             return NextResponse.json({ message: "No cards provided" }, { status: 400 });
@@ -89,7 +83,6 @@ export async function POST(req: Request) {
         }
 
         // 2. Batch Fetch Rates
-        // We fetch all rates for the brands involved in the whole batch
         const brands = Array.from(new Set(cards.map(c => c.cardBrand)));
         const relevantRates = await prisma.cardRate.findMany({
             where: {
@@ -97,7 +90,7 @@ export async function POST(req: Request) {
             }
         });
 
-        // 3. Handle Image Uploads... (already optimized)
+        // 3. Handle Image Uploads
         const images = formData.getAll("images") as File[];
         const imageUrls: string[] = [];
         if (images.length > 0) {
@@ -135,16 +128,16 @@ export async function POST(req: Request) {
             const trade = await prisma.trade.create({
                 data: {
                     tradeId,
-                    fullName: batchId,
+                    fullName: cards.length > 1 ? batchId : null,
                     userId: parseInt(session.user.id),
                     payoutMethod: payoutMethod as any,
                     payoutNetwork,
                     payoutPhoneNumber,
                     payoutAccountName,
-                    cryptoCoin,
-                    cryptoNetwork,
-                    cryptoExchange,
-                    cryptoReceiverIdType,
+                    cryptoCoin: cryptoCoin as any,
+                    cryptoNetwork: cryptoNetwork as any,
+                    cryptoExchange: cryptoExchange as any,
+                    cryptoReceiverIdType: cryptoReceiverIdType as any,
                     cryptoReceiverId,
                     cardBrand: card.cardBrand,
                     cardCountry: card.cardCountry,
@@ -162,30 +155,36 @@ export async function POST(req: Request) {
             createdTrades.push(trade);
         }
 
-        const user = await prisma.user.findUnique({ where: { id: parseInt(session.user.id) } });
+        const user = await prisma.user.findUnique({ 
+            where: { id: parseInt(session.user.id) },
+            select: { id: true, email: true, username: true, phoneNumber: true, emailNotificationsEnabled: true, role: true }
+        });
+
         if (user) {
-            // Send one email for the whole batch
             if (user.emailNotificationsEnabled) {
-                await sendTradeSubmittedEmail({ email: user.email, username: user.username }, createdTrades);
+                await sendTradeSubmittedEmail({ email: user.email, username: user.username }, createdTrades).catch(err => console.error("User email failed", err));
             }
-            await sendAdminNewTradeEmail(createdTrades, { username: user.username, email: user.email, phoneNumber: user.phoneNumber });
+            await sendAdminNewTradeEmail(createdTrades, { username: user.username, email: user.email, phoneNumber: user.phoneNumber }).catch(err => console.error("Admin email failed", err));
         }
 
         return NextResponse.json({ tradeId: createdTrades[0].tradeId, batchId }, { status: 201 });
     } catch (error: any) {
-        console.error("DEBUG: Trade submission detailed error:", error);
-        console.error("DEBUG META:", JSON.stringify(error.meta));
+        console.error("❌ Trade submission failed:", error);
+        
+        // Write error to a persistent log file for debugging
+        const errorLogPath = path.join(process.cwd(), "api_error.log");
+        const errorMessage = `[${new Date().toISOString()}] ❌ ERROR: ${error.message}\nSTACK: ${error.stack}\nDEBUG_META: ${JSON.stringify(error.meta || {})}\n\n`;
+        try {
+            fs.appendFileSync(errorLogPath, errorMessage);
+            console.log("📝 Error written to api_error.log");
+        } catch (fsError) {
+            console.error("Failed to write to api_error.log:", fsError);
+        }
 
-        // Detailed logging for each card specifically if reached
-        return NextResponse.json({
-            message: "Internal server error",
-            debug: {
-                message: error.message,
-                code: error.code,
-                meta: error.meta,
-                name: error.name
-            }
-        }, { status: 500 });
+        return NextResponse.json(
+            { message: error.message || "Internal server error", details: error.message },
+            { status: 500 }
+        );
     }
 }
 
@@ -196,24 +195,34 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
-        // Logged in users fetch only their trades
-        // Admins can be handled via a different route or passing a query param,
-        // but we'll stick to a separate admin route for pure admin management.
+        const { searchParams } = new URL(req.url);
+        const tradeId = searchParams.get("tradeId");
 
-        const url = new URL(req.url);
-        const limit = url.searchParams.get("limit");
+        // If tradeId is provided, fetch just that one
+        if (tradeId) {
+            const trade = await prisma.trade.findUnique({
+                where: {
+                    tradeId,
+                    userId: parseInt(session.user.id)
+                }
+            });
 
-        const queryOpts: any = {
+            if (!trade) {
+                return NextResponse.json({ message: "Trade not found" }, { status: 404 });
+            }
+
+            return NextResponse.json(trade);
+        }
+
+        // Otherwise list all for user
+        const trades = await prisma.trade.findMany({
             where: { userId: parseInt(session.user.id) },
-            orderBy: { createdAt: "desc" },
-        };
+            orderBy: { createdAt: "desc" }
+        });
 
-        if (limit) queryOpts.take = parseInt(limit);
-
-        const trades = await prisma.trade.findMany(queryOpts);
-
-        return NextResponse.json({ trades });
-    } catch (error) {
+        return NextResponse.json(trades);
+    } catch (error: any) {
+        console.error("❌ GET /api/trades failed:", error);
         return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

@@ -96,7 +96,6 @@ export default function RatesCalculator() {
                     box-shadow: var(--shadow-lg);
                     border: 1px solid var(--border);
                     position: relative;
-                    overflow: hidden;
                 }
 
                 .calculator-container::before {
@@ -260,34 +259,32 @@ export default function RatesCalculator() {
             <div className="calc-grid">
                 <div className="form-group">
                     <label className="field-label">Select Gift Card Brand</label>
-                    <select
+                    <SearchableCategorySelect
                         className="calc-select"
                         value={selectedBrand}
-                        onChange={(e) => {
-                            setSelectedBrand(e.target.value);
+                        onChange={(val) => {
+                            setSelectedBrand(val);
                             setSelectedCategory("");
                         }}
-                    >
-                        <option value="">Choose Brand...</option>
-                        {brands.map(brand => (
-                            <option key={brand} value={brand}>{brand}</option>
-                        ))}
-                    </select>
+                        categories={brands}
+                        placeholder="Choose Brand..."
+                        searchPlaceholder="Search brands..."
+                    />
                 </div>
 
                 <div className="form-group">
                     <label className="field-label">Card Type</label>
-                    <select
+                    <SearchableCategorySelect
                         className="calc-select"
                         value={selectedType}
-                        onChange={(e) => {
-                            setSelectedType(e.target.value);
+                        onChange={(val) => {
+                            setSelectedType(val);
                             setSelectedCategory("");
                         }}
-                    >
-                        <option value="Physical">Physical Card</option>
-                        <option value="E-code">E-code (Digital)</option>
-                    </select>
+                        categories={["Physical", "E-code"]}
+                        placeholder="Select Card Type..."
+                        showSearch={false}
+                    />
                 </div>
 
                 <div className="form-group">
@@ -299,6 +296,7 @@ export default function RatesCalculator() {
                         disabled={!selectedBrand}
                         categories={categories}
                         placeholder={selectedBrand ? `Choose Category for ${selectedType}...` : "Select Brand First"}
+                        searchPlaceholder="Type amount to filter..."
                     />
                 </div>
 

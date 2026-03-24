@@ -3,7 +3,12 @@ import ClientSettingsForm from "./ClientSettingsForm";
 import Link from "next/link";
 
 export default async function AdminSettingsPage() {
-    const settings: any = await prisma.settings.findFirst();
+    let settings: any = null;
+    try {
+        settings = await prisma.settings.findFirst();
+    } catch (e) {
+        console.error("Admin Settings: Could not fetch settings", e);
+    }
 
     return (
         <>

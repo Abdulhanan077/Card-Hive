@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { IoCheckmark, IoCheckmarkDone, IoImageOutline, IoDocumentAttachOutline, IoSend, IoEllipsisHorizontal, IoPencilOutline, IoTrashOutline, IoClose } from "react-icons/io5";
 import { pusherClient } from "@/lib/pusher";
 import { postMessage, markMessageAsRead, triggerTypingIndicator, uploadChatFileAction, deleteMessageAction, editMessageAction } from "../actions/chat";
+import { toast } from "react-hot-toast";
 
 interface Message {
     id: number;
@@ -127,7 +128,7 @@ export default function ChatBox({
             }
         } catch (err) {
             console.error("Upload failed", err);
-            alert("Failed to upload one or more files. Please try again.");
+            toast.error("Failed to upload one or more files. Please try again.");
         } finally {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -145,7 +146,7 @@ export default function ChatBox({
             await deleteMessageAction(messageId, tradeId);
         } catch (err) {
             console.error("Failed to delete message", err);
-            alert("Failed to delete message");
+            toast.error("Failed to delete message");
         }
     };
 
@@ -169,7 +170,7 @@ export default function ChatBox({
             setEditContent("");
         } catch (err) {
             console.error("Failed to update message", err);
-            alert("Failed to update message");
+            toast.error("Failed to update message");
         } finally {
             setLoading(false);
         }

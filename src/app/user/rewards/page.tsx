@@ -20,7 +20,13 @@ export default async function UserRewardsPage() {
         orderBy: { createdAt: "desc" }
     });
 
-    const settings = await prisma.settings.findFirst();
+    let settings = null;
+    try {
+        settings = await prisma.settings.findFirst();
+    } catch (e) {
+        console.error("User Rewards: Could not fetch settings", e);
+    }
+
     const cediEquivalent = (((user?.rewardBalance || 0) / 100) * (settings?.rewardPointsToGhs || 100)).toFixed(2);
 
     return (
@@ -30,7 +36,7 @@ export default async function UserRewardsPage() {
                 <p className="dashboard-subtitle">Request a withdrawal for your accumulated reward points.</p>
             </div>
 
-            <div className="grid grid-cols-2 flex-mobile-col" style={{ gap: '2rem', marginTop: '2rem' }}>
+            <div className="responsive-grid" style={{ marginTop: '2rem' }}>
                 <div className="card">
                     <h3 style={{ marginBottom: "1rem" }}>Current Balance</h3>
                     <div style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--warning)', marginTop: '1rem', marginBottom: '0.2rem' }}>

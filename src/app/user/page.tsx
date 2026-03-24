@@ -11,8 +11,8 @@ import StatusUpdatesCarousel from "@/components/StatusUpdatesCarousel";
 // Helper function to map brand names to icons
 const getBrandIcon = (brandName: string) => {
     const lower = brandName.toLowerCase();
-    if (lower.includes('apple') || lower.includes('itunes')) return <FaApple size={20} color="#000" />;
-    if (lower.includes('steam')) return <FaSteam size={20} color="#1b2838" />;
+    if (lower.includes('apple') || lower.includes('itunes')) return <FaApple size={20} color="var(--foreground)" />;
+    if (lower.includes('steam')) return <FaSteam size={20} color="var(--foreground)" />;
     if (lower.includes('xbox')) return <FaXbox size={20} color="#107C10" />;
     if (lower.includes('google') || lower.includes('play')) return <FaGooglePlay size={20} color="#3BCCFF" />;
     if (lower.includes('amazon')) return <FaAmazon size={20} color="#FF9900" />;
@@ -27,13 +27,69 @@ export default async function UserDashboardHome() {
     const userId = parseInt(session.user.id);
 
     // Fetch data sequentially to avoid connection pool exhaustion
-    const userData = await prisma.user.findUnique({ where: { id: userId } });
+    const userData = await prisma.user.findUnique({ 
+        where: { id: userId },
+        select: {
+            id: true,
+            username: true,
+            status: true,
+            rewardBalance: true,
+            completedTradesCount: true,
+        }
+    });
+    
+    // Use the manual count from user record for VIP status calculation (allows admin overrides)
+    const vipPoints = userData?.completedTradesCount || 0;
+    
+    // Also fetch actual completed trades for displaying in stats if needed
+    const actualCompletedTrades = await prisma.trade.count({
+        where: { 
+            userId,
+            status: { in: ['PAID', 'COMPLETED'] }
+        }
+    });
+
+    const getVipBadgeStyle = (tierName: string, baseColor: string) => {
+        let style: any = {
+            backgroundColor: baseColor,
+            color: 'white',
+            padding: '0.3rem 0.85rem',
+            borderRadius: '100px',
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            display: 'inline-block'
+        };
+
+        if (tierName === 'Platinum') {
+            style.background = 'linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%)';
+            style.border = '1px solid rgba(255,255,255,0.3)';
+        } else if (tierName === 'Gold') {
+            style.background = 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)';
+        } else if (tierName === 'Silver') {
+            style.background = 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)';
+        } else if (tierName === 'Bronze') {
+            style.background = 'linear-gradient(135deg, #d97706 0%, #b45309 100%)';
+        }
+
+        return style;
+    };
+
     const recentTrades = await prisma.trade.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
         take: 3
     });
-    const settings = await prisma.settings.findFirst();
+    
+    let settings = null;
+    try {
+        settings = await prisma.settings.findFirst();
+    } catch (e) {
+        console.error("Dashboard: Could not fetch site settings", e);
+    }
+
     const topRates = await prisma.cardRate.findMany({
         take: 5,
         orderBy: { rate: 'desc' }
@@ -43,10 +99,10 @@ export default async function UserDashboardHome() {
         <div className="modern-dashboard">
             {/* Warning Banner (Optional, keeping consistent with screenshot style) */}
             {userData?.status === 'ACTIVE' && (
-                <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem', color: '#1e3a8a' }}>
-                    <div style={{ backgroundColor: '#2563eb', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>i</div>
-                    <div style={{ fontSize: '0.9rem' }}>
-                        <strong>Welcome to Card Hive!</strong> Keep submitting gift cards to climb the VIP Tiers and multiply your Reward Points.
+                <div style={{ backgroundColor: 'var(--primary-light)', border: '1px solid var(--primary)', borderRadius: '8px', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem', color: 'var(--primary)' }}>
+                    <div style={{ backgroundColor: 'var(--primary)', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>i</div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--foreground)' }}>
+                        <strong style={{ color: 'var(--primary)' }}>Welcome to Card Hive!</strong> Keep submitting gift cards to climb the VIP Tiers and multiply your Reward Points.
                     </div>
                 </div>
             )}
@@ -56,7 +112,7 @@ export default async function UserDashboardHome() {
             <div className="dashboard-grid">
 
                 {/* LEFT COLUMN */}
-                <div className="grid-left" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div className="grid-left" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
 
                     {/* Latest Promotions Banner */}
                     <div className="promo-banner card">
@@ -72,7 +128,7 @@ export default async function UserDashboardHome() {
                     </div>
 
                     {/* Dual Cards Row: Wallet & Active Coupons */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                    <div className="responsive-grid">
 
                         {/* My Wallet */}
                         <div className="wallet-card card">
@@ -89,20 +145,19 @@ export default async function UserDashboardHome() {
                             </Link>
                         </div>
 
-                        {/* Referrals Block (Replacing "Coupons") */}
+                        {/* Referrals Block linking to dedicated page */}
                         <div className="referral-card card">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                <h3 style={{ color: 'white', fontSize: '1.1rem' }}>Refer Friends</h3>
-                                <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>Earn Bonus Pts</span>
+                                <h3 style={{ color: 'white', fontSize: '1.1rem' }}>Referral Rewards</h3>
+                                <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>New!</span>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 <p style={{ color: 'white', fontSize: '0.85rem', opacity: 0.9 }}>
-                                    Share your code and earn a percentage of their first trade as points!
+                                    Your personal dashboard is ready. Track your referrals, bonuses, and earnings in one place!
                                 </p>
-                                <div style={{ backgroundColor: 'white', padding: '0.5rem', borderRadius: '4px', marginTop: '0.5rem' }}>
-                                    <div style={{ fontSize: '0.8rem', color: 'gray', marginBottom: '0.2rem' }}>Your Referral Link:</div>
-                                    <ReferralLinkCopy referralCode={userData?.referralCode || null} />
-                                </div>
+                                <Link href="/user/referrals" className="btn" style={{ backgroundColor: 'white', color: '#1d4ed8', width: '100%', marginTop: '0.5rem', fontWeight: 'bold', textAlign: 'center' }}>
+                                    Open Referrals Hub
+                                </Link>
                             </div>
                         </div>
 
@@ -145,15 +200,15 @@ export default async function UserDashboardHome() {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                             <div style={{
                                                 width: '40px', height: '40px', borderRadius: '50%',
-                                                backgroundColor: trade.status === 'PAID' ? '#dcfce7' : (trade.status === 'REJECTED' ? '#fee2e2' : '#fef3c7'),
-                                                color: trade.status === 'PAID' ? '#16a34a' : (trade.status === 'REJECTED' ? '#ef4444' : '#d97706'),
+                                                backgroundColor: trade.status === 'PAID' ? 'var(--success-light)' : (trade.status === 'REJECTED' ? 'var(--danger-light)' : 'var(--warning-light)'),
+                                                color: trade.status === 'PAID' ? 'var(--success)' : (trade.status === 'REJECTED' ? 'var(--danger)' : 'var(--warning)'),
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem'
                                             }}>
                                                 {trade.status === 'PAID' ? '✓' : (trade.status === 'REJECTED' ? '✕' : '⏳')}
                                             </div>
                                             <div>
                                                 <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{trade.cardBrand}</div>
-                                                <div style={{ fontSize: '0.8rem', color: 'gray' }}>{new Date(trade.createdAt).toLocaleDateString()}</div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(trade.createdAt).toLocaleDateString()}</div>
                                             </div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
@@ -173,7 +228,49 @@ export default async function UserDashboardHome() {
                 </div>
 
                 {/* RIGHT COLUMN */}
-                <div className="grid-right" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div className="grid-right" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+
+                    {/* VIP Status Card */}
+                    {userData && (
+                        <div className="card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)', color: 'white', border: 'none' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+                                <h3 style={{ fontSize: '1.1rem', color: 'white' }}>VIP Status</h3>
+                                <span style={getVipBadgeStyle(calculateVipTier(vipPoints).name, calculateVipTier(vipPoints).color)}>
+                                    {calculateVipTier(vipPoints).name}
+                                </span>
+                            </div>
+                            
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>
+                                    {vipPoints} <span style={{ fontSize: '0.85rem', fontWeight: 500, opacity: 0.8 }}>VIP Pts</span>
+                                </div>
+                                <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Accumulated from successful trades</div>
+                            </div>
+
+                            {(() => {
+                                const currentTier = calculateVipTier(vipPoints);
+                                const nextTier = getNextVipTier(currentTier.level);
+                                if (!nextTier) return <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fbbf24' }}>Max Tier Reached! 👑</div>;
+                                
+                                const progress = Math.min(100, Math.max(0, ((vipPoints - currentTier.minTrades) / (nextTier.minTrades - currentTier.minTrades)) * 100));
+                                
+                                return (
+                                    <>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                                            <span>Progress to {nextTier.name}</span>
+                                            <span>{vipPoints} / {nextTier.minTrades} Pts</span>
+                                        </div>
+                                        <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                                            <div style={{ height: '100%', width: `${progress}%`, backgroundColor: currentTier.color, borderRadius: '4px', transition: 'width 0.5s ease' }}></div>
+                                        </div>
+                                        <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
+                                            Benefit: {nextTier.multiplier}x Reward Multiplier
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    )}
 
                     {/* Top Selling Gift Cards */}
                     <div className="card" style={{ padding: '1.5rem' }}>
@@ -189,7 +286,7 @@ export default async function UserDashboardHome() {
                                 topRates.map(rate => (
                                     <div key={rate.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', backgroundColor: 'var(--surface-hover)', borderRadius: '8px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                            <div style={{ backgroundColor: 'white', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                            <div style={{ backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                                                 {getBrandIcon(rate.cardBrand)}
                                             </div>
                                             <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{rate.cardBrand} <span style={{ fontSize: '0.75rem', color: 'gray', fontWeight: 'normal' }}>({rate.cardCountry})</span></div>
@@ -209,22 +306,22 @@ export default async function UserDashboardHome() {
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <a href={`https://wa.me/${(settings?.whatsappNumber || "").replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', textDecoration: 'none', color: 'inherit', transition: 'background-color 0.2s' }} className="hover-bg-light">
-                                <div style={{ backgroundColor: '#dcfce7', color: '#16a34a', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                                <div style={{ backgroundColor: 'var(--success-light)', color: 'var(--success)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
                                     <span>💬</span>
                                 </div>
                                 <div>
                                     <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>WhatsApp Support</div>
-                                    <div style={{ fontSize: '0.8rem', color: 'gray' }}>{settings?.whatsappNumber || "Message us!"}</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{settings?.whatsappNumber || "Message us!"}</div>
                                 </div>
                             </a>
 
                             <a href={`mailto:${settings?.contactEmail || "support@omorbiggy.com"}`} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', textDecoration: 'none', color: 'inherit', transition: 'background-color 0.2s' }} className="hover-bg-light">
-                                <div style={{ backgroundColor: '#e0e7ff', color: '#4f46e5', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                                <div style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
                                     <span>✉️</span>
                                 </div>
                                 <div>
                                     <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Email Support</div>
-                                    <div style={{ fontSize: '0.8rem', color: 'gray' }}>{settings?.contactEmail || "Drop us a line!"}</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{settings?.contactEmail || "Drop us a line!"}</div>
                                 </div>
                             </a>
                         </div>
@@ -243,6 +340,11 @@ export default async function UserDashboardHome() {
                     grid-template-columns: 2fr 1fr;
                     gap: 1.5rem;
                     align-items: start;
+                }
+                .responsive-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                    gap: 1.5rem;
                 }
                 .promo-banner {
                     background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);

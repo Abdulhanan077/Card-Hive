@@ -87,27 +87,29 @@ export default async function UserTradesPage(props: {
                 <p className="dashboard-subtitle">Track the status of all your submitted gift cards.</p>
             </div>
 
-            <div style={{ marginBottom: '2rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <Link
-                    href="/user/trades"
-                    className={`btn ${!statusFilter ? 'btn-primary' : 'btn-secondary'}`}
-                >All</Link>
-                <Link
-                    href="/user/trades?status=PENDING"
-                    className={`btn ${statusFilter === 'PENDING' ? 'btn-primary' : 'btn-secondary'}`}
-                >Pending</Link>
-                <Link
-                    href="/user/trades?status=PAID"
-                    className={`btn ${statusFilter === 'PAID' ? 'btn-primary' : 'btn-secondary'}`}
-                >Paid (Action Required)</Link>
-                <Link
-                    href="/user/trades?status=COMPLETED"
-                    className={`btn ${statusFilter === 'COMPLETED' ? 'btn-primary' : 'btn-secondary'}`}
-                >Completed</Link>
-                <Link
-                    href="/user/trades?status=REJECTED"
-                    className={`btn ${statusFilter === 'REJECTED' ? 'btn-primary' : 'btn-secondary'}`}
-                >Rejected</Link>
+            <div className="table-container" style={{ marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', width: 'max-content' }}>
+                    <Link
+                        href="/user/trades"
+                        className={`btn ${!statusFilter ? 'btn-primary' : 'btn-secondary'}`}
+                    >All</Link>
+                    <Link
+                        href="/user/trades?status=PENDING"
+                        className={`btn ${statusFilter === 'PENDING' ? 'btn-primary' : 'btn-secondary'}`}
+                    >Pending</Link>
+                    <Link
+                        href="/user/trades?status=PAID"
+                        className={`btn ${statusFilter === 'PAID' ? 'btn-primary' : 'btn-secondary'}`}
+                    >Paid (Action Required)</Link>
+                    <Link
+                        href="/user/trades?status=COMPLETED"
+                        className={`btn ${statusFilter === 'COMPLETED' ? 'btn-primary' : 'btn-secondary'}`}
+                    >Completed</Link>
+                    <Link
+                        href="/user/trades?status=REJECTED"
+                        className={`btn ${statusFilter === 'REJECTED' ? 'btn-primary' : 'btn-secondary'}`}
+                    >Rejected</Link>
+                </div>
             </div>
 
             <div className="table-container">

@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import ChatBox from "@/app/components/ChatBox";
 import Link from "next/link";
+import "@/app/trade-details.css";
+import SafeImage from "@/app/components/SafeImage";
 
 export default async function UserTradeDetailView(props: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
@@ -87,59 +89,52 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
     } else {
         batchTrades = [trade as any];
     }
+    const parsedImages: string[] = JSON.parse(trade.imageUrls || "[]");
 
     return (
-        <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem" }}>
-
-            <div style={{ marginBottom: "2rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-                <Link href="/user/trades" className="btn btn-outline" style={{ padding: "0.5rem 1rem" }}>
+        <div className="trade-details-container">
+            <div className="trade-header">
+                <Link href="/user/trades" className="btn-back">
                     &larr; Back
                 </Link>
-                <div>
-                    <h1 className="dashboard-title" style={{ margin: 0 }}>
+                <div className="header-content">
+                    <h1 className="trade-title">
                         {trade.fullName && trade.fullName.startsWith('BATCH-') ? `Batch Trade: ${trade.fullName}` : `Trade: ${trade.tradeId}`}
                     </h1>
-                    <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginTop: "0.5rem" }}>
+                    <div className="header-meta">
                         <span className={`badge badge-${trade.status.toLowerCase()}`}>
                             {trade.status.replace("_", " ")}
                         </span>
-                        <span style={{ opacity: 0.7 }}>Submitted on {new Date(trade.createdAt).toLocaleDateString()}</span>
+                        <span className="submission-date">Submitted on {new Date(trade.createdAt).toLocaleDateString()}</span>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 chat-layout" style={{ gap: "2rem", height: "calc(100vh - 250px)", minHeight: "600px" }}>
-
+            <div className="trade-grid">
                 {/* Left Column: Trade Details Summary */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", overflowY: "auto", paddingRight: "0.5rem" }}>
-
+                <div className="details-column">
                     <div className="card">
-                        <h3 style={{ marginBottom: "1rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>
+                        <h3 className="section-title">
                             {batchTrades.length > 1 ? `Batch Items (${batchTrades.length})` : 'Gift Card Details'}
                         </h3>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        <div className="batch-list">
                             {batchTrades.map((t: any, idx) => (
-                                <div key={t.id} style={{
-                                    padding: "1rem",
-                                    backgroundColor: "var(--bg-alt)",
-                                    borderRadius: "var(--radius-md)",
-                                    border: t.tradeId === trade.tradeId ? "1px solid var(--primary)" : "1px solid transparent"
-                                }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", marginBottom: "0.5rem" }}>
-                                        <span>#{idx + 1}: {t.cardBrand}</span>
+                                <div key={t.id} className={`batch-item ${t.id === trade.id ? 'active' : ''}`}>
+                                    <div className="batch-item-header">
+                                        <span className="item-label">#{idx + 1}: {t.cardBrand}</span>
                                         <span className={`badge badge-${t.status.toLowerCase()}`} style={{ fontSize: "0.7rem" }}>
                                             {t.status.replace("_", " ")}
                                         </span>
                                     </div>
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", fontSize: "0.85rem" }}>
-                                        <div>
-                                            <span style={{ opacity: 0.7 }}>Value:</span> {t.faceValue} {t.currency}
+                                    <div className="batch-item-grid">
+                                        <div className="item-field">
+                                            <span className="field-label">Value:</span> {t.faceValue} {t.currency}
                                         </div>
-                                        <div>
-                                            <span style={{ opacity: 0.7 }}>Type:</span> {t.cardType}
+                                        <div className="item-field">
+                                            <span className="field-label">Type:</span> {t.cardType}
                                         </div>
-                                        <div style={{ gridColumn: "span 2", marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px solid var(--border)", color: "var(--primary)", fontWeight: "bold" }}>
+                                        <div className="item-payout">
                                             Payout: GH₵ {t.calculatedPayout?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </div>
                                     </div>
@@ -148,68 +143,76 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
                         </div>
 
                         {batchTrades.length > 1 && (
-                            <div style={{ marginTop: "1.5rem", padding: "1rem", backgroundColor: "var(--primary-light)", borderRadius: "var(--radius-md)", textAlign: "center", color: "var(--primary)" }}>
-                                <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>Total Estimated Payout</div>
-                                <strong style={{ fontSize: "1.5rem" }}>
+                            <div className="total-payout-card">
+                                <div className="total-label">Total Estimated Payout</div>
+                                <strong className="total-value">
                                     GH₵ {batchTrades.reduce((sum: number, t: any) => sum + (t.status !== 'REJECTED' ? (t.calculatedPayout || 0) : 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </strong>
-                                <p style={{ fontSize: "0.7rem", marginTop: "0.5rem", opacity: 0.7 }}>
-                                    (Excludes rejected cards)
-                                </p>
+                                <p className="total-hint">(Excludes rejected cards)</p>
                             </div>
                         )}
                     </div>
 
                     <div className="card">
-                        <h3 style={{ marginBottom: "1rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.5rem" }}>
-                            Payout Target
-                        </h3>
+                        <h3 className="section-title">Payout Target</h3>
                         {trade.payoutMethod === 'CRYPTO' ? (
-                            <div>
-                                <div style={{ fontSize: "1.1rem", fontWeight: "bold", color: "var(--primary)" }}>
+                            <div className="payout-content">
+                                <div className="payout-main crypto">
                                     {trade.cryptoCoin} ({trade.cryptoNetwork})
                                 </div>
-                                <div style={{ fontSize: "0.9rem", color: "var(--primary)", marginTop: "0.25rem" }}>
+                                <div className="payout-sub">
                                     Exchange: <strong>{trade.cryptoExchange}</strong>
                                 </div>
-                                <div style={{ marginTop: "0.75rem", padding: "0.5rem", backgroundColor: "var(--bg-alt)", borderRadius: "4px", fontSize: "0.85rem", wordBreak: "break-all" }}>
-                                    <div style={{ opacity: 0.7, marginBottom: "0.25rem" }}>
+                                <div className="payout-id-box">
+                                    <div className="id-label">
                                         {trade.cryptoReceiverIdType === 'WALLET_ADDRESS' ? 'Wallet Address:' : 'Exchange ID:'}
                                     </div>
-                                    <code style={{ fontWeight: "bold" }}>{trade.cryptoReceiverId}</code>
+                                    <code className="id-value">{trade.cryptoReceiverId}</code>
                                 </div>
                             </div>
                         ) : (
-                            <div>
-                                <div style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{trade.payoutNetwork}</div>
+                            <div className="payout-content">
+                                <div className="payout-main">{trade.payoutNetwork}</div>
                                 {trade.payoutAccountName && (
-                                    <div style={{ fontSize: "1rem", opacity: 0.8, marginTop: "0.25rem" }}>
-                                        {trade.payoutAccountName}
-                                    </div>
+                                    <div className="payout-info">{trade.payoutAccountName}</div>
                                 )}
-                                <div style={{ color: "var(--primary)", fontSize: "1.2rem", marginTop: "0.25rem" }}>{trade.payoutPhoneNumber}</div>
+                                <div className="payout-highlight">{trade.payoutPhoneNumber}</div>
                             </div>
                         )}
                     </div>
 
+                    {/* Shared Evidence Images */}
+                    {parsedImages.length > 0 && (
+                        <div className="card">
+                            <h3 className="section-title no-border">Uploaded Proof (Shared)</h3>
+                            <div className="image-grid">
+                                {parsedImages.map((src, idx) => (
+                                    <a key={idx} href={src} target="_blank" rel="noopener noreferrer" className="proof-link">
+                                        <SafeImage src={src} alt="proof" className="proof-image" />
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Column: Chat System */}
-                <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-                    <div style={{ marginBottom: "1rem" }}>
-                        <h3 style={{ margin: 0 }}>Support Chat</h3>
-                        <p style={{ opacity: 0.7, fontSize: "0.9rem", margin: 0 }}>Message an admin directly about this trade.</p>
+                <div className="chat-column">
+                    <div className="chat-header">
+                        <h3 className="section-title m-0">Support Chat</h3>
+                        <p className="chat-subtitle">Message an admin directly about this trade.</p>
                     </div>
 
-                    <ChatBox
-                        tradeId={trade.id}
-                        messages={messages}
-                        currentUserId={currentUserId}
-                        currentUsername={session.user.name || "User"}
-                        path={`/user/trades/${trade.tradeId}`}
-                    />
+                    <div className="chat-container">
+                        <ChatBox
+                            tradeId={trade.id}
+                            messages={messages}
+                            currentUserId={currentUserId}
+                            currentUsername={session.user.name || "User"}
+                            path={`/user/trades/${trade.tradeId}`}
+                        />
+                    </div>
                 </div>
-
             </div>
 
         </div>

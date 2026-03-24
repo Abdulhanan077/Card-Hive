@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
+import TradeFilterModern from "./TradeFilterModern";
 
 // Define the type we expect back from prisma with include
 type TradeWithUserAndCount = Prisma.TradeGetPayload<{
@@ -99,33 +100,28 @@ export default async function AdminTradesList(props: {
                     <h1 className="dashboard-title">Manage Trades</h1>
                     <p className="dashboard-subtitle">Search, filter, and review all gift card submissions.</p>
                 </div>
+                <div style={{ backgroundColor: 'var(--bg-alt)', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.85rem', fontWeight: 600 }}>
+                    Total: {groupedTrades.length} Trade{groupedTrades.length === 1 ? '' : 's'}
+                </div>
             </div>
 
-            <div className="flex-mobile-col" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', gap: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <Link href="/admin/trades" className={`btn ${!statusFilter ? 'btn-primary' : 'btn-secondary'}`}>All</Link>
-                    <Link href="/admin/trades?status=PENDING" className={`btn ${statusFilter === 'PENDING' ? 'btn-primary' : 'btn-secondary'}`}>Pending</Link>
-                    <Link href="/admin/trades?status=UNDER_REVIEW" className={`btn ${statusFilter === 'UNDER_REVIEW' ? 'btn-primary' : 'btn-secondary'}`}>Under Review</Link>
-                    <Link href="/admin/trades?status=PAID" className={`btn ${statusFilter === 'PAID' ? 'btn-primary' : 'btn-secondary'}`}>Paid</Link>
-                    <Link href="/admin/trades?status=COMPLETED" className={`btn ${statusFilter === 'COMPLETED' ? 'btn-primary' : 'btn-secondary'}`}>Completed</Link>
-                    <Link href="/admin/trades?status=REJECTED" className={`btn ${statusFilter === 'REJECTED' ? 'btn-primary' : 'btn-secondary'}`}>Rejected</Link>
-                    <span style={{ borderLeft: '1px solid var(--border)', margin: '0 0.5rem' }}></span>
-                    <Link href="/admin/trades?payoutMethod=CRYPTO" className={`btn ${payoutMethodFilter === 'CRYPTO' ? 'btn-primary' : 'btn-secondary'}`}>Crypto Only</Link>
+            <div className="flex-mobile-col" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, position: 'relative', zIndex: 10, width: '100%' }}>
+                    <form className="flex" style={{ gap: '0.5rem', flexWrap: 'wrap', width: '100%', alignItems: 'center' }}>
+                        <input
+                            type="search"
+                            name="query"
+                            defaultValue={query || ""}
+                            placeholder="Search ID, Brand, or Phone..."
+                            className="form-input"
+                            style={{ marginBottom: 0, flex: '1 1 200px', minWidth: '150px' }}
+                        />
+                        <div style={{ flex: '2 1 300px', minWidth: '300px' }}>
+                            <TradeFilterModern />
+                        </div>
+                        <button type="submit" className="btn btn-secondary" style={{ whiteSpace: 'nowrap' }}>Filter</button>
+                    </form>
                 </div>
-
-
-                <form className="flex-mobile-col" style={{ display: 'flex', gap: '0.5rem', flex: 1, maxWidth: '100%' }}>
-                    {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
-                    <input
-                        type="search"
-                        name="query"
-                        defaultValue={query || ""}
-                        placeholder="Search Trade ID, Brand, or Phone..."
-                        className="form-input"
-                        style={{ marginBottom: 0 }}
-                    />
-                    <button type="submit" className="btn btn-secondary">Search</button>
-                </form>
             </div>
 
             <div className="table-container">
@@ -139,6 +135,7 @@ export default async function AdminTradesList(props: {
                             <tr>
                                 <th>Identification</th>
                                 <th>Submitter</th>
+                                <th>Method</th>
                                 <th>Contact/Payout</th>
                                 <th>Items</th>
                                 <th>Value</th>
@@ -173,10 +170,16 @@ export default async function AdminTradesList(props: {
                                     </td>
                                     <td>
                                         {trade.payoutMethod === 'CRYPTO' ? (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                                <span className="badge badge-paid" style={{ fontSize: '0.7rem', padding: '2px 6px', width: 'fit-content' }}>CRYPTO</span>
-                                                <div style={{ fontSize: '0.85rem' }}>{trade.cryptoCoin} ({trade.cryptoNetwork})</div>
-                                            </div>
+                                            <span className="badge badge-paid" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>CRYPTO</span>
+                                        ) : trade.payoutMethod === 'MOBILE_MONEY' ? (
+                                            <span className="badge" style={{ fontSize: '0.7rem', padding: '2px 6px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>M-MONEY</span>
+                                        ) : (
+                                            <span className="badge" style={{ fontSize: '0.7rem', padding: '2px 6px', backgroundColor: 'var(--bg-alt)' }}>{trade.payoutMethod}</span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        {trade.payoutMethod === 'CRYPTO' ? (
+                                            <div style={{ fontSize: '0.85rem' }}>{trade.cryptoCoin} ({trade.cryptoNetwork})</div>
                                         ) : (
                                             trade.payoutPhoneNumber
                                         )}
@@ -200,7 +203,7 @@ export default async function AdminTradesList(props: {
                                         {(trade.isBatch ? trade.totalValue : trade.faceValue).toFixed(2)} {trade.currency}
                                     </td>
                                     <td>
-                                        <span className={`badge badge-${trade.status.toLowerCase()}`} style={trade.status === 'REJECTED' ? { backgroundColor: '#ef4444', color: 'white', fontWeight: 'bold' } : {}}>
+                                        <span className={`badge badge-${trade.status.toLowerCase()}`}>
                                             {trade.status.replace("_", " ")}
                                         </span>
                                     </td>

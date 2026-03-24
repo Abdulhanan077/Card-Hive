@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { pusherServer } from "@/lib/pusher";
 
 export async function postMessage(tradeId: number, content: string, path: string, fileUrl?: string, fileType?: 'IMAGE' | 'FILE') {
+    console.log(`[postMessage] Entering: tradeId=${tradeId}, content length=${content.length || 0}`);
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Unauthorized");
 
@@ -21,6 +22,7 @@ export async function postMessage(tradeId: number, content: string, path: string
     if (!newMessageResult || newMessageResult.length === 0) {
         throw new Error("Failed to create message via raw SQL");
     }
+    console.log(`[postMessage] message created in DB, id=${newMessageResult[0].id}`);
 
     const rawMsg = newMessageResult[0];
     const newMessage: any = {

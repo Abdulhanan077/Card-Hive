@@ -15,15 +15,18 @@ export async function toggleCardStatusAction(
     reason?: string
 ) {
     try {
+        console.log(`[toggleCardStatusAction] tradeId=${tradeId}, currentStatus=${currentStatus}, pageTradeId=${pageTradeId}`);
         const newStatus = currentStatus === "REJECTED" ? "PENDING" : "REJECTED";
 
         const trade = await prisma.trade.update({
             where: { id: tradeId },
             data: { status: newStatus }
         });
+        console.log(`[toggleCardStatusAction] status updated to ${newStatus}`);
 
         // If newly rejected, post proof to chat
         if (newStatus === "REJECTED" && proofUrl) {
+            console.log(`[toggleCardStatusAction] posting rejection proof to chat...`);
             const messageContent = `🚫 CARD REJECTED\n-------------------\nCard: ${trade.cardBrand}\nValue: ${trade.faceValue} ${trade.currency}\nCode: ${trade.cardCode}\n${reason ? `Reason: ${reason}` : ""}`;
 
             // Fetch the parent workspace trade to attach the message there
@@ -49,13 +52,14 @@ export async function toggleCardStatusAction(
                     'IMAGE'
                 );
             }
+            console.log(`[toggleCardStatusAction] message posted`);
         }
 
         revalidatePath(`/admin/trades/${pageTradeId}`);
         revalidatePath(`/admin/trades`);
         return { success: true };
     } catch (error: any) {
-        console.error("Toggle card status failed:", error);
+        console.error("Toggle card status failed details:", error);
         throw new Error(error.message || "Failed to toggle card status");
     }
 }
@@ -107,24 +111,63 @@ export async function updateBatchStatusAction(formData: FormData, pageTradeId: s
 
         // 4. Special Handling for PAID status (Rewards + Extra Email)
         if (status === "PAID") {
+            // Group newly paid trades by user to update each user once
+            const usersToUpdate = new Map<number, { 
+                bonusSum: number, 
+                countIncrement: number, 
+                referrerId: number | null, 
+                userObj: any 
+            }>();
+
             for (const t of tradesToUpdate) {
-                const newCompletedCount = (t.user as any).completedTradesCount + 1;
-                const vipTier = calculateVipTier(newCompletedCount);
-                const traderBonus = 2 * vipTier.multiplier;
+                // IMPORTANT: Only reward if the trade wasn't already PAID
+                if (t.status === "PAID") continue;
 
-                await prisma.user.update({
-                    where: { id: t.userId },
-                    data: {
-                        rewardBalance: { increment: traderBonus },
-                        completedTradesCount: { increment: 1 }
-                    }
-                });
-
-                if ((t.user as any).referredBy) {
-                    await prisma.user.update({
-                        where: { id: (t.user as any).referredBy },
-                        data: { rewardBalance: { increment: 2 } }
+                const userId = t.userId;
+                if (!usersToUpdate.has(userId)) {
+                    usersToUpdate.set(userId, { 
+                        bonusSum: 0, 
+                        countIncrement: 0, 
+                        referrerId: (t.user as any).referredBy || null,
+                        userObj: t.user 
                     });
+                }
+                
+                const stats = usersToUpdate.get(userId)!;
+                stats.countIncrement += 1;
+                
+                // Calculate bonus based on projected tier for this specific trade in the sequence
+                const projectedCount = stats.userObj.completedTradesCount + stats.countIncrement;
+                const vipTier = calculateVipTier(projectedCount);
+                stats.bonusSum += (2 * vipTier.multiplier);
+            }
+
+            // Execute batched updates
+            for (const [userId, stats] of usersToUpdate) {
+                if (stats.countIncrement > 0) {
+                    await prisma.user.update({
+                        where: { id: userId },
+                        data: {
+                            rewardBalance: { increment: stats.bonusSum },
+                            completedTradesCount: { increment: stats.countIncrement }
+                        }
+                    });
+
+                    // Reward Referrer (if applicable) - Fixed 2 points per trade for now
+                    if (stats.referrerId) {
+                        await prisma.user.update({
+                            where: { id: stats.referrerId },
+                            data: { rewardBalance: { increment: 2 * stats.countIncrement } }
+                        });
+                        await prisma.user.update({
+                            where: { id: userId }, // The Referee (trader)
+                            data: { referralPointsEarned: { increment: 2 * stats.countIncrement } }
+                        });
+                    }
+
+                    // 5. Check for Leaderboard Milestones (Automatic Payout)
+                    const { checkAndAwardMilestones } = await import("@/lib/leaderboard-actions");
+                    await checkAndAwardMilestones(userId);
                 }
             }
 

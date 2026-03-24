@@ -47,12 +47,12 @@
 }
 
 .errorMessage {
-    background-color: #fef2f2;
+    background-color: var(--danger-light);
     color: var(--danger);
     padding: 1rem 1.5rem;
     border-radius: var(--radius-md);
     margin-bottom: 2rem;
-    border: 1px solid #fecaca;
+    border: 1px solid var(--danger);
     display: flex;
     flex-direction: column;
     gap: 0.25rem;

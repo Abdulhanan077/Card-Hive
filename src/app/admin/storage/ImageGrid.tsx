@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { deleteStorageImages } from "./actions";
+import { toast } from "react-hot-toast";
 
 type BlobImage = {
     url: string;
@@ -59,12 +60,12 @@ export default function ImageGrid({ initialImages }: { initialImages: BlobImage[
                 setImages(images.filter(img => !selectedUrls.has(img.url)));
                 setSelectedUrls(new Set());
             } else {
-                alert(res.error || "Failed to delete some images. Ensure they are older than 3 days.");
+                toast.error(res.error || "Failed to delete some images. Ensure they are older than 3 days.");
                 // Deselect everything that failed
                 setSelectedUrls(new Set());
             }
         } catch (error) {
-            alert("An error occurred while deleting images.");
+            toast.error("An error occurred while deleting images.");
         } finally {
             setIsDeleting(false);
         }

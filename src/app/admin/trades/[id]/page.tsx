@@ -4,12 +4,14 @@ import { revalidatePath } from "next/cache";
 import ChatBox from "@/app/components/ChatBox";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import "@/app/trade-details.css";
 import CopyButton from "@/components/CopyButton";
 import { calculateVipTier } from "@/lib/vipTiers";
 import DownloadButton from "./DownloadButton";
 import ResendEmailButtons from "./ResendEmailButtons";
 import SafeImage from "@/app/components/SafeImage";
 import StatusControlsClient from "./StatusControlsClient";
+import StatusSelector from "./StatusSelector";
 import RejectCardButton from "./RejectCardButton";
 import { updateBatchStatusAction } from "@/app/actions/admin-trade-actions";
 
@@ -129,20 +131,22 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
     const totalUsdtPayout = usdtExchangeRate > 0 ? (totalExpectedPayout / usdtExchangeRate) : 0;
 
     return (
-        <>
-            <div className="dashboard-header" style={{ marginBottom: "2rem" }}>
-                <h1 className="dashboard-title">
-                    {isBatchTrade ? `Batch Workspace: ${batchIdentifier}` : `Trade Workspace: ${trade.tradeId}`}
-                </h1>
-                <p className="dashboard-subtitle">Review multiple cards, reject bad ones, and process batch payment.</p>
+        <div className="trade-details-container">
+            <div className="trade-header-admin">
+                <div className="header-info">
+                    <h1 className="trade-title">
+                        {isBatchTrade ? `Batch Workspace: ${batchIdentifier}` : `Trade Workspace: ${trade.tradeId}`}
+                    </h1>
+                    <p className="trade-subtitle">Review multiple cards, reject bad ones, and process batch payment.</p>
+                </div>
             </div>
 
             {duplicateWarnings.length > 0 && (
-                <div style={{ backgroundColor: "#fef2f2", color: "var(--danger)", padding: "1.5rem", borderRadius: "var(--radius-md)", border: "1px solid #fca5a5", marginBottom: "2rem" }}>
-                    <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <div className="warning-card">
+                    <h3 className="warning-title">
                         <span>⚠️</span> Security Warning: Duplicate Code Detected in System!
                     </h3>
-                    <ul style={{ marginTop: "1rem" }}>
+                    <ul className="warning-list">
                         {duplicateWarnings.map(dw => (
                             <li key={dw.id}>
                                 Card in {dw.tradeId} matches code hash in <a href={`/admin/trades/${dw.tradeId}`} className="underline">{dw.tradeId}</a> ({dw.status})
@@ -152,59 +156,41 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                 </div>
             )}
 
-            <div className="grid grid-cols-2 chat-layout" style={{ gap: "2rem", alignItems: "start", height: "calc(100vh - 200px)", minHeight: "800px" }}>
-
+            <div className="trade-grid-admin chat-layout">
                 {/* Left Column */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", overflowY: "auto", paddingRight: "1rem" }}>
-
+                <div className="details-column">
                     {/* Itemized Cards List */}
                     <div className="card shadow-sm">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
-                            <h2 style={{ margin: 0 }}>Itemized Cards ({batchTrades.length})</h2>
-                            <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>
+                        <div className="section-header">
+                            <h2 className="section-title-main">Itemized Cards ({batchTrades.length})</h2>
+                            <div className="payout-summary-link">
                                 Total Batch Payout GH₵ <strong>{totalExpectedPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong>
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div className="batch-list">
                             {batchTrades.map((t: any, idx) => (
-                                <div key={t.id} style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '1rem',
-                                    padding: '1.25rem',
-                                    backgroundColor: t.status === 'REJECTED' ? '#fef2f2' : 'var(--bg-alt)',
-                                    borderRadius: 'var(--radius-md)',
-                                    border: t.status === 'REJECTED' ? '2px solid #ef4444' : '1px solid var(--border)',
-                                    opacity: 1
-                                }}>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', opacity: 0.3, marginTop: '2px' }}>{idx + 1}</div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)' }}>{t.cardBrand}</div>
-                                            <div style={{ fontSize: '0.9rem', opacity: 0.8, marginTop: '2px' }}>
+                                <div key={t.id} className={`batch-item ${t.status === 'REJECTED' ? 'rejected' : ''}`}>
+                                    <div className="batch-item-content">
+                                        <div className="item-index">{idx + 1}</div>
+                                        <div className="item-details">
+                                            <div className="item-brand">{t.cardBrand}</div>
+                                            <div className="item-meta">
                                                 {t.cardType} • {t.faceValue} {t.currency} • <strong>Est. ₵{t.calculatedPayout?.toFixed(2)}</strong>
                                             </div>
-                                            <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', backgroundColor: 'var(--bg)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <code style={{ wordBreak: 'break-all' }}>{t.cardCode || 'No code provided'}</code>
-                                                <div style={{ flexShrink: 0 }}>
+                                            <div className="item-code-box">
+                                                <code className="item-code">{t.cardCode || 'No code provided'}</code>
+                                                <div className="code-copy">
                                                     <CopyButton textToCopy={t.cardCode} label="" />
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        paddingTop: '1rem',
-                                        borderTop: '1px solid var(--border)',
-                                        marginTop: '0.5rem'
-                                    }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.5, letterSpacing: '0.5px' }}>Item Status</div>
-                                            <div style={{ fontWeight: '700', fontSize: '0.9rem', color: t.status === 'REJECTED' ? '#ef4444' : 'var(--success)' }}>
+                                    <div className="batch-item-footer">
+                                        <div className="status-info">
+                                            <div className="status-label">Item Status</div>
+                                            <div className={`status-value ${t.status === 'REJECTED' ? 'text-danger' : 'text-success'}`}>
                                                 {t.status === 'REJECTED' ? 'REJECTED' : 'ACCEPTED'}
                                             </div>
                                         </div>
@@ -223,69 +209,64 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                     </div>
 
                     {/* Batch Payout & Global Controls */}
-                    <div className="card" style={{ borderColor: 'var(--primary)', position: "sticky", top: 0, zIndex: 10 }}>
-                        <div style={{ marginBottom: "1.5rem", paddingBottom: "1.5rem", borderBottom: "1px solid var(--border)" }}>
-                            <h3 style={{ marginBottom: "1rem" }}>Batch Payout Summary</h3>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-alt)", padding: "1rem", borderRadius: "12px" }}>
-                                <div>
+                    <div className="card payout-controls sticky-payout">
+                        <div className="payout-header-row">
+                            <h3 className="section-title">Batch Payout Summary</h3>
+                            <div className="payout-stats-box">
+                                <div className="payout-stat">
                                     <small>TOTAL PAYOUT ({activeBatchTrades.length} accepted cards)</small>
-                                    <div style={{ fontSize: "1.75rem", fontWeight: "bold", color: "var(--primary)" }}>
+                                    <div className="payout-ghs">
                                         GH₵ {totalExpectedPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
                                 </div>
                                 {trade.payoutMethod === "CRYPTO" && (
-                                    <div style={{ textAlign: "right" }}>
+                                    <div className="payout-stat text-right">
                                         <small>APPROX. USDT</small>
-                                        <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#16a34a" }}>
+                                        <div className="payout-usdt">
                                             ≈ {totalUsdtPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })} USDT
                                         </div>
                                     </div>
                                 )}
                             </div>
 
-                            <div style={{ marginTop: "1.5rem" }}>
+                            <div className="payout-destination">
                                 <small>DESTINATION: </small>
-                                <strong style={{ marginLeft: "0.5rem" }}>
+                                <strong className="dest-text">
                                     {trade.payoutMethod === "CRYPTO"
                                         ? `${trade.cryptoCoin} via ${trade.cryptoNetwork} (${trade.cryptoExchange})`
                                         : `${trade.payoutNetwork} - ${trade.payoutAccountName ? `${trade.payoutAccountName} - ` : ''}${trade.payoutPhoneNumber}`}
                                 </strong>
-                                {trade.payoutMethod !== "CRYPTO" && (
-                                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+                                <div className="dest-actions">
+                                    {trade.payoutMethod !== "CRYPTO" && (
                                         <CopyButton textToCopy={trade.payoutPhoneNumber} label="Copy Phone Number" />
-                                    </div>
-                                )}
-                                {trade.payoutMethod === "CRYPTO" && trade.cryptoReceiverId && (
-                                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
-                                        <code style={{ flex: 1, backgroundColor: "var(--bg)", padding: "0.25rem 0.5rem", borderRadius: "4px", fontSize: "0.8rem" }}>{trade.cryptoReceiverId}</code>
-                                        <CopyButton textToCopy={trade.cryptoReceiverId} label="Copy ID" />
-                                    </div>
-                                )}
+                                    )}
+                                    {trade.payoutMethod === "CRYPTO" && trade.cryptoReceiverId && (
+                                        <div className="crypto-id-row">
+                                            <code className="crypto-code">{trade.cryptoReceiverId}</code>
+                                            <CopyButton textToCopy={trade.cryptoReceiverId} label="Copy ID" />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
-                        <StatusControlsClient action={handleUpdateBatchStatus}>
-                            <div className="form-group" style={{ marginBottom: 0 }}>
-                                <select name="status" className="form-select" defaultValue={trade.status}>
-                                    <option value="PENDING">Pending (Initial)</option>
-                                    <option value="UNDER_REVIEW">Under Review</option>
-                                    <option value="PAID">Mark Accepted Cards as PAID</option>
-                                    <option value="REJECTED" style={{ color: '#ef4444', fontWeight: 'bold' }}>Reject ENTIRE Batch (Careful!)</option>
-                                </select>
-                            </div>
-                            <div className="form-group" style={{ marginBottom: 0 }}>
-                                <input name="paymentReference" className="form-input" placeholder="Payment Ref (e.g. Mobile Money ID)" />
-                            </div>
-                        </StatusControlsClient>
+                        <div className="controls-form">
+                            <StatusControlsClient action={handleUpdateBatchStatus}>
+                                <StatusSelector currentStatus={trade.status} />
+                                <div className="form-group mb-0">
+                                    <input name="paymentReference" className="form-input" placeholder="Payment Ref (e.g. Mobile Money ID)" />
+                                </div>
+                            </StatusControlsClient>
+                        </div>
                     </div>
 
                     {/* Shared Images */}
                     <div className="card">
-                        <h3 style={{ marginBottom: "1rem" }}>Uploaded Proof (Shared)</h3>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "1rem" }}>
+                        <h3 className="section-title no-border">Uploaded Proof (Shared)</h3>
+                        <div className="image-grid">
                             {parsedImages.map((src, idx) => (
-                                <a key={idx} href={src} target="_blank" rel="noopener noreferrer">
-                                    <SafeImage src={src} alt="proof" style={{ width: "100%", height: "150px", objectFit: "cover", borderRadius: "8px" }} />
+                                <a key={idx} href={src} target="_blank" rel="noopener noreferrer" className="proof-link">
+                                    <SafeImage src={src} alt="proof" className="proof-image" />
                                 </a>
                             ))}
                         </div>
@@ -293,17 +274,20 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                 </div>
 
                 {/* Right Column: Chat */}
-                <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-                    <h3 style={{ marginBottom: "1rem" }}>Batch Conversation</h3>
-                    <ChatBox
-                        tradeId={trade.id}
-                        messages={messages}
-                        currentUserId={currentUserId}
-                        currentUsername="Admin"
-                        path={`/admin/trades/${trade.tradeId}`}
-                    />
+                <div className="chat-column">
+                    <h3 className="section-title">Batch Conversation</h3>
+                    <div className="chat-container">
+                        <ChatBox
+                            tradeId={trade.id}
+                            messages={messages}
+                            currentUserId={currentUserId}
+                            currentUsername="Admin"
+                            path={`/admin/trades/${trade.tradeId}`}
+                        />
+                    </div>
                 </div>
             </div>
-        </>
+
+        </div>
     );
 }

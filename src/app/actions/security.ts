@@ -86,23 +86,42 @@ export async function trackSession() {
         if (diff < 60000) return { success: true, throttled: true };
     }
 
-    await prisma.session.upsert({
-        where: { sessionToken: currentToken },
-        update: {
-            lastActive: new Date(),
-            ipAddress: ip,
-            deviceInfo: deviceString,
-        },
-        create: {
-            sessionToken: currentToken,
-            userId: parseInt(session.user.id),
-            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-            ipAddress: ip,
-            userAgent: uaDescription,
-            deviceInfo: deviceString,
-            lastActive: new Date(),
-        }
+    // 2. IMPORTANT: Verify user exists before tracking session
+    // This prevents foreign key violations if the database was reset 
+    // but the browser still has an old session cookie.
+    const userId = parseInt(session.user.id);
+    const userExists = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true }
     });
+
+    if (!userExists) {
+        console.warn(`[trackSession] User ${userId} not found in database. Skipping session track.`);
+        return { success: false, message: "User not found" };
+    }
+
+    try {
+        await prisma.session.upsert({
+            where: { sessionToken: currentToken },
+            update: {
+                lastActive: new Date(),
+                ipAddress: ip,
+                deviceInfo: deviceString,
+            },
+            create: {
+                sessionToken: currentToken,
+                userId: userId,
+                expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+                ipAddress: ip,
+                userAgent: uaDescription,
+                deviceInfo: deviceString,
+                lastActive: new Date(),
+            }
+        });
+    } catch (error) {
+        console.error("[trackSession] Failed to upsert session:", error);
+        return { success: false };
+    }
 
     return { success: true };
 }

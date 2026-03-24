@@ -4,6 +4,8 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { calculateVipTier } from "@/lib/vipTiers";
 import ResendAuthEmailButtons from "./ResendAuthEmailButtons";
+import UserActionPanelControls from "./UserActionPanelControls";
+import UserSortModern from "./UserSortModern";
 
 export default async function AdminUsersList(props: {
     searchParams: Promise<{ query?: string, sort?: string, target?: string }>
@@ -35,12 +37,18 @@ export default async function AdminUsersList(props: {
     const users = await prisma.user.findMany({
         where: whereClause,
         orderBy: orderByClause,
-        include: {
+        select: {
+            id: true,
+            username: true,
+            email: true,
+            phoneNumber: true,
+            status: true,
+            rewardBalance: true,
+            completedTradesCount: true,
+            createdAt: true,
             _count: {
                 select: {
-                    trades: {
-                        where: { status: { in: ["PAID", "COMPLETED"] } }
-                    },
+                    trades: true,
                     referrals: true
                 }
             }
@@ -69,9 +77,25 @@ export default async function AdminUsersList(props: {
                         },
                         referrals: true
                     }
+                },
+                referrals: {
+                    select: {
+                        username: true,
+                        createdAt: true,
+                        completedTradesCount: true,
+                        status: true
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    take: 10
                 }
             }
         });
+    }
+
+    function formatDate(date: Date) {
+        const d = new Date(date);
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
     }
 
     const getManageUrl = (username: string) => {
@@ -82,37 +106,6 @@ export default async function AdminUsersList(props: {
         return `/admin/users?${params.toString()}`;
     };
 
-    async function manageUser(formData: FormData) {
-        "use server";
-        const userId = parseInt(formData.get("userId") as string);
-        const action = formData.get("action") as string;
-
-        if (!userId || !action) return;
-
-        if (action === "add_points" || action === "deduct_points") {
-            const points = parseFloat(formData.get("points") as string);
-            if (isNaN(points) || points <= 0) return;
-            const modifier = action === "deduct_points" ? -points : points;
-
-            await prisma.user.update({
-                where: { id: userId },
-                data: { rewardBalance: { increment: modifier } },
-            });
-        } else if (action === "block") {
-            await prisma.user.update({
-                where: { id: userId },
-                data: { status: "BLOCKED" }
-            });
-        } else if (action === "activate") {
-            await prisma.user.update({
-                where: { id: userId },
-                data: { status: "ACTIVE" }
-            });
-        }
-
-        revalidatePath("/admin/users");
-        revalidatePath("/user");
-    }
 
     return (
         <>
@@ -123,45 +116,47 @@ export default async function AdminUsersList(props: {
                 </div>
             </div>
 
-            <div className="flex-mobile-col" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem', gap: '1rem' }}>
-                <form className="flex-mobile-col" style={{ display: 'flex', gap: '0.5rem', flex: 1, maxWidth: '700px' }}>
-                    <input
-                        type="search"
-                        name="query"
-                        defaultValue={query || ""}
-                        placeholder="Search Username, Email, or Phone..."
-                        className="form-input"
-                        style={{ marginBottom: 0, flex: 1 }}
-                    />
-                    <select name="sort" defaultValue={sortBy} className="form-select" style={{ marginBottom: 0, width: 'auto' }}>
-                        <option value="newest">Newest First</option>
-                        <option value="trades_desc">Most Trades</option>
-                        <option value="points_desc">Most Reward Points</option>
-                        <option value="referrals_desc">Most Referrals</option>
-                    </select>
-                    <button type="submit" className="btn btn-secondary">Search</button>
-                </form>
+            <div className="flex-mobile-col" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', gap: '1.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, position: 'relative', zIndex: 50, width: '100%' }}>
+                    <form className="flex" style={{ gap: '0.5rem', flexWrap: 'wrap', width: '100%' }}>
+                        <input
+                            type="search"
+                            name="query"
+                            defaultValue={query || ""}
+                            placeholder="Search User..."
+                            className="form-input"
+                            style={{ marginBottom: 0, flex: '1 1 200px', minWidth: '150px' }}
+                        />
+                        <div style={{ flex: '1 1 150px', minWidth: '150px' }}>
+                            <UserSortModern />
+                        </div>
+                        <button type="submit" className="btn btn-secondary" style={{ whiteSpace: 'nowrap' }}>Filter</button>
+                    </form>
+                </div>
             </div>
 
-            <div className="flex flex-mobile-col" style={{ gap: '2rem', alignItems: 'flex-start', position: 'relative', flexWrap: 'wrap' }}>
-                <div className="card sticky-desktop" style={{ flexShrink: 0, width: '100%', maxWidth: '350px', height: 'fit-content' }}>
+            <div className="admin-users-grid">
+                <div className="card" style={{ 
+                    height: 'fit-content',
+                    zIndex: 5
+                }}>
                     <h3 style={{ marginBottom: "1.5rem" }}>User Action Panel</h3>
 
                     <form className="form-group" style={{ marginBottom: "2rem" }}>
                         <label className="form-label" style={{ fontSize: "0.85rem" }}>Select Target User (@username)</label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.5rem', alignItems: 'center' }}>
                             <input
                                 type="text"
                                 name="target"
                                 className="form-input"
                                 placeholder="e.g. johndoe"
                                 defaultValue={targetUsername || ""}
-                                style={{ marginBottom: 0 }}
+                                style={{ marginBottom: 0, width: '100%', minWidth: 0 }}
                                 required
                             />
                             {query && <input type="hidden" name="query" value={query} />}
                             {searchParams.sort && <input type="hidden" name="sort" value={searchParams.sort} />}
-                            <button type="submit" className="btn btn-secondary">Select</button>
+                            <button type="submit" className="btn btn-secondary" style={{ padding: '0.6rem 1.25rem' }}>Select</button>
                         </div>
                     </form>
 
@@ -182,26 +177,47 @@ export default async function AdminUsersList(props: {
                                 </div>
                             </div>
 
-                            <form action={manageUser} className="form-group" style={{ padding: '1rem', backgroundColor: 'var(--bg-alt)', borderRadius: 'var(--radius-md)' }}>
-                                <label className="form-label" style={{ fontSize: "0.85rem", color: 'var(--warning)', fontWeight: 600 }}>Modify Points</label>
-                                <input type="hidden" name="userId" value={targetUser.id} />
-                                <input type="number" name="points" placeholder="Amount (e.g. 50)" min="1" step="any" required className="form-input" style={{ marginBottom: '0.75rem' }} />
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button type="submit" name="action" value="add_points" className="btn btn-primary" style={{ flex: 1, padding: '0.5rem' }}>Reward</button>
-                                    <button type="submit" name="action" value="deduct_points" className="btn btn-secondary" style={{ flex: 1, padding: '0.5rem', backgroundColor: '#fef2f2', color: 'var(--danger)', border: '1px solid currentColor' }}>Deduct</button>
+                            <UserActionPanelControls 
+                                key={`controls-${targetUser.id}`}
+                                userId={targetUser.id}
+                                username={targetUser.username}
+                                status={targetUser.status}
+                                completedTradesCount={targetUser.completedTradesCount || 0}
+                            />
+
+                            <ResendAuthEmailButtons key={`email-${targetUser.id}`} userId={targetUser.id} />
+
+                            <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>Referrals ({targetUser._count.referrals})</span>
+                                    {targetUser._count.referrals > 10 && <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>Showing latest 10</span>}
                                 </div>
-                            </form>
-
-                            <form action={manageUser} style={{ display: 'flex', gap: '0.5rem' }}>
-                                <input type="hidden" name="userId" value={targetUser.id} />
-                                {targetUser.status === 'ACTIVE' ? (
-                                    <button type="submit" name="action" value="block" className="btn btn-secondary" style={{ flex: 1, color: 'var(--danger)', border: '1px solid currentColor' }}>Block Account</button>
+                                {targetUser.referrals.length === 0 ? (
+                                    <div style={{ fontSize: '0.8rem', opacity: 0.5, fontStyle: 'italic' }}>No referrals found.</div>
                                 ) : (
-                                    <button type="submit" name="action" value="activate" className="btn btn-primary" style={{ flex: 1, backgroundColor: 'var(--success)', color: 'white' }}>Activate Account</button>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                        {targetUser.referrals.map((ref: any, ridx: number) => (
+                                            <div key={ridx} style={{ fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', padding: '0.4rem', backgroundColor: 'var(--bg)', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <Link href={`/admin/users?target=${ref.username}`} style={{ color: 'var(--primary)', fontWeight: 500 }}>@{ref.username}</Link>
+                                                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                                        {ref.status === 'BLOCKED' && (
+                                                            <span style={{ fontSize: '0.65rem', backgroundColor: 'var(--danger)', color: 'white', padding: '0.1rem 0.2rem', borderRadius: '3px', fontWeight: 700 }}>Blocked</span>
+                                                        )}
+                                                        <span style={{ fontSize: '0.7rem', color: ref.completedTradesCount > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+                                                            {ref.completedTradesCount > 0 ? 'Qualified' : 'Pending'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div style={{ fontSize: '0.7rem', opacity: 0.6, display: 'flex', justifyContent: 'space-between' }}>
+                                                    <span>Trades: {ref.completedTradesCount}</span>
+                                                    <span style={{ color: 'var(--primary)', fontWeight: 600 }}>Points: +{ref.completedTradesCount * 2}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
-                            </form>
-
-                            <ResendAuthEmailButtons userId={targetUser.id} />
+                            </div>
                         </div>
                     ) : (
                         <div style={{ padding: '2rem 1rem', textAlign: 'center', opacity: 0.6, fontSize: '0.9rem', borderTop: '1px solid var(--border)' }}>
@@ -210,7 +226,7 @@ export default async function AdminUsersList(props: {
                     )}
                 </div>
 
-                <div className="table-container" style={{ flex: 1, minWidth: 0, width: '100%' }}>
+                <div className="table-container" style={{ minWidth: 0, width: '100%', overflowX: 'auto' }}>
                     {users.length === 0 ? (
                         <div style={{ padding: '4rem', textAlign: 'center', opacity: 0.6 }}>
                             No users match the current search.
@@ -232,7 +248,7 @@ export default async function AdminUsersList(props: {
                                 </tr>
                             </thead>
                             <tbody>
-                                {users.map((user) => (
+                                {users.map((user: any) => (
                                     <tr key={user.id}>
                                         <td>
                                             <div style={{
@@ -250,7 +266,7 @@ export default async function AdminUsersList(props: {
                                             </div>
                                         </td>
                                         <td>
-                                            <span className="badge" style={{ backgroundColor: calculateVipTier(user.completedTradesCount || 0).color, color: '#000', fontSize: '0.7rem', padding: '0.25rem 0.5rem', fontWeight: 700 }}>
+                                            <span className="badge" style={{ backgroundColor: calculateVipTier(user.completedTradesCount || 0).color, color: 'white', fontSize: '0.7rem', padding: '0.25rem 0.5rem', fontWeight: 700, textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                                                 {calculateVipTier(user.completedTradesCount || 0).name}
                                             </span>
                                         </td>
@@ -266,11 +282,7 @@ export default async function AdminUsersList(props: {
                                         </td>
                                         <td>
                                             <span style={{ opacity: 0.8, fontSize: '0.9em' }}>
-                                                {new Date(user.createdAt).toLocaleDateString(undefined, {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric'
-                                                })}
+                                                {formatDate(user.createdAt)}
                                             </span>
                                         </td>
                                         <td>

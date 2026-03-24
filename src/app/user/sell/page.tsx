@@ -48,6 +48,7 @@ export default function SellGiftCardPage() {
 
     // Payout Method State (Common for all cards in the batch)
     const [payoutMethod, setPayoutMethod] = useState<"MOBILE_MONEY" | "CRYPTO">("MOBILE_MONEY");
+    const [payoutNetwork, setPayoutNetwork] = useState("");
     const [cryptoCoin, setCryptoCoin] = useState<"USDT">("USDT");
     const [cryptoNetwork, setCryptoNetwork] = useState("TRC20");
     const [cryptoExchange, setCryptoExchange] = useState("");
@@ -166,6 +167,13 @@ export default function SellGiftCardPage() {
         });
 
         formData.set("cards", JSON.stringify(cardsData));
+        formData.set("payoutNetwork", payoutNetwork);
+
+        if (payoutMethod === "CRYPTO") {
+            formData.set("cryptoNetwork", cryptoNetwork);
+            formData.set("cryptoExchange", cryptoExchange);
+            formData.set("cryptoReceiverIdType", cryptoReceiverIdType);
+        }
 
         // Append files manually
         formData.delete("images");
@@ -229,11 +237,16 @@ export default function SellGiftCardPage() {
                             <div className={styles.grid2}>
                                 <div className="form-group">
                                     <label className="form-label">Payout Network</label>
-                                    <select name="payoutNetwork" className="form-select" required={payoutMethod === 'MOBILE_MONEY'}>
-                                        <option value="">Select Network...</option>
-                                        <option value="MTN">MTN Mobile Money</option>
-                                        <option value="Telecel">Telecel Cash</option>
-                                    </select>
+                                    <SearchableCategorySelect
+                                        className="form-select"
+                                        required={payoutMethod === 'MOBILE_MONEY'}
+                                        placeholder="Select Network..."
+                                        categories={["MTN", "Telecel"]}
+                                        value={payoutNetwork}
+                                        onChange={(val) => setPayoutNetwork(val)}
+                                        showSearch={false}
+                                    />
+                                    <input type="hidden" name="payoutNetwork" value={payoutNetwork} />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Mobile Money Number</label>
@@ -256,32 +269,43 @@ export default function SellGiftCardPage() {
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label">Network</label>
-                                        <select name="cryptoNetwork" className="form-select" required value={cryptoNetwork} onChange={(e) => setCryptoNetwork(e.target.value)}>
-                                            <option value="TRC20">TRC20 (Tron)</option>
-                                            <option value="BEP20">BEP20 (Binance)</option>
-                                        </select>
+                                        <SearchableCategorySelect
+                                            className="form-select"
+                                            required={true}
+                                            value={cryptoNetwork}
+                                            onChange={(val) => setCryptoNetwork(val)}
+                                            categories={["TRC20", "BEP20"]}
+                                            showSearch={false}
+                                        />
+                                        <input type="hidden" name="cryptoNetwork" value={cryptoNetwork} />
                                     </div>
                                 </div>
 
                                 <div className={styles.grid2} style={{ marginTop: '1rem' }}>
                                     <div className="form-group">
                                         <label className="form-label">Exchange</label>
-                                        <select name="cryptoExchange" className="form-select" required value={cryptoExchange} onChange={(e) => setCryptoExchange(e.target.value)}>
-                                            <option value="">Select Exchange...</option>
-                                            <option value="NOONES">NoOnes</option>
-                                            <option value="BINANCE">Binance</option>
-                                            <option value="OKX">OKX</option>
-                                            <option value="BYBIT">Bybit</option>
-                                            <option value="KUCOIN">KuCoin</option>
-                                            <option value="OTHER">Other</option>
-                                        </select>
+                                        <SearchableCategorySelect
+                                            className="form-select"
+                                            required={true}
+                                            value={cryptoExchange}
+                                            onChange={(val) => setCryptoExchange(val)}
+                                            categories={["NOONES", "BINANCE", "OKX", "BYBIT", "KUCOIN", "OTHER"]}
+                                            placeholder="Select Exchange..."
+                                            searchPlaceholder="Search exchange..."
+                                        />
+                                        <input type="hidden" name="cryptoExchange" value={cryptoExchange} />
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label">Receiving Method</label>
-                                        <select name="cryptoReceiverIdType" className="form-select" required value={cryptoReceiverIdType} onChange={(e) => setCryptoReceiverIdType(e.target.value as any)}>
-                                            <option value="EXCHANGE_ID">Internal Transfer (ID/Email)</option>
-                                            <option value="WALLET_ADDRESS">External Wallet Address</option>
-                                        </select>
+                                        <SearchableCategorySelect
+                                            className="form-select"
+                                            required={true}
+                                            value={cryptoReceiverIdType}
+                                            onChange={(val) => setCryptoReceiverIdType(val as any)}
+                                            categories={["EXCHANGE_ID", "WALLET_ADDRESS"]}
+                                            showSearch={false}
+                                        />
+                                        <input type="hidden" name="cryptoReceiverIdType" value={cryptoReceiverIdType} />
                                     </div>
                                 </div>
 
@@ -334,30 +358,26 @@ export default function SellGiftCardPage() {
                                     <div className={styles.grid2}>
                                         <div className="form-group">
                                             <label className="form-label">Card Brand</label>
-                                            <select
+                                            <SearchableCategorySelect
                                                 className="form-select"
-                                                required
+                                                required={true}
                                                 value={card.cardBrand}
-                                                onChange={(e) => updateCard(card.id, { cardBrand: e.target.value, cardCategory: "" })}
-                                            >
-                                                <option value="">Select Brand...</option>
-                                                {availableBrands.map(brand => (
-                                                    <option key={brand} value={brand}>{brand}</option>
-                                                ))}
-                                                {!availableBrands.includes("Other") && <option value="Other">Other (Manual Review)</option>}
-                                            </select>
+                                                onChange={(val) => updateCard(card.id, { cardBrand: val, cardCategory: "" })}
+                                                categories={availableBrands.includes("Other") ? availableBrands : [...availableBrands, "Other"]}
+                                                placeholder="Select Brand..."
+                                                searchPlaceholder="Search brands..."
+                                            />
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">Type</label>
-                                            <select
+                                            <SearchableCategorySelect
                                                 className="form-select"
-                                                required
+                                                required={true}
                                                 value={card.cardType}
-                                                onChange={(e) => updateCard(card.id, { cardType: e.target.value })}
-                                            >
-                                                <option value="Physical">Physical Card</option>
-                                                <option value="E-code">E-code (Digital)</option>
-                                            </select>
+                                                onChange={(val) => updateCard(card.id, { cardType: val })}
+                                                categories={["Physical", "E-code"]}
+                                                showSearch={false}
+                                            />
                                         </div>
                                     </div>
 
@@ -377,6 +397,7 @@ export default function SellGiftCardPage() {
                                                     categories={card.cardBrand === "Other" ? [...availableCategories, "Manual Entry"] : availableCategories}
                                                     placeholder="Select Category..."
                                                     disabled={!card.cardBrand}
+                                                    searchPlaceholder="Type amount to filter..."
                                                 />
                                             )}
                                         </div>

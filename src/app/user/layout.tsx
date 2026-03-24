@@ -7,6 +7,7 @@ import LogoutButton from "@/components/LogoutButton";
 import SidebarAutoClose from "@/components/SidebarAutoClose";
 import SessionTracker from "@/app/components/SessionTracker";
 import UserNotificationBell from "./UserNotificationBell";
+import LiveTicker from "@/components/LiveTicker";
 import "./user.css";
 
 export default async function UserLayout({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,8 @@ export default async function UserLayout({ children }: { children: React.ReactNo
                         + Sell Gift Card
                     </Link>
                     <Link href="/user/trades" className="sidebar-link">My Trades</Link>
+                    <Link href="/user/leaderboard" className="sidebar-link">Leaderboard</Link>
+                    <Link href="/user/referrals" className="sidebar-link">Referrals</Link>
                     <Link href="/user/settings" className="sidebar-link">Settings</Link>
                     <Link href="/user/security" className="sidebar-link">Security & Sessions</Link>
 
@@ -110,6 +113,7 @@ export default async function UserLayout({ children }: { children: React.ReactNo
                 <main className="dashboard-main" style={{ flex: 1, overflowY: 'auto' }}>
                     {children}
                 </main>
+                <LiveTicker />
             </div>
         </div>
     );

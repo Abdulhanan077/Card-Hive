@@ -46,3 +46,27 @@ prisma/dev.db-journal
 
 # uploads
 /public/uploads/
+
+# temporary and test files
+test*.js
+test*.ts
+verify*.js
+check*.js
+check*.ts
+create*.js
+add*.js
+final*.js
+simple*.js
+seed*.js
+db-check*
+scripts/db-check*
+scripts/check-rates*
+scripts/test-out.txt
+*.txt
+*.log
+api_error.log
+prisma/test.prisma
+tmp/
+tmp*
+.antigravity/
+.gemini/

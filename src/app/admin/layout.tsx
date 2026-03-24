@@ -7,7 +7,10 @@ import SidebarAutoClose from "@/components/SidebarAutoClose";
 import "../user/user.css"; // Reuse dashboard styles
 import SidebarNotifications from "./SidebarNotifications";
 import AdminNotificationBell from "./AdminNotificationBell";
+import LiveTicker from "@/components/LiveTicker";
 import SessionTracker from "@/app/components/SessionTracker";
+import TradesCounter from "./TradesCounter";
+import RewardsCounter from "./RewardsCounter";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
     const session = await getServerSession(authOptions);
@@ -33,11 +36,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </div>
                 <nav className="sidebar-nav" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <Link href="/admin" className="sidebar-link">Dashboard Home</Link>
-                    <Link href="/admin/trades" className="sidebar-link">Manage Trades</Link>
+                    <Link href="/admin/trades" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Manage Trades
+                        <TradesCounter />
+                    </Link>
                     <Link href="/admin/users" className="sidebar-link">Registered Users</Link>
-                    <Link href="/admin/rewards" className="sidebar-link">Reward Redemptions</Link>
+                    <Link href="/admin/rewards" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Reward Redemptions
+                        <RewardsCounter />
+                    </Link>
                     <Link href="/admin/rates" className="sidebar-link">Manage Rates</Link>
                     <Link href="/admin/status-updates" className="sidebar-link">Status Updates</Link>
+                    <Link href="/admin/leaderboard" className="sidebar-link">Leaderboard</Link>
                     <Link href="/admin/settings" className="sidebar-link">Site Settings</Link>
                     <Link href="/admin/logins" className="sidebar-link" style={{ color: 'var(--success)' }}>Security Logs</Link>
 
@@ -88,6 +98,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 <main className="dashboard-main" style={{ flex: 1, overflowY: 'auto' }}>
                     {children}
                 </main>
+                <LiveTicker />
             </div>
         </div>
     );
