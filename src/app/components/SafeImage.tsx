@@ -37,8 +37,8 @@ export default function SafeImage({ src, alt, className, style, width, height, f
             >
                 <IoWarningOutline size={24} style={{ marginBottom: '0.5rem', color: 'var(--danger)' }} />
                 <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>{fallbackText}</span>
-                <span style={{ fontSize: '0.65rem', opacity: 0.6, marginTop: '0.25rem', wordBreak: 'break-all' }}>
-                    {src.substring(0, 30)}...
+                <span style={{ fontSize: '0.65rem', opacity: 0.6, marginTop: '0.25rem', wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                    URL: {src}
                 </span>
             </div>
         );

@@ -2,23 +2,14 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { uploadToR2 } from "@/lib/upload";
 import crypto from "crypto";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import {
     sendTradeSubmittedEmail,
     sendAdminNewTradeEmail
 } from "@/lib/email";
 import fs from "fs";
 import path from "path";
-
-const s3Client = new S3Client({
-    region: "auto",
-    endpoint: process.env.CLOUDFLARE_R2_ENDPOINT!,
-    credentials: {
-        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
-    },
-});
 
 export async function POST(req: Request) {
     try {
@@ -92,19 +83,26 @@ export async function POST(req: Request) {
 
         // 3. Handle Image Uploads
         const images = formData.getAll("images") as File[];
-        const imageUrls: string[] = [];
+        // --- 1. HANDLE IMAGE UPLOADS (In Parallel for speed) ---
+        let imageUrls: string[] = [];
         if (images.length > 0) {
-            for (const image of images) {
-                if (image.size > 0) {
-                    const uniqueName = `${Date.now()}-${image.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-                    await s3Client.send(new PutObjectCommand({
-                        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
-                        Key: uniqueName,
-                        Body: Buffer.from(await image.arrayBuffer()),
-                        ContentType: image.type,
-                    }));
-                    imageUrls.push(`${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${uniqueName}`);
-                }
+            console.log(`[API/Trades] Starting parallel upload for ${images.length} images...`);
+            try {
+                // Use Promise.all to upload all at once, saving time to prevent Vercel timeouts
+                imageUrls = await Promise.all(
+                    images
+                        .filter(img => img.size > 0)
+                        .map(async (image) => {
+                            const url = await uploadToR2(await image.arrayBuffer(), image.name, image.type);
+                            console.log(`[API/Trades] Uploaded: ${url}`);
+                            return url;
+                        })
+                );
+                console.log(`[API/Trades] All uploads complete. Total: ${imageUrls.length}`);
+            } catch (uploadError: any) {
+                console.error("[API/Trades] Image upload failed:", uploadError);
+                // We keep going if some fail, or we could throw. 
+                // Given the context, it's better to log the failure clearly.
             }
         }
 
