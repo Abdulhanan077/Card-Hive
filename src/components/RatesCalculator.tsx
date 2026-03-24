@@ -140,6 +140,16 @@ export default function RatesCalculator() {
                     gap: 1.5rem;
                 }
 
+                .form-group {
+                    position: relative;
+                }
+
+                /* Ensure dropdowns stack correctly on top of subsequent fields */
+                .form-group:nth-child(1) { z-index: 50; }
+                .form-group:nth-child(2) { z-index: 40; }
+                .form-group:nth-child(3) { z-index: 30; }
+                .form-group:nth-child(4) { z-index: 20; }
+
                 .field-label {
                     display: block;
                     font-size: 0.875rem;
