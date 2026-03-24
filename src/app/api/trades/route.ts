@@ -86,23 +86,17 @@ export async function POST(req: Request) {
         // --- 1. HANDLE IMAGE UPLOADS (In Parallel for speed) ---
         let imageUrls: string[] = [];
         if (images.length > 0) {
-            console.log(`[API/Trades] Starting parallel upload for ${images.length} images...`);
             try {
                 // Use Promise.all to upload all at once, saving time to prevent Vercel timeouts
                 imageUrls = await Promise.all(
                     images
                         .filter(img => img.size > 0)
                         .map(async (image) => {
-                            const url = await uploadToR2(await image.arrayBuffer(), image.name, image.type);
-                            console.log(`[API/Trades] Uploaded: ${url}`);
-                            return url;
+                            return await uploadToR2(await image.arrayBuffer(), image.name, image.type);
                         })
                 );
-                console.log(`[API/Trades] All uploads complete. Total: ${imageUrls.length}`);
             } catch (uploadError: any) {
                 console.error("[API/Trades] Image upload failed:", uploadError);
-                // We keep going if some fail, or we could throw. 
-                // Given the context, it's better to log the failure clearly.
             }
         }
 

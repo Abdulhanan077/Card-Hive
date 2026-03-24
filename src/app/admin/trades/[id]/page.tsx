@@ -117,7 +117,6 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
     } as any);
 
     const parsedImages: string[] = JSON.parse(trade.imageUrls || "[]");
-    console.log(`[AdminTradeView] Trade: ${trade.tradeId}, Image Count: ${parsedImages.length}, Data:`, trade.imageUrls);
 
     const handleUpdateBatchStatus = async (formData: FormData) => {
         "use server";
@@ -276,8 +275,6 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                                 </a>
                             ))}
                         </div>
-                        {/* Client-side diagnostic log */}
-                        <script dangerouslySetInnerHTML={{ __html: `console.log("Admin Workspace Images:", ${trade.imageUrls || '[]'})` }} />
                     </div>
                 </div>
 
