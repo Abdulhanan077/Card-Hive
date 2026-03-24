@@ -117,7 +117,6 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
     } as any);
 
     const parsedImages: string[] = JSON.parse(trade.imageUrls || "[]");
-    console.log(`[AdminTradeView] tradeId: ${trade.tradeId}, imageUrls:`, trade.imageUrls);
 
     const handleUpdateBatchStatus = async (formData: FormData) => {
         "use server";
@@ -265,14 +264,12 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                     <div className="card">
                         <h3 className="section-title no-border">Uploaded Proof (Shared)</h3>
                         <div className="image-grid">
-                            {parsedImages.length === 0 && <p style={{ opacity: 0.5, fontSize: '0.9rem' }}>No evidence images found in database.</p>}
                             {parsedImages.map((src, idx) => (
                                 <a key={idx} href={src} target="_blank" rel="noopener noreferrer" className="proof-link">
                                     <SafeImage src={src} alt="proof" className="proof-image" />
                                 </a>
                             ))}
                         </div>
-                        <script dangerouslySetInnerHTML={{ __html: `console.log("Admin Diagnostic - imageUrls:", ${trade.imageUrls})` }} />
                     </div>
                 </div>
 
