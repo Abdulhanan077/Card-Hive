@@ -12,7 +12,7 @@ export default function Header() {
     const closeMenu = () => setIsMenuOpen(false);
 
     return (
-        <header className="header">
+        <header className="header" style={{ zIndex: 1000 }}>
             <div className="container header-container">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                     <Link href="/" className="logo-container" onClick={closeMenu}>

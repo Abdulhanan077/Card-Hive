@@ -75,7 +75,7 @@ export default function SearchableCategorySelect({
   const selectedOption = normalizedOptions.find(opt => opt.value === value);
 
   return (
-    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%', zIndex: isOpen ? 900 : 1 }}>
       {/* Visually hidden input for HTML5 required validation */}
       <input 
         type="text" 
@@ -118,8 +118,10 @@ export default function SearchableCategorySelect({
           top: '100%', 
           left: 0, 
           right: 0, 
-          zIndex: 400, // High z-index for admin dashboards
-          background: 'var(--background, #ffffff)', 
+          zIndex: 901, 
+          background: 'var(--surface, #ffffff)', 
+          backgroundColor: 'var(--surface, #ffffff)',
+          opacity: 1,
           border: '1px solid var(--border)', 
           borderRadius: '8px', 
           marginTop: '6px',
