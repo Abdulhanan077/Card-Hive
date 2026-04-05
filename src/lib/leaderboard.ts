@@ -64,10 +64,7 @@ function calculatePointsBatch(
         const basePointsConfig = allConfigs.find((c: any) => c.type === 'BOARD_SETTING' && c.boardType === boardType && c.key === 'BASE_POINTS' && c.isActive);
         const p = basePointsConfig?.points || (boardType === 'WHALE' ? 150 : 100);
         
-        let offset = 0;
-        if (currentRank === 2) offset = 5;
-        else if (currentRank === 3) offset = 10;
-        else if (currentRank >= 4) offset = 15;
+        let offset = (currentRank - 1) * 5;
         
         rankPoints = Math.max(10, p - offset);
     }
