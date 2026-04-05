@@ -416,29 +416,17 @@ export default function SellGiftCardPage() {
                                         </div>
                                     </div>
 
-                                    <div className={styles.grid2}>
-                                        <div className="form-group">
-                                            <label className="form-label">Card Code / PIN</label>
-                                            <input
-                                                type="text"
-                                                className="form-input"
-                                                required
-                                                placeholder="Enter card code"
-                                                value={card.cardCode}
-                                                onChange={(e) => updateCard(card.id, { cardCode: e.target.value })}
-                                                style={{ fontFamily: 'monospace' }}
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Serial Number (Optional)</label>
-                                            <input
-                                                type="text"
-                                                className="form-input"
-                                                placeholder="Enter serial number"
-                                                value={card.serialNumber}
-                                                onChange={(e) => updateCard(card.id, { serialNumber: e.target.value })}
-                                            />
-                                        </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Card Code / PIN</label>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            required
+                                            placeholder="Enter card code"
+                                            value={card.cardCode}
+                                            onChange={(e) => updateCard(card.id, { cardCode: e.target.value })}
+                                            style={{ fontFamily: 'monospace' }}
+                                        />
                                     </div>
 
                                     {card.estimatedPayout !== null && (
@@ -492,10 +480,7 @@ export default function SellGiftCardPage() {
                             </div>
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Additional Notes (Optional)</label>
-                            <textarea name="notes" className="form-textarea" rows={3} placeholder="Any extra info..."></textarea>
-                        </div>
+
                     </div>
 
                     <div className={styles.consentBox}>

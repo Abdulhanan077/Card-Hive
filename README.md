@@ -1,8 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Omor Biggy Gift Card Trading Center (Card-Hive)
 
-## Getting Started
+[![Documentation](https://img.shields.io/badge/docs-full-blue)](./DOCUMENTATION.md)
 
-First, run the development server:
+Welcome to the Omor Biggy Gift Card Trading Center! This project is a comprehensive platform for trading gift cards for instant cash.
+
+## 📄 Full Documentation
+For a deep dive into the technical architecture, features, database schema, and setup instructions, please refer to the [**Full Documentation (DOCUMENTATION.md)**](./DOCUMENTATION.md).
+
+## Quick Start
+1.  **Install dependencies**: `npm install`
+2.  **Setup environment**: Copy `.env.example` to `.env` and fill in the details.
+3.  **Database setup**: `npx prisma db push`
+4.  **Run development server**: `npm run dev`
 
 ```bash
 npm run dev

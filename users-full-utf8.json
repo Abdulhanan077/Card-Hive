@@ -1,0 +1,408 @@
+﻿[
+  {
+    "id": 59,
+    "username": "dev_admin",
+    "email": "dev_admin@local.test",
+    "role": "ADMIN",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 1,
+    "username": "admin",
+    "email": "admin@cardhive.com",
+    "role": "ADMIN",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 5,
+    "username": "SuperTrader_15_z8ib9",
+    "email": "supertrader@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 11,
+    "username": "user_7_8bh",
+    "email": "user_7_8bh@example.com",
+    "role": "USER",
+    "status": "BLOCKED"
+  },
+  {
+    "id": 16,
+    "username": "user_12_f4d",
+    "email": "user_12_f4d@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 27,
+    "username": "user_23_oj4",
+    "email": "user_23_oj4@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 35,
+    "username": "user_31_an8",
+    "email": "user_31_an8@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 36,
+    "username": "user_32_aqd",
+    "email": "user_32_aqd@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 34,
+    "username": "user_30_lyz",
+    "email": "user_30_lyz@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 30,
+    "username": "user_26_fcu",
+    "email": "user_26_fcu@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 19,
+    "username": "user_15_btw",
+    "email": "user_15_btw@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 14,
+    "username": "user_10_pey",
+    "email": "user_10_pey@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 10,
+    "username": "user_6_3fn",
+    "email": "user_6_3fn@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 3,
+    "username": "competitor",
+    "email": "comp@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 8,
+    "username": "user_4_u8z",
+    "email": "user_4_u8z@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 9,
+    "username": "user_5_qon",
+    "email": "user_5_qon@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 12,
+    "username": "user_8_hbv",
+    "email": "user_8_hbv@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 13,
+    "username": "user_9_3qi",
+    "email": "user_9_3qi@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 7,
+    "username": "user_3_jhh",
+    "email": "user_3_jhh@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 17,
+    "username": "user_13_5wy",
+    "email": "user_13_5wy@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 18,
+    "username": "user_14_eaa",
+    "email": "user_14_eaa@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 20,
+    "username": "user_16_hcg",
+    "email": "user_16_hcg@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 21,
+    "username": "user_17_5iz",
+    "email": "user_17_5iz@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 22,
+    "username": "user_18_uvr",
+    "email": "user_18_uvr@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 24,
+    "username": "user_20_75p",
+    "email": "user_20_75p@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 25,
+    "username": "user_21_sfi",
+    "email": "user_21_sfi@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 26,
+    "username": "user_22_71t",
+    "email": "user_22_71t@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 28,
+    "username": "user_24_3xl",
+    "email": "user_24_3xl@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 29,
+    "username": "user_25_2io",
+    "email": "user_25_2io@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 31,
+    "username": "user_27_2x5",
+    "email": "user_27_2x5@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 32,
+    "username": "user_28_m83",
+    "email": "user_28_m83@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 33,
+    "username": "user_29_mj0",
+    "email": "user_29_mj0@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 56,
+    "username": "user_52_8mc",
+    "email": "user_52_8mc@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 47,
+    "username": "user_43_1qj",
+    "email": "user_43_1qj@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 42,
+    "username": "user_38_k5c",
+    "email": "user_38_k5c@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 41,
+    "username": "user_37_dgc",
+    "email": "user_37_dgc@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 57,
+    "username": "user_53_931",
+    "email": "user_53_931@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 23,
+    "username": "user_19_16f",
+    "email": "user_19_16f@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 44,
+    "username": "user_40_5ow",
+    "email": "user_40_5ow@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 37,
+    "username": "user_33_jfv",
+    "email": "user_33_jfv@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 54,
+    "username": "user_50_b39",
+    "email": "user_50_b39@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 40,
+    "username": "user_36_mzh",
+    "email": "user_36_mzh@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 46,
+    "username": "user_42_75a",
+    "email": "user_42_75a@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 2,
+    "username": "hanan",
+    "email": "hanan@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 48,
+    "username": "user_44_bh0",
+    "email": "user_44_bh0@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 52,
+    "username": "user_48_knh",
+    "email": "user_48_knh@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 38,
+    "username": "user_34_5kb",
+    "email": "user_34_5kb@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 39,
+    "username": "user_35_bzq",
+    "email": "user_35_bzq@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 49,
+    "username": "user_45_ciq",
+    "email": "user_45_ciq@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 45,
+    "username": "user_41_1nb",
+    "email": "user_41_1nb@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 50,
+    "username": "user_46_641",
+    "email": "user_46_641@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 51,
+    "username": "user_47_iap",
+    "email": "user_47_iap@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 55,
+    "username": "user_51_5xe",
+    "email": "user_51_5xe@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 43,
+    "username": "user_39_tzd",
+    "email": "user_39_tzd@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 58,
+    "username": "user_54_6f7",
+    "email": "user_54_6f7@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 6,
+    "username": "user_2_cpb",
+    "email": "user_2_cpb@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 53,
+    "username": "user_49_2am",
+    "email": "user_49_2am@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  },
+  {
+    "id": 15,
+    "username": "user_11_7gx",
+    "email": "user_11_7gx@example.com",
+    "role": "USER",
+    "status": "ACTIVE"
+  }
+]
