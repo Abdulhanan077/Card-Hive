@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import { toast } from "react-hot-toast";
+import SearchableCategorySelect from "@/components/SearchableCategorySelect";
 
 type BalanceCheckerLink = {
     id: number;
@@ -17,6 +18,8 @@ const TOP_CARDS = [
     "Nordstrom", "PlayStation", "Razer Gold", "Roblox", "Sephora", "Starbucks", 
     "Steam", "Target", "Vanilla Visa", "Walmart", "Xbox"
 ];
+
+const ADD_CUSTOM_OPTION = "+ Add Custom Brand";
 
 export default function AdminBalanceCheckersPage() {
     const [links, setLinks] = useState<BalanceCheckerLink[]>([]);
@@ -140,23 +143,22 @@ export default function AdminBalanceCheckersPage() {
                         <div className="form-group">
                             <label className="form-label">Brand Name</label>
                             {brandInputType === "SELECT" ? (
-                                <select 
+                                <SearchableCategorySelect 
                                     className="form-select" 
                                     required 
                                     value={TOP_CARDS.includes(brandName) ? brandName : ""}
-                                    onChange={(e) => {
-                                        if (e.target.value === "OTHER_MANUAL") {
+                                    onChange={(val: string) => {
+                                        if (val === ADD_CUSTOM_OPTION) {
                                             setBrandInputType("CUSTOM");
                                             setBrandName("");
                                         } else {
-                                            setBrandName(e.target.value);
+                                            setBrandName(val);
                                         }
                                     }}
-                                >
-                                    <option value="" disabled>Select a brand...</option>
-                                    {TOP_CARDS.map(c => <option key={c} value={c}>{c}</option>)}
-                                    <option value="OTHER_MANUAL">+ Add Custom Brand</option>
-                                </select>
+                                    categories={[...TOP_CARDS, ADD_CUSTOM_OPTION]}
+                                    placeholder="Select a brand..."
+                                    searchPlaceholder="Search brands..."
+                                />
                             ) : (
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                     <input 
