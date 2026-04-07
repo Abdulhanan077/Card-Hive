@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -83,11 +83,10 @@ export async function POST(req: Request) {
 
         // 3. Handle Image Uploads
         const images = formData.getAll("images") as File[];
-        // --- 1. HANDLE IMAGE UPLOADS (In Parallel for speed) ---
         let imageUrls: string[] = [];
         if (images.length > 0) {
             try {
-                // Use Promise.all to upload all at once, saving time to prevent Vercel timeouts
+                // Use Promise.all to upload all at once, saving time
                 imageUrls = await Promise.all(
                     images
                         .filter(img => img.size > 0)
@@ -101,7 +100,7 @@ export async function POST(req: Request) {
         }
 
         const batchId = `BATCH-${Date.now()}-${session.user.id}`;
-        const createdTrades = [];
+        const createdTrades: any[] = [];
         const baseTradeCount = await prisma.trade.count();
 
         for (let i = 0; i < cards.length; i++) {
@@ -147,17 +146,24 @@ export async function POST(req: Request) {
             createdTrades.push(trade);
         }
 
-        const user = await prisma.user.findUnique({ 
-            where: { id: parseInt(session.user.id) },
-            select: { id: true, email: true, username: true, phoneNumber: true, emailNotificationsEnabled: true, role: true }
-        });
+        // 5. Send Emails in Background Job (Non-Blocking)
+        after(async () => {
+            try {
+                const user = await prisma.user.findUnique({ 
+                    where: { id: parseInt(session.user.id) },
+                    select: { id: true, email: true, username: true, phoneNumber: true, emailNotificationsEnabled: true, role: true }
+                });
 
-        if (user) {
-            if (user.emailNotificationsEnabled) {
-                await sendTradeSubmittedEmail({ email: user.email, username: user.username }, createdTrades).catch(err => console.error("User email failed", err));
+                if (user) {
+                    if (user.emailNotificationsEnabled) {
+                        await sendTradeSubmittedEmail({ email: user.email, username: user.username }, createdTrades).catch(err => console.error("User email failed", err));
+                    }
+                    await sendAdminNewTradeEmail(createdTrades, { username: user.username, email: user.email, phoneNumber: user.phoneNumber }).catch(err => console.error("Admin email failed", err));
+                }
+            } catch (bgError) {
+                console.error("Background email process failed:", bgError);
             }
-            await sendAdminNewTradeEmail(createdTrades, { username: user.username, email: user.email, phoneNumber: user.phoneNumber }).catch(err => console.error("Admin email failed", err));
-        }
+        });
 
         return NextResponse.json({ tradeId: createdTrades[0].tradeId, batchId }, { status: 201 });
     } catch (error: any) {

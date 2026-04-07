@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./sell.module.css";
 import { useNotification } from "@/context/NotificationContext";
-import { sortCategories, validateCategoryAmount } from "@/lib/categoryUtils";
+import { sortCategories, validateCategoryAmount, getExactCategoryAmount } from "@/lib/categoryUtils";
 import SearchableCategorySelect from "@/components/SearchableCategorySelect";
 
 interface CardEntry {
@@ -94,6 +94,19 @@ export default function SellGiftCardPage() {
             if (card.id !== id) return card;
 
             const updatedCard = { ...card, ...updates };
+
+            // Auto-fill exact face value
+            if (updates.cardCategory !== undefined && updates.cardCategory !== card.cardCategory) {
+                const exact = getExactCategoryAmount(updates.cardCategory);
+                if (exact !== null) {
+                    updatedCard.faceValue = exact.toString();
+                    updates.faceValue = exact.toString(); // Ensure logic below uses it
+                } else if (getExactCategoryAmount(card.cardCategory) !== null) {
+                    // Reset if changing from exact to non-exact
+                    updatedCard.faceValue = "";
+                    updates.faceValue = "";
+                }
+            }
 
             // Recalculate if relevant fields changed
             if (updates.cardBrand || updates.cardCategory || updates.cardType || updates.faceValue !== undefined) {
@@ -187,7 +200,19 @@ export default function SellGiftCardPage() {
                 body: formData,
             });
 
-            const data = await res.json();
+            const contentType = res.headers.get("content-type");
+            let data: any = {};
+            
+            if (contentType && contentType.includes("application/json")) {
+                data = await res.json();
+            } else {
+                // Read text to prevent "the string did not match the expected pattern" or "Unexpected token <"
+                await res.text();
+                throw new Error(res.status === 504 
+                    ? "Trade submitted, but the server timed out while sending confirmation emails. Please check your trades history." 
+                    : `Server Error (${res.status}): Something went wrong.`);
+            }
+
             if (!res.ok) throw new Error(data.message || "Failed to submit trade");
 
             showNotification('SUCCESS', `Successfully submitted ${cards.length} gift cards!`);
@@ -411,6 +436,8 @@ export default function SellGiftCardPage() {
                                                 placeholder="e.g. 50"
                                                 value={card.faceValue}
                                                 onChange={(e) => updateCard(card.id, { faceValue: e.target.value })}
+                                                readOnly={getExactCategoryAmount(card.cardCategory) !== null}
+                                                style={getExactCategoryAmount(card.cardCategory) !== null ? { backgroundColor: 'var(--bg-alt, #f3f4f6)', cursor: 'not-allowed', color: 'var(--foreground)' } : {}}
                                             />
                                             {card.faceValueError && <p style={{ color: "var(--danger)", fontSize: "0.85rem", marginTop: "0.4rem" }}>{card.faceValueError}</p>}
                                         </div>

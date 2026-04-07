@@ -40,6 +40,9 @@ export default function Header() {
                     <Link href="/#faq" className="nav-link" onClick={closeMenu}>
                         FAQ
                     </Link>
+                    <Link href="/check-balance" className="nav-link" onClick={closeMenu}>
+                        Check Balance
+                    </Link>
                     {session ? (
                         <>
                             <Link

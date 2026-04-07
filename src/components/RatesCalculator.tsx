@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { FaCalculator, FaArrowRight, FaSyncAlt } from "react-icons/fa";
 import Link from "next/link";
-import { sortCategories, validateCategoryAmount } from "@/lib/categoryUtils";
+import { sortCategories, validateCategoryAmount, getExactCategoryAmount } from "@/lib/categoryUtils";
 import SearchableCategorySelect from "@/components/SearchableCategorySelect";
 
 type Rate = {
@@ -275,6 +275,7 @@ export default function RatesCalculator() {
                         onChange={(val) => {
                             setSelectedBrand(val);
                             setSelectedCategory("");
+                            setAmount("");
                         }}
                         categories={brands}
                         placeholder="Choose Brand..."
@@ -290,6 +291,7 @@ export default function RatesCalculator() {
                         onChange={(val) => {
                             setSelectedType(val);
                             setSelectedCategory("");
+                            setAmount("");
                         }}
                         categories={["Physical", "E-code"]}
                         placeholder="Select Card Type..."
@@ -302,7 +304,15 @@ export default function RatesCalculator() {
                     <SearchableCategorySelect
                         className="calc-select"
                         value={selectedCategory}
-                        onChange={(val) => setSelectedCategory(val)}
+                        onChange={(val) => {
+                            setSelectedCategory(val);
+                            const exact = getExactCategoryAmount(val);
+                            if (exact !== null) {
+                                setAmount(exact.toString());
+                            } else {
+                                setAmount("");
+                            }
+                        }}
                         disabled={!selectedBrand}
                         categories={categories}
                         placeholder={selectedBrand ? `Choose Category for ${selectedType}...` : "Select Brand First"}
@@ -319,6 +329,8 @@ export default function RatesCalculator() {
                             placeholder="Enter face value amount"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
+                            readOnly={getExactCategoryAmount(selectedCategory) !== null}
+                            style={getExactCategoryAmount(selectedCategory) !== null ? { backgroundColor: 'var(--bg-alt, #f3f4f6)', cursor: 'not-allowed', color: 'var(--foreground)' } : {}}
                         />
                         {amountError && <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginTop: "0.5rem" }}>{amountError}</div>}
                     </div>

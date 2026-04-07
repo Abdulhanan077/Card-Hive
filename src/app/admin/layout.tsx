@@ -49,7 +49,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     <Link href="/admin/status-updates" className="sidebar-link">Status Updates</Link>
                     <Link href="/admin/leaderboard" className="sidebar-link">Leaderboard</Link>
                     <Link href="/admin/settings" className="sidebar-link">Site Settings</Link>
-                    <Link href="/admin/logins" className="sidebar-link" style={{ color: 'var(--success)' }}>Security Logs</Link>
+                    <Link href="/admin/logins" className="sidebar-link">Security Logs</Link>
+                    <Link href="/admin/balance-checkers" className="sidebar-link">Balance Checkers</Link>
 
                     <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)', marginBottom: '1rem' }}>
                         <LogoutButton />

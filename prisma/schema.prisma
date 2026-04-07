@@ -13,57 +13,57 @@ datasource db {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  username      String   @unique
-  email         String   @unique
-  phoneNumber   String
-  role          String   @default("USER") // USER or ADMIN
-  status        String   @default("ACTIVE") // ACTIVE or BLOCKED
-  password      String
-  emailNotificationsEnabled Boolean @default(true)
-  emailVerified DateTime?
-  
-  // Referral System Fields
-  referralCode  String?  @unique
-  referredBy    Int?
-  referrer      User?    @relation("Referrals", fields: [referredBy], references: [id])
-  referrals     User[]   @relation("Referrals")
-  rewardBalance Float    @default(0.0)
-  referralPointsEarned Float @default(0.0) // Points this user has generated for their referrer
-  completedTradesCount Int @default(0)
-  
-  // Login Trackers
-  lastLoginAt   DateTime?
-  lastIp        String?
-  lastDevice    String?
-  
-  trades                  Trade[]
-  messages                Message[] @relation("UserMessages")
-  redemptions             RewardRedemption[]
-  accounts                Account[]
-  sessions                Session[]
-  loginEvents             LoginEvent[]
-  leaderboardAdjustments  LeaderboardAdjustment[]
-  leaderboardHistory      LeaderboardHistory[]
+  id                        Int       @id @default(autoincrement())
+  username                  String    @unique
+  email                     String    @unique
+  phoneNumber               String
+  role                      String    @default("USER") // USER or ADMIN
+  status                    String    @default("ACTIVE") // ACTIVE or BLOCKED
+  password                  String
+  emailNotificationsEnabled Boolean   @default(true)
+  emailVerified             DateTime?
 
-  theme         String   @default("light")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  // Referral System Fields
+  referralCode         String? @unique
+  referredBy           Int?
+  referrer             User?   @relation("Referrals", fields: [referredBy], references: [id])
+  referrals            User[]  @relation("Referrals")
+  rewardBalance        Float   @default(0.0)
+  referralPointsEarned Float   @default(0.0) // Points this user has generated for their referrer
+  completedTradesCount Int     @default(0)
+
+  // Login Trackers
+  lastLoginAt DateTime?
+  lastIp      String?
+  lastDevice  String?
+
+  trades                 Trade[]
+  messages               Message[]               @relation("UserMessages")
+  redemptions            RewardRedemption[]
+  accounts               Account[]
+  sessions               Session[]
+  loginEvents            LoginEvent[]
+  leaderboardAdjustments LeaderboardAdjustment[]
+  leaderboardHistory     LeaderboardHistory[]
+
+  theme     String   @default("light")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             Int
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -76,12 +76,12 @@ model Session {
   userId       Int
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   // Custom tracking fields
-  ipAddress    String?
-  userAgent    String?
-  deviceInfo   String?
-  lastActive   DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+  deviceInfo String?
+  lastActive DateTime @default(now())
 }
 
 model RegistrationOTP {
@@ -100,30 +100,29 @@ model PasswordResetOTP {
   createdAt DateTime @default(now())
 }
 
-
 model Trade {
-  id                Int       @id @default(autoincrement())
-  tradeId           String    @unique // e.g., GC-2026-0001
-  batchId           String?   // For grouping multiple cards submitted together
-  userId            Int
-  user              User      @relation(fields: [userId], references: [id])
-  fullName          String?
+  id       Int     @id @default(autoincrement())
+  tradeId  String  @unique // e.g., GC-2026-0001
+  batchId  String? // For grouping multiple cards submitted together
+  userId   Int
+  user     User    @relation(fields: [userId], references: [id])
+  fullName String?
 
-  cardBrand         String
-  cardCountry       String
-  cardType          String    // Physical, E-code
-  faceValue         Float
-  currency          String
-  calculatedPayout  Float?    // The expected payout when submitted based on the active rate
-  cardCode          String    // Raw code, accessible only to admin
-  serialNumber      String?
-  cardCodeHash      String    // SHA-256 hash for duplicate detection
-  status            String    @default("PENDING") // PENDING, UNDER_REVIEW, PAID, REJECTED, COMPLETED
-  
+  cardBrand        String
+  cardCountry      String
+  cardType         String // Physical, E-code
+  faceValue        Float
+  currency         String
+  calculatedPayout Float? // The expected payout when submitted based on the active rate
+  cardCode         String // Raw code, accessible only to admin
+  serialNumber     String?
+  cardCodeHash     String // SHA-256 hash for duplicate detection
+  status           String  @default("PENDING") // PENDING, UNDER_REVIEW, PAID, REJECTED, COMPLETED
+
   payoutMethod      PayoutMethod @default(MOBILE_MONEY)
-  payoutNetwork     String    // MTN, Telecel
+  payoutNetwork     String // MTN, Telecel
   payoutPhoneNumber String
-  payoutAccountName String?   // Account name attached to the mobile money number
+  payoutAccountName String? // Account name attached to the mobile money number
 
   // crypto payout fields (nullable for non-crypto trades)
   cryptoCoin           CryptoCoin?
@@ -134,65 +133,65 @@ model Trade {
   cryptoTxHash         String?
   cryptoTxNote         String?
 
-  imageUrls         String    @default("[]") // JSON string of upload paths
-  paymentReference  String?
-  paidAt            DateTime?
-  adminNotes        String?
-  messages          Message[]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  imageUrls        String    @default("[]") // JSON string of upload paths
+  paymentReference String?
+  paidAt           DateTime?
+  adminNotes       String?
+  messages         Message[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model Settings {
-  id                      Int      @id @default(autoincrement())
-  siteName                String   @default("Omor Biggy Gift Card Trading Center")
-  contactEmail            String   @default("support@omorbiggy.com")
-  whatsappNumber          String   @default("")
-  landingPageIntroText    String   @default("Sell your gift cards for instant cash payouts via MTN & Telecel.")
-  faqContent              String   @default("[]") // JSON string of FAQs
-  referralBonusPercentage Float    @default(1.5) // Percentage of the referred user's first trade
-  rewardPointsToGhs       Float    @default(100.0) // How much 100 Reward Points is worth in GHS
-  usdtExchangeRate        Float    @default(15.0) // How much GHS is 1 USDT currently
-  cryptoServiceFee        Float    @default(5.0)  // Percentage fee for crypto payouts
+  id                      Int    @id @default(autoincrement())
+  siteName                String @default("Omor Biggy Gift Card Trading Center")
+  contactEmail            String @default("support@omorbiggy.com")
+  whatsappNumber          String @default("")
+  landingPageIntroText    String @default("Sell your gift cards for instant cash payouts via MTN & Telecel.")
+  faqContent              String @default("[]") // JSON string of FAQs
+  referralBonusPercentage Float  @default(1.5) // Percentage of the referred user's first trade
+  rewardPointsToGhs       Float  @default(100.0) // How much 100 Reward Points is worth in GHS
+  usdtExchangeRate        Float  @default(15.0) // How much GHS is 1 USDT currently
+  cryptoServiceFee        Float  @default(5.0) // Percentage fee for crypto payouts
 }
 
 model CardRate {
   id          Int      @id @default(autoincrement())
-  cardBrand   String   // e.g., Apple/iTunes
-  cardCountry String   // e.g., US
+  cardBrand   String // e.g., Apple/iTunes
+  cardCountry String // e.g., US
   cardType    String   @default("Physical") // Physical, E-code
-  rate        Float    // e.g., 10.5 (GHS per USD)
-  publicRate  Float?   // Optional: Different rate for public display
+  rate        Float // e.g., 10.5 (GHS per USD)
+  publicRate  Float? // Optional: Different rate for public display
   updatedAt   DateTime @updatedAt
 
   @@unique([cardBrand, cardCountry, cardType])
 }
 
 model Message {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   tradeId   Int
-  trade     Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  trade     Trade     @relation(fields: [tradeId], references: [id], onDelete: Cascade)
   senderId  Int
-  sender    User     @relation("UserMessages", fields: [senderId], references: [id])
+  sender    User      @relation("UserMessages", fields: [senderId], references: [id])
   content   String
-  isRead    Boolean  @default(false)
+  isRead    Boolean   @default(false)
   readAt    DateTime?
   fileUrl   String?
   fileType  String? // IMAGE or FILE
-  isEdited  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  isEdited  Boolean   @default(false)
+  createdAt DateTime  @default(now())
 }
 
 model RewardRedemption {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  user          User     @relation(fields: [userId], references: [id])
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id])
   pointsRedeemed Float
-  status        String   @default("PENDING") // PENDING, PAID, REJECTED
-  payoutMethod  String?  // e.g., "Add to next trade payout", "Mobile Money"
-  payoutDetails String?  // Optional info if Mobile Money was chosen
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status         String   @default("PENDING") // PENDING, PAID, REJECTED
+  payoutMethod   String? // e.g., "Add to next trade payout", "Mobile Money"
+  payoutDetails  String? // Optional info if Mobile Money was chosen
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model LeaderboardAdjustment {
@@ -201,20 +200,20 @@ model LeaderboardAdjustment {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   points    Float
   reason    String?
-  boardType String   // WHALE, SPEED, REFERRAL, or ALL
+  boardType String // WHALE, SPEED, REFERRAL, or ALL
   month     Int
   year      Int
   createdAt DateTime @default(now())
 }
 
 model LeaderboardRewardConfig {
-  id          Int      @id @default(autoincrement())
-  type        String   // RANK or MILESTONE
-  boardType   String   // WHALE, SPEED, REFERRAL
-  key         String   // e.g. "1st", "10_trades", "30000_volume"
+  id          Int     @id @default(autoincrement())
+  type        String // RANK or MILESTONE
+  boardType   String // WHALE, SPEED, REFERRAL
+  key         String // e.g. "1st", "10_trades", "30000_volume"
   points      Float
   description String?
-  isActive    Boolean  @default(true)
+  isActive    Boolean @default(true)
 }
 
 model LeaderboardHistory {
@@ -223,7 +222,7 @@ model LeaderboardHistory {
   user          User     @relation(fields: [userId], references: [id])
   boardType     String
   rank          Int
-  value         Float    // The metric value (volume, trades, etc.)
+  value         Float // The metric value (volume, trades, etc.)
   pointsAwarded Float
   month         Int
   year          Int
@@ -285,4 +284,13 @@ enum CryptoExchange {
 enum CryptoReceiverIdType {
   WALLET_ADDRESS
   EXCHANGE_ID
+}
+
+model BalanceCheckerLink {
+  id        Int      @id @default(autoincrement())
+  brandName String   @unique
+  url       String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

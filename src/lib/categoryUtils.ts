@@ -86,3 +86,22 @@ export function validateCategoryAmount(value: number, categoryName: string): str
 
     return "";
 }
+
+/**
+ * Parses the category name to find if it represents an exact face value.
+ * @returns the exact amount as a number, or null if it's a range/minimum/unknown.
+ */
+export function getExactCategoryAmount(categoryName: string): number | null {
+    if (!categoryName) return null;
+    const matchRange = categoryName.match(/\((?:\$|£|€)?(\d+)\s*-\s*(?:\$|£|€)?(\d+)\)/);
+    const matchMin = categoryName.match(/\((?:\$|£|€)?(\d+)\+\)/);
+    const matchExact = categoryName.match(/\((?:\$|£|€)?(\d+)\)/);
+
+    // If it's a range or minimum, it's not exact.
+    if (matchRange || matchMin) return null;
+
+    if (matchExact) {
+        return parseFloat(matchExact[1]);
+    }
+    return null;
+}
