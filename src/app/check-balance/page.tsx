@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { FaExternalLinkAlt, FaSearchDollar } from "react-icons/fa";
+import SearchableCategorySelect from "@/components/SearchableCategorySelect";
 
 type BalanceCheckerLink = {
     id: number;
@@ -34,8 +35,9 @@ export default function CheckBalancePage() {
     }, []);
 
     const handleCheckBalance = () => {
-        if (selectedBrand) {
-            window.open(selectedBrand, "_blank", "noopener,noreferrer");
+        const link = links.find(l => l.brandName === selectedBrand);
+        if (link?.url) {
+            window.open(link.url, "_blank", "noopener,noreferrer");
         }
     };
 
@@ -71,17 +73,14 @@ export default function CheckBalancePage() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             <div className="form-group">
                                 <label className="form-label">Select Brand</label>
-                                <select 
-                                    className="form-select" 
-                                    value={selectedBrand} 
-                                    onChange={(e) => setSelectedBrand(e.target.value)}
-                                    style={{ padding: '1rem', fontSize: '1.1rem', backgroundColor: 'var(--bg-alt)' }}
-                                >
-                                    <option value="" disabled>Select a gift card brand...</option>
-                                    {links.map(brand => (
-                                        <option key={brand.id} value={brand.url}>{brand.brandName}</option>
-                                    ))}
-                                </select>
+                                <SearchableCategorySelect
+                                    className="calc-select"
+                                    value={selectedBrand}
+                                    onChange={(val: string) => setSelectedBrand(val)}
+                                    categories={links.map(l => l.brandName)}
+                                    placeholder="Select a gift card brand..."
+                                    searchPlaceholder="Search brands..."
+                                />
                             </div>
 
                             <button 
