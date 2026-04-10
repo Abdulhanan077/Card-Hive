@@ -256,6 +256,55 @@ export async function sendDuplicateCardAttemptEmail(user: { email: string; usern
   return sendEmail({ to: user.email, subject: "Action Required: Trade Status Verification - Card Hive", html });
 }
 
+export async function sendItemRejectionEmail(user: { email: string; username: string }, rejectedTrade: any, batchTrades: any[]) {
+  const isBatch = batchTrades.length > 1;
+  const workspaceId = isBatch ? (batchTrades[0].fullName || batchTrades[0].tradeId) : rejectedTrade.tradeId;
+  
+  const rejectedCount = batchTrades.filter(t => t.status === "REJECTED").length;
+  const successCount = batchTrades.filter(t => ["PAID", "COMPLETED", "APPROVED"].includes(t.status)).length;
+  const pendingCount = batchTrades.length - rejectedCount - successCount;
+
+  const content = `
+    <h1 style="margin-top: 0; color: #ef4444;">Card Rejected 🚫</h1>
+    <p>Hello ${user.username}, an item in your trade <strong>${workspaceId}</strong> has been rejected.</p>
+    
+    <div class="card" style="border-left: 4px solid #ef4444;">
+        <h3 style="margin-top: 0; color: #ef4444;">Rejected Item Details</h3>
+        <p><strong>Brand:</strong> ${rejectedTrade.cardBrand}</p>
+        <p><strong>Value:</strong> ${rejectedTrade.faceValue} ${rejectedTrade.currency}</p>
+        ${rejectedTrade.adminNotes ? `<p><strong>Reason:</strong> ${rejectedTrade.adminNotes}</p>` : ''}
+    </div>
+
+    ${isBatch ? `
+    <div class="card">
+        <h3 style="margin-top: 0;">Batch Overview (${batchTrades.length} Cards)</h3>
+        <div style="display: flex; gap: 20px;">
+            <div style="text-align: center; flex: 1;">
+                <span style="display: block; font-size: 20px; font-weight: 700; color: #ef4444;">${rejectedCount}</span>
+                <span style="font-size: 12px; color: #6b7280; text-transform: uppercase;">Rejected</span>
+            </div>
+            <div style="text-align: center; flex: 1;">
+                <span style="display: block; font-size: 20px; font-weight: 700; color: #10b981;">${successCount}</span>
+                <span style="font-size: 12px; color: #6b7280; text-transform: uppercase;">Successful</span>
+            </div>
+            ${pendingCount > 0 ? `
+            <div style="text-align: center; flex: 1;">
+                <span style="display: block; font-size: 20px; font-weight: 700; color: #f59e0b;">${pendingCount}</span>
+                <span style="font-size: 12px; color: #6b7280; text-transform: uppercase;">Pending</span>
+            </div>
+            ` : ''}
+        </div>
+    </div>
+    ` : ''}
+
+    <p>You can view the full details and proof of rejection in the trade chat.</p>
+    <a href="${getAppUrl()}/user/trades" class="button">View My Trades</a>
+  `;
+  
+  const html = wrapTemplate(content, `Item rejected in trade ${workspaceId}`);
+  return sendEmail({ to: user.email, subject: `Action Required: Card Rejected - ${workspaceId}`, html });
+}
+
 export async function sendAdminNewUserEmail(user: { username: string; email: string; phoneNumber: string }) {
   const adminEmail = process.env.EMAIL_ADMIN;
   if (!adminEmail) return;

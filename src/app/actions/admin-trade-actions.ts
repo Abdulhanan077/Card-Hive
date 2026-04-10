@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { sendTradeStatusUpdateEmail, sendPaymentSentEmail } from "@/lib/email";
+import { sendTradeStatusUpdateEmail, sendPaymentSentEmail, sendItemRejectionEmail } from "@/lib/email";
 import { calculateVipTier } from "@/lib/vipTiers";
 
 import { postMessage } from "./chat";
@@ -20,7 +20,11 @@ export async function toggleCardStatusAction(
 
         const trade = await prisma.trade.update({
             where: { id: tradeId },
-            data: { status: newStatus }
+            data: { 
+                status: newStatus,
+                adminNotes: newStatus === "REJECTED" ? (reason || null) : null
+            },
+            include: { user: true }
         });
         console.log(`[toggleCardStatusAction] status updated to ${newStatus}`);
 
@@ -53,6 +57,21 @@ export async function toggleCardStatusAction(
                 );
             }
             console.log(`[toggleCardStatusAction] message posted`);
+        }
+
+        // Automatic Rejection Email
+        if (newStatus === "REJECTED" && trade.user.emailNotificationsEnabled) {
+            console.log(`[toggleCardStatusAction] sending rejection email...`);
+            const isBatch = trade.fullName && trade.fullName.startsWith('BATCH-');
+            
+            const batchTrades = await prisma.trade.findMany({
+                where: {
+                    fullName: isBatch ? trade.fullName : undefined,
+                    tradeId: isBatch ? undefined : trade.tradeId,
+                } as any
+            });
+
+            await sendItemRejectionEmail(trade.user, trade, batchTrades);
         }
 
         revalidatePath(`/admin/trades/${pageTradeId}`);
