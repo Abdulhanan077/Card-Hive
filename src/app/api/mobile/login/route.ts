@@ -1,0 +1,94 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import { encode } from "next-auth/jwt";
+
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
+        const { username, password } = body;
+
+        if (!username || !password) {
+            return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
+        }
+
+        const user = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { username: { equals: username, mode: 'insensitive' } },
+                    { email: { equals: username, mode: 'insensitive' } },
+                ],
+            },
+        });
+
+        if (!user) {
+            return NextResponse.json({ error: "No account found with this username or email." }, { status: 401 });
+        }
+
+        if (user.status === "BLOCKED") {
+            return NextResponse.json({ error: "Your account has been deactivated. Please contact support." }, { status: 403 });
+        }
+
+        if (!user.emailVerified) {
+            return NextResponse.json({ error: "Please verify your email address before logging in." }, { status: 403 });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            return NextResponse.json({ error: "Incorrect password. Please try again." }, { status: 401 });
+        }
+
+        // Generate JWT token matching next-auth
+        const secret = process.env.NEXTAUTH_SECRET;
+        if (!secret) {
+            throw new Error("NEXTAUTH_SECRET is not configured.");
+        }
+
+        const token = await encode({
+            token: {
+                id: user.id.toString(),
+                username: user.username,
+                role: user.role,
+                theme: user.theme,
+            },
+            secret,
+        });
+
+        // Log the event
+        await prisma.loginEvent.create({
+            data: {
+                emailOrUsername: username,
+                portal: "USER",
+                success: true,
+                ipAddress: "Mobile App",
+                userAgent: "Flutter MyCardHive",
+                userId: user.id,
+            }
+        });
+
+        // Update last login
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                lastLoginAt: new Date(),
+                lastIp: "Mobile App",
+                lastDevice: "Mobile App",
+            }
+        });
+
+        return NextResponse.json({
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            }
+        }, { status: 200 });
+
+    } catch (err: any) {
+        console.error("Mobile Login API Error:", err);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
+}
