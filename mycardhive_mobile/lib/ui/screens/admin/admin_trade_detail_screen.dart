@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mycardhive_mobile/services/admin_service.dart';
 import 'package:mycardhive_mobile/services/chat_service.dart';
@@ -223,17 +224,17 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
           _dataRow("Payout Method", trade['payoutMethod']?.toString().replaceAll('_', ' ') ?? "N/A"),
           if (trade['payoutPhoneNumber'] != null && trade['payoutPhoneNumber'].toString().isNotEmpty) ...[
             _dataRow("Network", trade['payoutNetwork'] ?? "N/A"),
-            _dataRow("Phone Number", trade['payoutPhoneNumber']),
+            _dataRow("Phone Number", trade['payoutPhoneNumber'], isCopyable: true),
             if (trade['payoutAccountName'] != null)
-              _dataRow("Account Name", trade['payoutAccountName']),
+              _dataRow("Account Name", trade['payoutAccountName'], isCopyable: true),
           ],
           if (trade['cryptoReceiverId'] != null && trade['cryptoReceiverId'].toString().isNotEmpty) ...[
             _dataRow("Crypto Coin", trade['cryptoCoin'] ?? "N/A"),
             _dataRow("Network", trade['cryptoNetwork'] ?? "N/A"),
-            _dataRow("Receiver ID", trade['cryptoReceiverId']),
+            _dataRow("Receiver ID", trade['cryptoReceiverId'], isCopyable: true),
           ],
           const Divider(height: 24),
-          _dataRow("Amount Payable", "GHS ${trade['calculatedPayout']?.toStringAsFixed(2) ?? '0.00'}", isHighlight: true),
+          _dataRow("Amount Payable", "GHS ${trade['calculatedPayout']?.toStringAsFixed(2) ?? '0.00'}", isHighlight: true, isCopyable: true),
           const Divider(height: 24),
           _dataRow("Submitted", DateFormat('MMM dd, yyyy - HH:mm').format(DateTime.parse(trade['createdAt']))),
         ],
@@ -241,19 +242,47 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
     );
   }
 
-  Widget _dataRow(String label, String value, {bool isHighlight = false}) {
+  Widget _dataRow(String label, String value, {bool isHighlight = false, bool isCopyable = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey)),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              fontWeight: FontWeight.bold, 
-              fontSize: 14, 
-              color: isHighlight ? const Color(0xFF10B981) : null,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: Text(
+                    value,
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold, 
+                      fontSize: 14, 
+                      color: isHighlight ? const Color(0xFF10B981) : null,
+                    ),
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (isCopyable) ...[
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: value));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Copied: $value"), duration: const Duration(seconds: 1)),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Icon(Icons.copy_rounded, size: 14, color: Colors.blue.withOpacity(0.6)),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],
