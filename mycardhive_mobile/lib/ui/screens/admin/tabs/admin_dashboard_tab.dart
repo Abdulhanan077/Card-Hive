@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:mycardhive_mobile/services/admin_service.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mycardhive_mobile/services/auth_service.dart';
+import 'package:mycardhive_mobile/services/notification_service.dart';
+import 'dart:async';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -18,7 +19,9 @@ class AdminDashboardTab extends StatefulWidget {
 
 class _AdminDashboardTabState extends State<AdminDashboardTab> {
   final AdminService _adminService = AdminService();
+  final AuthService _authService = AuthService();
   final PageController _pageController = PageController();
+  Timer? _notifTimer;
   
   Map<String, dynamic> _stats = {};
   Map<String, dynamic> _charts = {};
@@ -31,6 +34,22 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
   void initState() {
     super.initState();
     _loadData();
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _notifTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checkNotifications();
+    });
+  }
+
+  Future<void> _checkNotifications() async {
+    try {
+      final notifications = await NotificationService.getFilteredNotifications(_authService);
+      if (mounted) {
+        setState(() => _unreadCount = notifications.length);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadData() async {
@@ -61,6 +80,13 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     }
   }
 
+  @override
+  void dispose() {
+    _notifTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleAction(String tradeId, String status, String notes) async {
     final result = await _adminService.updateTradeStatus(tradeId, status, notes);
     if (result['success']) {
@@ -77,47 +103,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
       onRefresh: _loadData,
       child: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            pinned: true,
-            elevation: 0,
-            backgroundColor: theme.scaffoldBackgroundColor,
-            surfaceTintColor: Colors.transparent,
-            title: Text(
-              "Admin Dashboard",
-              style: GoogleFonts.outfit(
-                fontWeight: FontWeight.bold, 
-                fontSize: 24,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            actions: [
-              Stack(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.notifications_none_rounded, color: theme.colorScheme.onSurface),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminNotificationsScreen())).then((_) => _loadData());
-                    },
-                  ),
-                  if (_unreadCount > 0)
-                    Positioned(
-                      top: 10, right: 10,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                        child: Text(
-                          _unreadCount > 9 ? "9+" : "$_unreadCount",
-                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 8),
-            ],
-          ),
+          // No local AppBar here - using global AppBar from AdminHome
           
           // 1. Stat Carousel (Now with 12 Metrics)
           SliverToBoxAdapter(

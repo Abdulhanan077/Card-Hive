@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:mycardhive_mobile/ui/screens/admin/tabs/admin_dashboard_tab.dart';
-import 'package:mycardhive_mobile/ui/screens/admin/tabs/admin_trades_tab.dart';
-import 'package:mycardhive_mobile/ui/screens/admin/tabs/admin_users_tab.dart';
-import 'package:mycardhive_mobile/ui/screens/admin/tabs/admin_more_tab.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mycardhive_mobile/services/auth_service.dart';
+import 'package:mycardhive_mobile/services/notification_service.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_notifications_screen.dart';
+import 'dart:async';
 
 class AdminHome extends StatefulWidget {
   final dynamic user;
@@ -14,8 +13,11 @@ class AdminHome extends StatefulWidget {
 }
 
 class _AdminHomeState extends State<AdminHome> {
+  final AuthService _authService = AuthService();
   int _currentIndex = 0;
   late List<Widget> _tabs;
+  int _unreadCount = 0;
+  Timer? _notifTimer;
 
   @override
   void initState() {
@@ -26,6 +28,25 @@ class _AdminHomeState extends State<AdminHome> {
       const AdminUsersTab(),
       AdminMoreTab(user: widget.user),
     ];
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _checkNotifications();
+    _notifTimer = Timer.periodic(const Duration(seconds: 30), (_) => _checkNotifications());
+  }
+
+  Future<void> _checkNotifications() async {
+    final notifications = await NotificationService.getFilteredNotifications(_authService);
+    if (mounted) {
+      setState(() => _unreadCount = notifications.length);
+    }
+  }
+
+  @override
+  void dispose() {
+    _notifTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -34,6 +55,46 @@ class _AdminHomeState extends State<AdminHome> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          "Admin Portal",
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.bold, 
+            fontSize: 22,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: Icon(Icons.notifications_none_rounded, color: theme.colorScheme.onSurface),
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminNotificationsScreen())).then((_) => _checkNotifications());
+                },
+              ),
+              if (_unreadCount > 0)
+                Positioned(
+                  top: 10, right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Text(
+                      _unreadCount > 9 ? "9+" : "$_unreadCount",
+                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: IndexedStack(
         index: _currentIndex,
         children: _tabs,
