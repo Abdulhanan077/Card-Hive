@@ -1,3 +1,8 @@
+import 'package:flutter/material.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/tabs/admin_dashboard_tab.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/tabs/admin_trades_tab.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/tabs/admin_users_tab.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/tabs/admin_more_tab.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/services/notification_service.dart';
