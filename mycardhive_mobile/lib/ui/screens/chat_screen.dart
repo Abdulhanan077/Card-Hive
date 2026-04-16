@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mycardhive_mobile/services/chat_service.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:intl/intl.dart';
@@ -27,6 +29,7 @@ class _ChatScreenState extends State<ChatScreen> {
   int? _currentUserId;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
 
   late int _parsedTradeId;
@@ -78,6 +81,26 @@ class _ChatScreenState extends State<ChatScreen> {
     if (result != null) {
       _refreshChat();
     }
+  }
+
+  Future<void> _pickAndSendImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image == null) return;
+
+    setState(() => _isUploading = true);
+    
+    final uploadResponse = await _chatService.uploadFile(File(image.path));
+    if (uploadResponse['success'] == true) {
+      final fileUrl = uploadResponse['fileUrl'];
+      await _chatService.sendMessage(_parsedTradeId, "Sent an image", fileUrl: fileUrl, fileType: 'IMAGE');
+      _refreshChat();
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(uploadResponse['error'] ?? "Upload failed")));
+      }
+    }
+    
+    setState(() => _isUploading = false);
   }
 
   @override
@@ -210,13 +233,17 @@ class _ChatScreenState extends State<ChatScreen> {
       child: SafeArea(
         child: Row(
           children: [
+            IconButton(
+              icon: Icon(Icons.add_photo_alternate_rounded, color: _isUploading ? Colors.grey : const Color(0xFF2563EB)),
+              onPressed: _isUploading ? null : _pickAndSendImage,
+            ),
             Expanded(
               child: TextField(
                 controller: _messageController,
                 maxLines: 4,
                 minLines: 1,
                 decoration: InputDecoration(
-                  hintText: "Type a message...",
+                  hintText: _isUploading ? "Uploading..." : "Type a message...",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                   filled: true,
                   fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
@@ -226,10 +253,13 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             const SizedBox(width: 8),
             Container(
-              decoration: const BoxDecoration(color: Color(0xFF2563EB), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: _isUploading ? Colors.grey : const Color(0xFF2563EB), 
+                shape: BoxShape.circle
+              ),
               child: IconButton(
                 icon: const Icon(Icons.send_rounded, color: Colors.white),
-                onPressed: _sendMessage,
+                onPressed: _isUploading ? null : _sendMessage,
               ),
             ),
           ],

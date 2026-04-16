@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mycardhive_mobile/services/admin_service.dart';
+import 'package:mycardhive_mobile/services/chat_service.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/ui/screens/chat_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,6 +23,10 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
   late String _currentStatus;
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _refController = TextEditingController();
+  final ChatService _chatService = ChatService();
+  final ImagePicker _picker = ImagePicker();
+  File? _receiptFile;
+  bool _isUploadingFile = false;
 
   @override
   void initState() {
@@ -29,10 +36,22 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
 
   Future<void> _updateStatus(String newStatus) async {
     setState(() => _isUpdating = true);
+    
+    String? receiptUrl;
+    if (newStatus == 'PAID' && _receiptFile != null) {
+      setState(() => _isUploadingFile = true);
+      final uploadRes = await _chatService.uploadFile(_receiptFile!);
+      if (uploadRes['success']) {
+        receiptUrl = uploadRes['fileUrl'];
+      }
+      setState(() => _isUploadingFile = false);
+    }
+
     final result = await _adminService.updateTradeStatus(
       widget.trade['tradeId'], 
       newStatus, 
       _notesController.text,
+      paymentReceiptUrl: receiptUrl,
     );
     
     if (result['success']) {
@@ -274,34 +293,65 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
            ),
          ),
          const SizedBox(height: 16),
-         Row(
-           children: [
-             Expanded(
-               child: _actionButton(
-                 "REJECT", 
-                 Colors.red, 
-                 () => _updateStatus("REJECTED"),
+          const SizedBox(height: 16),
+          if (_currentStatus == 'PENDING' || _currentStatus == 'UNDER_REVIEW') ...[
+             Container(
+               padding: const EdgeInsets.all(12),
+               decoration: BoxDecoration(
+                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                 borderRadius: BorderRadius.circular(16),
+                 border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+               ),
+               child: Column(
+                 children: [
+                   if (_receiptFile != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(_receiptFile!, height: 100, width: double.infinity, fit: BoxFit.cover),
+                      ),
+                      const SizedBox(height: 10),
+                   ],
+                   TextButton.icon(
+                     onPressed: () async {
+                       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+                       if (image != null) setState(() => _receiptFile = File(image.path));
+                     },
+                     icon: Icon(_receiptFile == null ? Icons.add_a_photo_rounded : Icons.change_circle_rounded),
+                     label: Text(_receiptFile == null ? "Attach Payment Receipt" : "Change Receipt"),
+                   ),
+                 ],
                ),
              ),
-             const SizedBox(width: 12),
-             Expanded(
-               child: _actionButton(
-                 "UNDER REVIEW", 
-                 Colors.orange, 
-                 () => _updateStatus("UNDER_REVIEW"),
-               ),
-             ),
-           ],
-         ),
-         const SizedBox(height: 12),
-         SizedBox(
-           width: double.infinity,
-           child: _actionButton(
-             "MARK AS PAID", 
-             const Color(0xFF10B981), 
-             () => _updateStatus("PAID"),
-           ),
-         ),
+             const SizedBox(height: 16),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: _actionButton(
+                  "REJECT", 
+                  Colors.red, 
+                  () => _updateStatus("REJECTED"),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _actionButton(
+                  "UNDER REVIEW", 
+                  Colors.orange, 
+                  () => _updateStatus("UNDER_REVIEW"),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: _actionButton(
+              "MARK AS PAID", 
+              const Color(0xFF10B981), 
+              () => _updateStatus("PAID"),
+            ),
+          ),
       ],
     );
   }

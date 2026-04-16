@@ -78,7 +78,7 @@ class AdminService {
     }
   }
 
-  Future<Map<String, dynamic>> updateTradeStatus(String tradeId, String newStatus, String adminNotes) async {
+  Future<Map<String, dynamic>> updateTradeStatus(String tradeId, String newStatus, String adminNotes, {String? paymentReceiptUrl}) async {
     try {
       final token = await _authService.getToken();
       if (token == null) return {'success': false, 'error': 'Unauthorized'};
@@ -94,6 +94,7 @@ class AdminService {
           'tradeId': tradeId,
           'status': newStatus,
           'adminNotes': adminNotes,
+          'paymentReceiptUrl': paymentReceiptUrl,
         }),
       );
 

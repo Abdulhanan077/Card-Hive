@@ -18,7 +18,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { tradeId, status, adminNotes, paymentReference } = body;
+        const { tradeId, status, adminNotes, paymentReference, paymentReceiptUrl } = body;
 
         if (!tradeId || !status) {
             return NextResponse.json({ error: "Trade ID and Status are required" }, { status: 400 });
@@ -35,7 +35,11 @@ export async function POST(request: Request) {
         }
 
         const isBatch = targetTrade.fullName && targetTrade.fullName.startsWith('BATCH-');
-        const updateData: any = { status, adminNotes: adminNotes || null };
+        const updateData: any = { 
+            status, 
+            adminNotes: adminNotes || null,
+            paymentReceiptUrl: paymentReceiptUrl || null
+        };
 
         if (status === "PAID") {
             updateData.paymentReference = paymentReference || `MOB-${Date.now()}`;
