@@ -7,6 +7,9 @@ import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/signup_screen.dart';
 import 'package:mycardhive_mobile/models/rate.dart';
 import 'package:mycardhive_mobile/ui/screens/general_support_chat_screen.dart';
+import 'package:mycardhive_mobile/services/public_service.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:mycardhive_mobile/ui/screens/sell_card_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +20,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final RatesService _ratesService = RatesService();
+  final PublicService _publicService = PublicService();
   late Future<RatesResponse> _ratesFuture;
+  List<Map<String, dynamic>> _statusUpdates = [];
+  final PageController _statusController = PageController();
   
   final GlobalKey _ratesKey = GlobalKey();
   final GlobalKey _howItWorksKey = GlobalKey();
@@ -26,6 +32,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _ratesFuture = _ratesService.fetchRates();
+    _loadStatusUpdates();
+  }
+
+  Future<void> _loadStatusUpdates() async {
+    final updates = await _publicService.getStatusUpdates();
+    if (mounted) {
+      setState(() => _statusUpdates = updates);
+    }
   }
 
   void _scrollTo(GlobalKey key) {
@@ -163,6 +177,10 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             _buildHero(theme, isDark),
+            if (_statusUpdates.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              _buildStatusCarousel(isDark, theme),
+            ],
             Padding(
               key: _ratesKey,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -263,6 +281,87 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildStatusCarousel(bool isDark, ThemeData theme) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            controller: _statusController,
+            itemCount: _statusUpdates.length,
+            itemBuilder: (context, index) {
+              final update = _statusUpdates[index];
+              final hasImage = update['imageUrl'] != null;
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  border: Border.all(color: theme.dividerColor),
+                  image: hasImage ? DecorationImage(
+                    image: NetworkImage(update['imageUrl']),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken),
+                  ) : null,
+                  gradient: !hasImage ? const LinearGradient(
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ) : null,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _getUpdateTitle(update),
+                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        update['message'] ?? "",
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+        SmoothPageIndicator(
+          controller: _statusController,
+          count: _statusUpdates.length,
+          effect: ScrollingDotsEffect(
+            dotWidth: 6,
+            dotHeight: 6,
+            activeDotColor: const Color(0xFF2563EB),
+            dotColor: isDark ? Colors.white24 : Colors.grey.withOpacity(0.3),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getUpdateTitle(Map<String, dynamic> update) {
+    if (update['message'] != null && update['message'].toString().contains("paid")) return "Payment Confirmed! ✅";
+    return "Official Update 📢";
+  }
+
+  @override
+  void dispose() {
+    _statusController.dispose();
+    super.dispose();
   }
 
   Widget _buildStepCard(int step, String title, String desc, ThemeData theme) {
