@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:mycardhive_mobile/services/auth_service.dart';
+import 'package:mycardhive_mobile/config.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
 class ChatService {
