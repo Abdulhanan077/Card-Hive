@@ -73,7 +73,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
       child: CustomScrollView(
         slivers: [
           SliverAppBar(
-            floating: true,
+            pinned: true,
             elevation: 0,
             backgroundColor: theme.scaffoldBackgroundColor,
             surfaceTintColor: Colors.transparent,
