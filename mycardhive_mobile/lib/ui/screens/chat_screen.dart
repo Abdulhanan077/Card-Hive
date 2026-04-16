@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mycardhive_mobile/services/chat_service.dart';
@@ -31,7 +32,10 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
-
+  
+  // Real-time states
+  String? _typingUser;
+  Timer? _typingTimer;
   late int _parsedTradeId;
 
   @override
@@ -41,12 +45,70 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadInitialData();
   }
 
+  @override
+  void dispose() {
+    _chatService.disconnectPusher(_parsedTradeId);
+    _typingTimer?.cancel();
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadInitialData() async {
     final userData = await _authService.getCurrentUser();
     if (userData != null) {
       setState(() => _currentUserId = userData['id']);
     }
-    _refreshChat();
+    
+    // 1. Fetch historical messages
+    await _refreshChat();
+    
+    // 2. Initialize Pusher for real-time
+    _chatService.initPusher(
+      _parsedTradeId,
+      onNewMessage: (data) {
+        if (mounted) {
+          setState(() {
+            // Avoid duplicates if already polled
+            if (!_messages.any((m) => m['id'] == data['id'])) {
+              _messages.add(data);
+              _scrollToBottom();
+            }
+          });
+          // Mark as seen immediately when received while chat is open
+          if (data['senderId'] != _currentUserId) {
+            _chatService.markAsSeen(_parsedTradeId, messageId: data['id']);
+          }
+        }
+      },
+      onTyping: (data) {
+        if (mounted && data['userId'].toString() != _currentUserId.toString()) {
+          setState(() {
+            if (data['isTyping'] == true) {
+              _typingUser = data['username'];
+            } else {
+              _typingUser = null;
+            }
+          });
+        }
+      },
+      onSeen: (data) {
+        if (mounted) {
+          setState(() {
+            for (var m in _messages) {
+              if (data['messageId'] == null || m['id'] == data['messageId']) {
+                if (m['senderId'] == _currentUserId) {
+                  m['isRead'] = true;
+                }
+              }
+            }
+          });
+        }
+      },
+    );
+
+    // 3. Mark all as seen upon opening
+    _chatService.markAsSeen(_parsedTradeId);
   }
 
   Future<void> _refreshChat() async {
@@ -72,14 +134,26 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  void _handleTyping(String value) {
+    if (value.isNotEmpty) {
+      _chatService.sendTypingStatus(_parsedTradeId, true);
+      _typingTimer?.cancel();
+      _typingTimer = Timer(const Duration(seconds: 3), () {
+        _chatService.sendTypingStatus(_parsedTradeId, false);
+      });
+    }
+  }
+
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
     final content = _messageController.text;
     _messageController.clear();
+    _chatService.sendTypingStatus(_parsedTradeId, false); // Clear typing status
 
     final result = await _chatService.sendMessage(_parsedTradeId, content);
-    if (result != null) {
-      _refreshChat();
+    if (result['success'] == true) {
+      // Local addition is handled by Pusher 'new-message' event usually, 
+      // but for better UX we could add it here if Pusher is slow.
     }
   }
 
@@ -93,7 +167,6 @@ class _ChatScreenState extends State<ChatScreen> {
     if (uploadResponse['success'] == true) {
       final fileUrl = uploadResponse['fileUrl'];
       await _chatService.sendMessage(_parsedTradeId, "Sent an image", fileUrl: fileUrl, fileType: 'IMAGE');
-      _refreshChat();
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(uploadResponse['error'] ?? "Upload failed")));
@@ -133,6 +206,17 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemBuilder: (context, index) => _buildChatMessage(_messages[index], isDark),
                   ),
           ),
+          if (_typingUser != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                children: [
+                  Text("$_typingUser is typing...", style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey)),
+                  const SizedBox(width: 8),
+                  SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey.withOpacity(0.5))),
+                ],
+              ),
+            ),
           _buildInputArea(isDark, theme),
         ],
       ),
@@ -156,6 +240,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final sender = msg['sender'];
     final bool isMe = sender['id'] == _currentUserId;
     final bool isAdmin = sender['role'] == 'ADMIN';
+    final bool isRead = msg['isRead'] == true;
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -212,9 +297,22 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             Padding(
               padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
-              child: Text(
-                DateFormat('HH:mm').format(DateTime.parse(msg['createdAt'])),
-                style: const TextStyle(fontSize: 9, color: Colors.grey),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    DateFormat('HH:mm').format(DateTime.parse(msg['createdAt'].toString())),
+                    style: const TextStyle(fontSize: 9, color: Colors.grey),
+                  ),
+                  if (isMe) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      isRead ? Icons.done_all : Icons.done,
+                      size: 12,
+                      color: isRead ? Colors.green : Colors.grey,
+                    ),
+                  ]
+                ],
               ),
             ),
           ],
@@ -240,6 +338,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               child: TextField(
                 controller: _messageController,
+                onChanged: _handleTyping,
                 maxLines: 4,
                 minLines: 1,
                 decoration: InputDecoration(

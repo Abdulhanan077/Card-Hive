@@ -8,4 +8,8 @@ class AppConfig {
   // --- 🚀 TOGGLE THIS LINE ---
   // Change this to 'liveUrl' when you are ready to publish the app!
   static const String baseUrl = liveUrl; 
+
+  // --- Real-time Config (Pusher) ---
+  static const String pusherKey = 'ece064fc506a3a8db60b';
+  static const String pusherCluster = 'mt1';
 }

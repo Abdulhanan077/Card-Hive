@@ -44,6 +44,7 @@ dependencies:
   firebase_messaging: ^16.2.0
   gal: ^2.3.2
   uuid: ^4.5.3
+  pusher_channels_flutter: ^2.4.0
 
 dev_dependencies:
   flutter_test:
