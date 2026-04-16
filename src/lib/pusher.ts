@@ -10,8 +10,16 @@ export const pusherServer = new PusherServer({
 });
 
 /**
- * The client-side instance of Pusher.
+ * The client-side instance of Pusher. Safe initialization to prevent blank-screen
+ * crashes if the Vercel environment variables are temporarily missing.
  */
-export const pusherClient = new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-});
+export const pusherClient = process.env.NEXT_PUBLIC_PUSHER_KEY 
+    ? new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY, {
+          cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1',
+      })
+    : {
+          subscribe: () => ({ bind: () => {}, unbind: () => {} }),
+          unsubscribe: () => {},
+          bind: () => {},
+          unbind: () => {},
+      } as any;
