@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mycardhive_mobile/services/admin_service.dart';
@@ -245,47 +246,46 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
   Widget _dataRow(String label, String value, {bool isHighlight = false, bool isCopyable = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label, 
-                style: GoogleFonts.outfit(
-                  fontSize: 12, 
-                  color: Colors.grey, 
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                )
-              ),
-              if (isCopyable) ...[
-                const SizedBox(width: 4),
-                InkWell(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: value));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Copied: $label"), duration: const Duration(seconds: 1)),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(4),
-                  child: Padding(
-                    padding: const EdgeInsets.all(2.0),
-                    child: Icon(Icons.copy_rounded, size: 12, color: Colors.blue.withOpacity(0.6)),
+          Text(label, style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: AutoSizeText(
+                    value,
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold, 
+                      fontSize: 15, 
+                      color: isHighlight ? const Color(0xFF10B981) : null,
+                    ),
+                    maxLines: 1,
+                    minFontSize: 8,
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (isCopyable) ...[
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: value));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Copied: $label"), duration: const Duration(seconds: 1)),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Icon(Icons.copy_rounded, size: 14, color: Colors.blue.withOpacity(0.6)),
+                    ),
+                  ),
+                ],
               ],
-            ],
-          ),
-          const SizedBox(height: 4),
-          SelectableText(
-            value,
-            style: GoogleFonts.outfit(
-              fontWeight: FontWeight.bold, 
-              fontSize: 15, 
-              color: isHighlight ? const Color(0xFF10B981) : null,
-              height: 1.3,
             ),
           ),
         ],
