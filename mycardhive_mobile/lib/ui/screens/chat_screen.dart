@@ -195,7 +195,7 @@ class _ChatScreenState extends State<ChatScreen> {
       'createdAt': DateTime.now().toIso8601String(),
       'sender': {'id': _currentUserId, 'username': 'You', 'role': 'USER'},
       'isSending': true,
-      'fileUrl': null, // Show a placeholder or something if possible
+      'localFile': File(image.path), // Add local file for preview
     };
 
     setState(() {
@@ -206,7 +206,7 @@ class _ChatScreenState extends State<ChatScreen> {
     
     final uploadResponse = await _chatService.uploadFile(File(image.path));
     if (uploadResponse['success'] == true) {
-      final fileUrl = uploadResponse['fileUrl'];
+      final fileUrl = uploadResponse['url']; // Fixed: Server returns 'url', not 'fileUrl'
       final result = await _chatService.sendMessage(_parsedTradeId, "Sent an image", fileUrl: fileUrl, fileType: 'IMAGE');
       
       if (mounted) {
@@ -294,6 +294,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final bool isAdmin = sender['role'] == 'ADMIN';
     final bool isRead = msg['isRead'] == true;
     final bool isSending = msg['isSending'] == true;
+    final String? fileUrl = msg['fileUrl'] ?? msg['url']; // Handle both keys
+    final File? localFile = msg['localFile'];
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -330,12 +332,20 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (msg['fileUrl'] != null)
+                  if (localFile != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(msg['fileUrl'], fit: BoxFit.fitWidth, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image)),
+                        child: Image.file(localFile, fit: BoxFit.fitWidth),
+                      ),
+                    )
+                  else if (fileUrl != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(fileUrl, fit: BoxFit.fitWidth, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image)),
                       ),
                     ),
                   Text(
