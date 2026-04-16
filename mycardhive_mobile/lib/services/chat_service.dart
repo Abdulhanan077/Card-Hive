@@ -13,7 +13,7 @@ class ChatService {
         Uri.parse('${AuthService.baseUrl}/mobile/chat/$tradeId'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
       );
 
@@ -34,7 +34,7 @@ class ChatService {
         Uri.parse('${AuthService.baseUrl}/mobile/chat/$tradeId'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
         body: json.encode({
           'content': content,
@@ -54,7 +54,7 @@ class ChatService {
       final token = await _authService.getToken();
       var uri = Uri.parse('${AuthService.baseUrl}/mobile/chat/upload');
       var request = http.MultipartRequest('POST', uri);
-      request.headers.addAll({'Cookie': 'next-auth.session-token=$token'});
+      request.headers.addAll({'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token'});
       
       request.files.add(await http.MultipartFile.fromPath('file', file.path));
       
