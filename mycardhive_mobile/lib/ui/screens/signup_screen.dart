@@ -96,13 +96,16 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Sync parity with global.css --background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back_ios_new, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -110,16 +113,20 @@ class _SignupScreenState extends State<SignupScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Container(
-              // The exact "authCard" CSS recreation
-              width: double.infinity,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset('assets/logo.png', height: 150),
+                const SizedBox(height: 32),
+                Container(
+                  // The exact "authCard" CSS recreation
+                  width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF), // --surface
-                borderRadius: BorderRadius.circular(12), // --radius-lg
-                border: Border.all(color: const Color(0xFFE2E8F0)), // --border
-                boxShadow: const [
-                  // --shadow-sm
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.dividerColor),
+                boxShadow: isDark ? [] : const [
                   BoxShadow(color: Color(0x0D000000), offset: Offset(0, 1), blurRadius: 2)
                 ],
               ),
@@ -133,7 +140,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9), // surface-hover
+                        color: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF1F5F9), // surface-hover
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Center(
@@ -144,30 +151,30 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 16),
                   
                   // Header
-                  const Text(
+                  Text(
                     "Create an Account",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     "Join Card Hive to start trading securely",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 15, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 15, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
                   ),
                   const SizedBox(height: 32),
                   
                   // Form Fields mapped directly to Web PARITY
-                  _buildLabel("Username"),
-                  _buildTextField(controller: _usernameController, hint: "Choose a username"),
+                  _buildLabel("Username", theme, isDark),
+                  _buildTextField(controller: _usernameController, hint: "Choose a username", theme: theme, isDark: isDark),
 
                   const SizedBox(height: 20),
-                  _buildLabel("Email"),
+                  _buildLabel("Email", theme, isDark),
                   Row(
                     children: [
                       Expanded(
                         flex: 2,
-                        child: _buildTextField(controller: _emailController, hint: "you@example.com", enabled: !_otpSent),
+                        child: _buildTextField(controller: _emailController, hint: "you@example.com", enabled: !_otpSent, theme: theme, isDark: isDark),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -177,11 +184,11 @@ class _SignupScreenState extends State<SignupScreen> {
                           child: ElevatedButton(
                             onPressed: _isSendingOTP ? null : _handleSendOTP,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF1F5F9),
+                              backgroundColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF1F5F9),
                               foregroundColor: const Color(0xFF2563EB),
                               elevation: 0,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              side: const BorderSide(color: Color(0xFFE2E8F0)),
+                              side: BorderSide(color: theme.dividerColor),
                               padding: EdgeInsets.zero,
                             ),
                             child: _isSendingOTP
@@ -195,25 +202,25 @@ class _SignupScreenState extends State<SignupScreen> {
                   
                   if (_otpSent) ...[
                     const SizedBox(height: 20),
-                    _buildLabel("Verification Code (OTP)"),
-                    _buildTextField(controller: _otpController, hint: "Enter 6-digit code"),
+                    _buildLabel("Verification Code (OTP)", theme, isDark),
+                    _buildTextField(controller: _otpController, hint: "Enter 6-digit code", theme: theme, isDark: isDark),
                   ],
                   
                   const SizedBox(height: 20),
-                  _buildLabel("Phone Number (MTN/Telecel)"),
-                  _buildTextField(controller: _phoneController, hint: "e.g. +233 55 123 4567"),
+                  _buildLabel("Phone Number (MTN/Telecel)", theme, isDark),
+                  _buildTextField(controller: _phoneController, hint: "e.g. +233 55 123 4567", theme: theme, isDark: isDark),
                   
                   const SizedBox(height: 20),
-                  _buildLabel("Password"),
-                  _buildPasswordField(controller: _passwordController, obscure: _obscurePassword, onToggle: () => setState(() => _obscurePassword = !_obscurePassword)),
+                  _buildLabel("Password", theme, isDark),
+                  _buildPasswordField(controller: _passwordController, obscure: _obscurePassword, onToggle: () => setState(() => _obscurePassword = !_obscurePassword), theme: theme, isDark: isDark),
                   
                   const SizedBox(height: 20),
-                  _buildLabel("Confirm Password"),
-                  _buildPasswordField(controller: _confirmPasswordController, hint: "Repeat password", obscure: _obscureConfirm, onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm)),
+                  _buildLabel("Confirm Password", theme, isDark),
+                  _buildPasswordField(controller: _confirmPasswordController, hint: "Repeat password", obscure: _obscureConfirm, onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm), theme: theme, isDark: isDark),
                   
                   const SizedBox(height: 20),
-                  _buildLabel("Referral Code (Optional)"),
-                  _buildTextField(controller: _referralController, hint: "Did someone invite you?"),
+                  _buildLabel("Referral Code (Optional)", theme, isDark),
+                  _buildTextField(controller: _referralController, hint: "Did someone invite you?", theme: theme, isDark: isDark),
                   
                   const SizedBox(height: 32),
                   
@@ -234,18 +241,20 @@ class _SignupScreenState extends State<SignupScreen> {
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, ThemeData theme, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: theme.colorScheme.onSurface),
       ),
     );
   }
@@ -254,21 +263,23 @@ class _SignupScreenState extends State<SignupScreen> {
     required TextEditingController controller,
     required String hint,
     bool enabled = true,
+    required ThemeData theme,
+    required bool isDark,
   }) {
     return TextField(
       controller: controller,
       enabled: enabled,
-      style: const TextStyle(fontSize: 15),
+      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+        hintStyle: TextStyle(color: isDark ? Colors.white24 : const Color(0xFF94A3B8)),
         filled: true,
-        fillColor: enabled ? const Color(0xFFF8FAFC) : const Color(0xFFF1F5F9),
+        fillColor: enabled ? (isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC)) : (isDark ? theme.cardColor : const Color(0xFFF1F5F9)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2)),
-        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
       ),
     );
   }
@@ -278,16 +289,18 @@ class _SignupScreenState extends State<SignupScreen> {
     String hint = "••••••••",
     required bool obscure,
     required VoidCallback onToggle,
+    required ThemeData theme,
+    required bool isDark,
   }) {
     return TextField(
       controller: controller,
       obscureText: obscure,
-      style: const TextStyle(fontSize: 15),
+      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+        hintStyle: TextStyle(color: isDark ? Colors.white24 : const Color(0xFF94A3B8)),
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC),
         suffixIcon: Padding(
           padding: const EdgeInsets.only(right: 8.0),
           child: TextButton(
@@ -301,8 +314,8 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2)),
       ),
     );

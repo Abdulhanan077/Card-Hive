@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/models/rate.dart';
 import 'package:mycardhive_mobile/services/category_utils.dart';
+import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
 
 class RatesCalculator extends StatefulWidget {
   final List<Rate> rates;
@@ -83,6 +84,9 @@ class _RatesCalculatorState extends State<RatesCalculator> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final brands = widget.rates.map((r) => r.cardBrand).toSet().toList()..sort();
     final categories = widget.rates
         .where((r) =>
@@ -94,14 +98,14 @@ class _RatesCalculatorState extends State<RatesCalculator> {
       ..sort(CategoryUtils.sortCategories);
 
     return Container(
-      padding: const EdgeInsets.all(24), // matching padding 1.5rem typical
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12), // matching --radius-lg
-        border: Border.all(color: const Color(0xFFE2E8F0)), // matching --border
-        boxShadow: const [
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor),
+        boxShadow: isDark ? [] : const [
           BoxShadow(
-            color: Color(0x0D000000), // matching --shadow-sm
+            color: Color(0x0D000000),
             blurRadius: 2,
             offset: Offset(0, 1),
           ),
@@ -110,13 +114,15 @@ class _RatesCalculatorState extends State<RatesCalculator> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          _buildHeader(theme, isDark),
           const SizedBox(height: 20),
-          _buildLabel("Select Gift Card Brand"),
+          _buildLabel("Select Gift Card Brand", theme, isDark),
           _buildDropdown(
             value: selectedBrand,
             items: brands,
             hint: "Choose Brand...",
+            theme: theme,
+            isDark: isDark,
             onChanged: (val) {
               setState(() {
                 selectedBrand = val;
@@ -126,10 +132,12 @@ class _RatesCalculatorState extends State<RatesCalculator> {
             },
           ),
           const SizedBox(height: 15),
-          _buildLabel("Card Type"),
+          _buildLabel("Card Type", theme, isDark),
           _buildDropdown(
             value: selectedType,
             items: ["Physical", "E-code"],
+            theme: theme,
+            isDark: isDark,
             onChanged: (val) {
               setState(() {
                 selectedType = val!;
@@ -139,12 +147,14 @@ class _RatesCalculatorState extends State<RatesCalculator> {
             },
           ),
           const SizedBox(height: 15),
-          _buildLabel("Category / Country"),
+          _buildLabel("Category / Country", theme, isDark),
           _buildDropdown(
             value: selectedCategory,
             items: categories,
             hint: selectedBrand != null ? "Choose category..." : "Select Brand First",
             disabled: selectedBrand == null,
+            theme: theme,
+            isDark: isDark,
             onChanged: (val) {
               setState(() {
                 selectedCategory = val;
@@ -158,21 +168,21 @@ class _RatesCalculatorState extends State<RatesCalculator> {
             },
           ),
           const SizedBox(height: 15),
-          _buildLabel("Amount (USD/GBP/EUR)"),
-          _buildAmountField(),
+          _buildLabel("Amount (USD/GBP/EUR)", theme, isDark),
+          _buildAmountField(theme, isDark),
           if (amountError != null)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Text(amountError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
             ),
           const SizedBox(height: 25),
-          _buildResultArea(),
+          _buildResultArea(theme, isDark),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ThemeData theme, bool isDark) {
     return Row(
       children: [
         Container(
@@ -185,15 +195,15 @@ class _RatesCalculatorState extends State<RatesCalculator> {
           child: const Icon(Icons.calculate_rounded, color: Colors.white, size: 24),
         ),
         const SizedBox(width: 12),
-        const Text(
+        Text(
           "Rate Calculator",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
         ),
       ],
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, ThemeData theme, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
@@ -201,7 +211,7 @@ class _RatesCalculatorState extends State<RatesCalculator> {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Colors.black.withOpacity(0.7),
+          color: theme.colorScheme.onSurface.withOpacity(0.7),
         ),
       ),
     );
@@ -212,6 +222,8 @@ class _RatesCalculatorState extends State<RatesCalculator> {
     required List<String> items,
     String? hint,
     bool disabled = false,
+    required ThemeData theme,
+    required bool isDark,
     required void Function(String?) onChanged,
   }) {
     return InkWell(
@@ -219,6 +231,8 @@ class _RatesCalculatorState extends State<RatesCalculator> {
         _showBottomSheetPicker(
           items: items, 
           title: hint ?? "Select Option", 
+          theme: theme,
+          isDark: isDark,
           onSelected: onChanged
         );
       },
@@ -226,9 +240,11 @@ class _RatesCalculatorState extends State<RatesCalculator> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: disabled ? Colors.grey[100] : Colors.grey[50],
+          color: disabled 
+            ? (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]) 
+            : (isDark ? Colors.white.withOpacity(0.1) : Colors.grey[50]),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withOpacity(0.3), width: 2),
+          border: Border.all(color: theme.dividerColor, width: 2),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -239,12 +255,12 @@ class _RatesCalculatorState extends State<RatesCalculator> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: value == null ? FontWeight.normal : FontWeight.w600,
-                  color: value == null ? Colors.black54 : Colors.black87,
+                  color: value == null ? theme.colorScheme.onSurface.withOpacity(0.5) : theme.colorScheme.onSurface,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black54),
+            Icon(Icons.keyboard_arrow_down_rounded, color: theme.colorScheme.onSurface.withOpacity(0.5)),
           ],
         ),
       ),
@@ -254,12 +270,14 @@ class _RatesCalculatorState extends State<RatesCalculator> {
   void _showBottomSheetPicker({
     required List<String> items,
     required String title,
+    required ThemeData theme,
+    required bool isDark,
     required void Function(String?) onSelected,
   }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -276,25 +294,29 @@ class _RatesCalculatorState extends State<RatesCalculator> {
     );
   }
 
-  Widget _buildAmountField() {
+  Widget _buildAmountField(ThemeData theme, bool isDark) {
     final bool isExact = selectedCategory != null && CategoryUtils.getExactCategoryAmount(selectedCategory!) != null;
 
     return TextFormField(
       controller: _amountController,
       keyboardType: TextInputType.number,
       readOnly: isExact,
+      style: TextStyle(color: theme.colorScheme.onSurface),
       decoration: InputDecoration(
         hintText: "Enter face value amount",
+        hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4)),
         filled: true,
-        fillColor: isExact ? Colors.grey[200] : Colors.grey[50],
+        fillColor: isExact 
+          ? (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[200]) 
+          : (isDark ? Colors.white.withOpacity(0.1) : Colors.grey[50]),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 2),
+          borderSide: BorderSide(color: theme.dividerColor, width: 2),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 2),
+          borderSide: BorderSide(color: theme.dividerColor, width: 2),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -304,12 +326,12 @@ class _RatesCalculatorState extends State<RatesCalculator> {
     );
   }
 
-  Widget _buildResultArea() {
+  Widget _buildResultArea(ThemeData theme, bool isDark) {
     return Column(
       children: [
-        const Text(
+        Text(
           "ESTIMATED PAYOUT",
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface.withOpacity(0.5)),
         ),
         const SizedBox(height: 8),
         Row(
@@ -339,7 +361,12 @@ class _RatesCalculatorState extends State<RatesCalculator> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
@@ -381,6 +408,9 @@ class _BottomSheetPickerContentState extends State<_BottomSheetPickerContent> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final filtered = widget.items
         .where((e) => e.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
@@ -399,20 +429,22 @@ class _BottomSheetPickerContentState extends State<_BottomSheetPickerContent> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: theme.dividerColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(height: 20),
-          Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Text(widget.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.colorScheme.onSurface)),
           const SizedBox(height: 15),
           if (widget.items.length > 5)
             TextField(
+              style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: "Search...",
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface.withOpacity(0.4)),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[100],
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
               ),
@@ -431,7 +463,7 @@ class _BottomSheetPickerContentState extends State<_BottomSheetPickerContent> {
               itemBuilder: (context, index) {
                 final item = filtered[index];
                 return ListTile(
-                  title: Text(item, style: const TextStyle(fontWeight: FontWeight.w500)),
+                  title: Text(item, style: TextStyle(fontWeight: FontWeight.w500, color: theme.colorScheme.onSurface)),
                   onTap: () => widget.onSelected(item),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

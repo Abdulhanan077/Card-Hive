@@ -1,22 +1,32 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mycardhive_mobile/models/rate.dart';
+import 'package:mycardhive_mobile/services/auth_service.dart';
+import 'package:mycardhive_mobile/services/cache_service.dart';
 
 class RatesService {
-  // Use your production URL here once the API is ready
-  static const String baseUrl = 'https://mycardhive.com/api';
+  static const String baseUrl = AuthService.baseUrl;
 
   Future<RatesResponse> fetchRates() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/rates'));
+      final response = await http.get(Uri.parse('$baseUrl/rates')).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
-        return RatesResponse.fromJson(json.decode(response.body));
+        final Map<String, dynamic> data = json.decode(response.body);
+        // Cache the fresh data
+        await CacheService.cacheRates(data);
+        return RatesResponse.fromJson(data);
       } else {
-        throw Exception('Failed to load rates');
+        throw Exception('Server error');
       }
     } catch (e) {
-      // Return mock data if API fails or isn't ready
+      // Offline fallback: Attempt to load from cache
+      final cachedData = CacheService.getCachedRates();
+      if (cachedData != null) {
+        return RatesResponse.fromJson(cachedData);
+      }
+      
+      // Critical fallback: Static mock data if cache is also empty
       return RatesResponse(
         rates: [
           Rate(id: 1, cardBrand: "iTunes", cardCountry: "USA (10-500)", cardType: "Physical", rate: 12.5),

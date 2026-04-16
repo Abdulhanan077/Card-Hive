@@ -70,13 +70,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+          icon: Icon(Icons.arrow_back_ios_new, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -86,35 +89,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.orange[50], 
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.lock_reset, size: 40, color: Colors.orange),
-                  ),
-                ),
-              ),
+              Image.asset('assets/logo.png', height: 250),
+              const SizedBox(height: 12),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 "Reset Password",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), letterSpacing: -0.5),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface, letterSpacing: -0.5),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "Securely reset your account password",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 15, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
               ),
               const SizedBox(height: 40),
 
-              _buildLabel("Email Address"),
-              _buildTextField(controller: _emailController, hint: "Enter your account email", enabled: !_codeSent),
+              _buildLabel("Email Address", theme, isDark),
+              _buildTextField(controller: _emailController, hint: "Enter your account email", enabled: !_codeSent, theme: theme, isDark: isDark),
 
               if (!_codeSent) ...[
                 const SizedBox(height: 30),
@@ -134,12 +126,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ] else ...[
                 const SizedBox(height: 20),
-                _buildLabel("Verification Code (OTP)"),
-                _buildTextField(controller: _otpController, hint: "Enter 6-digit code"),
+                _buildLabel("Verification Code (OTP)", theme, isDark),
+                _buildTextField(controller: _otpController, hint: "Enter 6-digit code", theme: theme, isDark: isDark),
                 
                 const SizedBox(height: 20),
-                _buildLabel("New Password"),
-                _buildPasswordField(),
+                _buildLabel("New Password", theme, isDark),
+                _buildPasswordField(theme, isDark),
                 
                 const SizedBox(height: 40),
                 
@@ -165,50 +157,52 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, ThemeData theme, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface),
       ),
     );
   }
 
-  Widget _buildTextField({required TextEditingController controller, required String hint, bool enabled = true}) {
+  Widget _buildTextField({required TextEditingController controller, required String hint, bool enabled = true, required ThemeData theme, required bool isDark}) {
     return TextField(
       controller: controller,
       enabled: enabled,
+      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+        hintStyle: TextStyle(color: isDark ? Colors.white24 : const Color(0xFF94A3B8)),
         filled: true,
-        fillColor: enabled ? const Color(0xFFF8FAFC) : const Color(0xFFF1F5F9),
+        fillColor: enabled ? (isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC)) : (isDark ? theme.cardColor : const Color(0xFFF1F5F9)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
-        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+        disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
       ),
     );
   }
 
-  Widget _buildPasswordField() {
+  Widget _buildPasswordField(ThemeData theme, bool isDark) {
     return TextField(
       controller: _newPasswordController,
       obscureText: _obscurePassword,
+      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
       decoration: InputDecoration(
         hintText: "••••••••",
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+        hintStyle: TextStyle(color: isDark ? Colors.white24 : const Color(0xFF94A3B8)),
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC),
         suffixIcon: IconButton(
-          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF94A3B8), size: 20),
+          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: isDark ? Colors.white24 : const Color(0xFF94A3B8), size: 20),
           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
       ),
     );

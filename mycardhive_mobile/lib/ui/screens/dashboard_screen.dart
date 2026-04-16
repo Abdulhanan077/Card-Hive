@@ -2,6 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/main.dart';
 import 'package:mycardhive_mobile/ui/screens/sell_card_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/trades_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/leaderboard_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/referrals_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/settings_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/rewards_screen.dart';
+import 'package:mycardhive_mobile/services/cache_service.dart';
+import 'package:mycardhive_mobile/services/status_service.dart';
+import 'package:mycardhive_mobile/services/trade_service.dart';
+import 'package:mycardhive_mobile/services/rate_service.dart';
+import 'package:intl/intl.dart';
+import 'dart:async';
+import 'package:mycardhive_mobile/services/notification_service.dart';
+import 'package:mycardhive_mobile/ui/screens/notifications_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -14,6 +28,75 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final AuthService _authService = AuthService();
+  final TradeService _tradeService = TradeService();
+  final RateService _rateService = RateService();
+  
+  List<Map<String, dynamic>> _topRates = [];
+  List<Map<String, dynamic>> _recentTrades = [];
+  Map<String, dynamic> _user = {};
+  bool _isRefreshing = false;
+  int _unreadCount = 0;
+  bool _initialCheckDone = false;
+  Timer? _notifTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _user = widget.user;
+    _loadDashboardData();
+    StatusPollingService.startPolling();
+    _startNotificationPolling();
+  }
+
+  void _startNotificationPolling() {
+    _checkNotifications();
+    _notifTimer = Timer.periodic(const Duration(seconds: 30), (_) => _checkNotifications());
+  }
+
+  Future<void> _checkNotifications() async {
+    final notifications = await NotificationService.getFilteredNotifications(_authService);
+    if (mounted) {
+      setState(() => _unreadCount = notifications.length);
+    }
+    _initialCheckDone = true;
+  }
+
+  Future<void> _loadDashboardData() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      // 1. Refresh user stats from server
+      final autoLoginRes = await _authService.tryAutoLogin();
+      if (autoLoginRes['success']) {
+        setState(() => _user = autoLoginRes['user']);
+        await CacheService.cacheDashboard(_user);
+      }
+
+      // 2. Load trades and rates
+      final trades = await _tradeService.getTrades();
+      final rates = await _rateService.getTopRates();
+      setState(() {
+        _recentTrades = trades.take(3).toList();
+        _topRates = rates;
+      });
+    } catch (e) {
+      debugPrint("Dashboard Refresh Error: $e");
+      // Fallback to cache if needed
+      final cachedTrades = CacheService.getCachedTrades();
+      if (cachedTrades != null) {
+        setState(() => _recentTrades = cachedTrades.take(3).toList());
+      }
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    StatusPollingService.stopPolling();
+    _notifTimer?.cancel();
+    super.dispose();
+  }
 
   void _logout() async {
     await _authService.logout();
@@ -23,218 +106,367 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu, color: isDark ? Colors.white : Colors.black87),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: Image.asset('assets/logo.png', height: 28),
-        backgroundColor: Colors.white,
-        centerTitle: false,
+        backgroundColor: theme.cardColor,
+        centerTitle: true,
         elevation: 1,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.black87),
-            onPressed: () {},
-          ),
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu, color: Colors.black87),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
+          Stack(
+            children: [
+              IconButton(
+                icon: Icon(_unreadCount > 0 ? Icons.notifications_active : Icons.notifications_none, 
+                  color: _unreadCount > 0 ? const Color(0xFF2563EB) : (isDark ? Colors.white : Colors.black87)),
+                onPressed: () async {
+                  // Mark current notifications as "seen" locally to clear status updates from badge
+                  final notifications = await NotificationService.checkAndNotify(_authService);
+                  for (var n in notifications) {
+                    if (n['type'] == 'STATUS') {
+                      NotificationService.markStatusAsSeenLocally(n['id']);
+                    }
+                  }
+                  
+                  setState(() => _unreadCount = 0);
+                  await Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsScreen()));
+                  
+                  // Final refresh
+                  final updatedNotifs = await NotificationService.getFilteredNotifications(_authService);
+                  setState(() => _unreadCount = updatedNotifs.length);
+                },
+              ),
+              if (_unreadCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Text(
+                      '$_unreadCount',
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
-      endDrawer: _buildUserPanelDrawer(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Welcome Banner
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: Color(0xFF2563EB)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: const TextStyle(color: Color(0xFF1E3A8A), fontSize: 13, height: 1.4),
-                        children: [
-                          const TextSpan(text: "Welcome to Card Hive! ", style: TextStyle(fontWeight: FontWeight.bold)),
-                          TextSpan(text: "Keep submitting gift cards to climb the VIP Tiers and multiply your Reward Points."),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+      drawer: _buildUserPanelDrawer(),
+      body: RefreshIndicator(
+        onRefresh: _loadDashboardData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+            // Latest Promotions / Status Update Banner
+            _buildStatusCarousel(isDark, theme),
+            const SizedBox(height: 16),
 
-            // Latest Promotions
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)], // Purple to Indigo
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
+            // Top Content Row: Dashboard Grid (Wallet & Referrals)
+            _buildColoredInfoCard(
+              title: "My Wallet (Reward Pts)",
+              value: "${_user['rewardBalance'] ?? 0} pts",
+              buttonText: "View Rewards",
+              icon: "💼",
+              gradient: const [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RewardsScreen(user: _user))),
+            ),
+            const SizedBox(height: 12),
+            _buildColoredInfoCard(
+              title: "Referral Rewards",
+              value: "New!",
+              buttonText: "Open Referrals Hub",
+              icon: "🎁",
+              description: "Your personal dashboard is ready. Track your referrals, bonuses, and earnings in one place!",
+              gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralsScreen())),
+            ),
+            const SizedBox(height: 16),
+
+            // Quick Actions (Matching Web layout better)
+            _buildModernCard(
+              isDark, theme,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Latest Promotions", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Discover the best exchange rates and start selling your unused gift cards today to maximize your payouts.",
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen()));
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF6366F1),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text("Sell Now", style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
+                   Text("Quick Actions", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+                   const SizedBox(height: 16),
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildQuickAction(Icons.credit_card, "Sell Card", const Color(0xFF9333EA), theme, isDark, onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen()));
+                      }),
+                      _buildQuickAction(Icons.bar_chart, "History", const Color(0xFF16A34A), theme, isDark, onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const TradesScreen()));
+                      }),
+                      _buildQuickAction(Icons.settings, "Settings", const Color(0xFF0284C7), theme, isDark, onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                      }),
+                    ],
+                   ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
 
-            // VIP Status
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(16),
-              ),
+            // Recent Trades Section
+            _buildModernCard(
+              isDark, theme,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("VIP Status", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: const Color(0xFFB45309), borderRadius: BorderRadius.circular(20)),
-                        child: const Text("BRONZE", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      Text("Recent Trades", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+                      TextButton(
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TradesScreen())),
+                        child: const Text("View All", style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  RichText(
-                    text: const TextSpan(
-                      children: [
-                        TextSpan(text: "5 ", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-                        TextSpan(text: "VIP Pts", style: TextStyle(color: Colors.white70)),
-                      ],
-                    ),
-                  ),
-                  const Text("Accumulated from successful trades", style: TextStyle(color: Colors.white54, fontSize: 12)),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  if (_recentTrades.isEmpty)
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Center(child: Text("No recent activity.", style: TextStyle(color: Colors.grey))))
+                  else
+                    ..._recentTrades.map((t) => _buildTradeListItem(t, isDark, theme)),
+                ],
+              ),
+            ),
+             const SizedBox(height: 16),
+
+            // VIP Status
+            _buildVipCard(isDark, theme),
+            const SizedBox(height: 16),
+
+            // Top Rates Section
+            _buildModernCard(
+              isDark, theme,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text("Progress to Silver", style: TextStyle(color: Colors.white, fontSize: 12)),
-                      Text("5 / 51 Pts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                    children: [
+                      Text("Top Rates Today", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+                      TextButton(
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen())),
+                        child: const Text("Trade Now", style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  LinearProgressIndicator(value: 5 / 51, backgroundColor: Colors.white24, color: const Color(0xFFEAB308), minHeight: 6, borderRadius: BorderRadius.circular(10)),
-                  const SizedBox(height: 8),
-                  const Text("Benefit: 1.5x Reward Multiplier", style: TextStyle(color: Colors.white54, fontSize: 11, fontStyle: FontStyle.italic)),
+                  if (_topRates.isEmpty)
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Center(child: Text("Loading live rates...", style: TextStyle(color: Colors.grey))))
+                  else
+                    ..._topRates.map((r) => _buildRateListItem(r, isDark, theme)),
                 ],
               ),
             ),
             const SizedBox(height: 16),
 
-            // Grid items: Wallet & Referrals
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 140,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: const Color(0xFF9333EA), borderRadius: BorderRadius.circular(16)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("My Wallet (Reward Pts)", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                        const Spacer(),
-                        const Text("1,112 pts", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                        const Spacer(),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF9333EA), padding: EdgeInsets.zero),
-                            child: const Text("View Rewards"),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Container(
-                    height: 140,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(16)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Expanded(child: Text("Referral Rewards", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))),
-                            Text("New!", style: TextStyle(color: Colors.white70, fontSize: 10)),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Text("Track your referrals, bonuses, and earnings.", style: TextStyle(color: Colors.white70, fontSize: 11)),
-                        const Spacer(),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF2563EB), padding: EdgeInsets.zero),
-                            child: const Text("Open Hub"),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            // Support Section
+            _buildModernCard(
+              isDark, theme,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Text("Support", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+                   const SizedBox(height: 16),
+                   _buildSupportButton(
+                     icon: "💬",
+                     title: "WhatsApp Support",
+                     subtitle: "+233 201548030", // Placeholder matching screenshot
+                     color: const Color(0xFF10B981),
+                     onTap: () => launchUrl(Uri.parse("https://wa.me/233201548030")),
+                   ),
+                   const SizedBox(height: 12),
+                   _buildSupportButton(
+                     icon: "✉️",
+                     title: "Email Support",
+                     subtitle: "support@mycardhive.com",
+                     color: const Color(0xFF2563EB),
+                     onTap: () => launchUrl(Uri.parse("mailto:support@mycardhive.com")),
+                   ),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
-            // Quick Actions
-            const Text("Quick Actions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+  Widget _buildStatusCarousel(bool isDark, ThemeData theme) {
+     return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Latest Promotions", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text(
+            "Discover the best exchange rates and start selling your gift cards today.",
+            style: TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen())),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF6366F1),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text("Sell Now", style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildColoredInfoCard({
+    required String title, 
+    required String value, 
+    required String buttonText, 
+    required String icon, 
+    required List<Color> gradient, 
+    required VoidCallback onTap,
+    String? description,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: gradient[1].withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(icon, style: const TextStyle(fontSize: 18)),
+                  const SizedBox(width: 8),
+                  Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                ],
+              ),
+              if (value == "New!")
+                Text("New!", style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w500)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (description != null)
+            Text(description, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14, height: 1.4)),
+          if (description == null)
+            Text(value, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+          
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: onTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: gradient[1],
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(buttonText, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernCard(bool isDark, ThemeData theme, {required Widget child, EdgeInsets padding = const EdgeInsets.all(16)}) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: isDark ? theme.cardColor : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
+        boxShadow: isDark ? [] : [
+           BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildRateListItem(Map<String, dynamic> rate, bool isDark, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : theme.dividerColor.withOpacity(0.5)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: theme.dividerColor),
+              ),
+              child: const Icon(Icons.credit_card, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("${rate['cardBrand'] ?? "Card"} (${rate['cardCountry'] ?? ""})", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: theme.colorScheme.onSurface)),
+                  Text(rate['cardType'] ?? "Physical", style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _buildQuickAction(Icons.credit_card, "Sell Card", Colors.blue, onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen()));
-                }),
-                _buildQuickAction(Icons.bar_chart, "History", Colors.green, onTap: () {}),
-                _buildQuickAction(Icons.settings, "Settings", Colors.grey, onTap: () {}),
+                Text("${rate['effectiveRate'] ?? rate['rate']} GHS/\$", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF2563EB))),
               ],
             ),
           ],
@@ -243,7 +475,149 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildQuickAction(IconData icon, String label, Color color, {VoidCallback? onTap}) {
+  Widget _buildTradeListItem(Map<String, dynamic> trade, bool isDark, ThemeData theme) {
+    final status = trade['status'] as String;
+    final isRejected = status == "REJECTED";
+    final isPaid = status == "PAID";
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: theme.dividerColor.withOpacity(0.1)))),
+        child: Row(
+          children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: isRejected ? Colors.red[50] : (isPaid ? Colors.green[50] : Colors.blue[50]),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isRejected ? Icons.close : (isPaid ? Icons.check : Icons.access_time),
+                size: 18, 
+                color: isRejected ? Colors.red : (isPaid ? Colors.green : Colors.blue),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(trade['cardBrand'] ?? "Trade", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(DateFormat('MM/dd/yyyy').format(DateTime.parse(trade['createdAt'])), style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text("${trade['faceValue']} ${trade['currency']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isRejected ? Colors.red : (isPaid ? Colors.green : Colors.orange),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(status.replaceAll("_", " "), style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSupportButton({required String icon, required String title, required String subtitle, required Color color, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              child: Center(child: Text(icon, style: const TextStyle(fontSize: 18))),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVipCard(bool isDark, ThemeData theme) {
+    final pts = _user['completedTradesCount'] ?? 0;
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? theme.cardColor : const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("VIP Status", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(color: const Color(0xFFB45309), borderRadius: BorderRadius.circular(20)),
+                child: const Text("BRONZE", style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text("$pts ", style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 6),
+                child: Text("VIP Pts", style: TextStyle(color: Colors.white70, fontSize: 16)),
+              ),
+            ],
+          ),
+          const Text("Accumulated from successful trades", style: TextStyle(color: Colors.white54, fontSize: 12)),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Progress to Silver", style: TextStyle(color: Colors.white, fontSize: 13)),
+              Text("$pts / 51 Pts", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: (pts / 51).clamp(0, 1).toDouble(), 
+            backgroundColor: Colors.white12, 
+            color: const Color(0xFFEAB308), 
+            minHeight: 6, 
+            borderRadius: BorderRadius.circular(10)
+          ),
+          const SizedBox(height: 12),
+          const Text("Benefit: 1.5x Reward Multiplier", style: TextStyle(color: Colors.white54, fontSize: 12, fontStyle: FontStyle.italic)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAction(IconData icon, String label, Color color, ThemeData theme, bool isDark, {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -252,27 +626,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? theme.cardColor : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
-              border: Border.all(color: Colors.grey.withOpacity(0.1)),
+              boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+              border: Border.all(color: theme.dividerColor),
             ),
             child: Icon(icon, color: color, size: 28),
           ),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: theme.colorScheme.onSurface)),
         ],
       ),
     );
   }
 
   Widget _buildUserPanelDrawer() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.cardColor,
       child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -281,16 +659,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("User Panel", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                      IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                      Text("User Panel", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+                      IconButton(icon: Icon(Icons.close, color: theme.colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
                     ],
                   ),
-                  Text("@${widget.user['username']}", style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.w600)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("@${_user['username']}", style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.w600)),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                        },
+                        style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                        child: Text("Edit Profile", style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.grey, decoration: TextDecoration.underline)),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            const Divider(height: 1),
-            _buildDrawerItem("Dashboard Home", isSelected: true),
+            Divider(height: 1, color: theme.dividerColor),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ElevatedButton.icon(
@@ -308,45 +698,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+            _buildDrawerItem("Dashboard Home", isSelected: true),
             _buildDrawerItem("My Trades"),
             _buildDrawerItem("Leaderboard"),
             _buildDrawerItem("Referrals"),
             _buildDrawerItem("Settings"),
             _buildDrawerItem("Security & Sessions"),
-            const Spacer(),
+            const SizedBox(height: 20),
             
             // Lifetime Stats
             Container(
               padding: const EdgeInsets.all(20),
-              color: const Color(0xFFF8FAFC),
+              color: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text("LIFETIME STATISTICS", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const SizedBox(height: 16),
+                  
+                  _buildStatBox("Total Trades", "${_user['stats']?['totalTrades'] ?? 0}", theme, isDark),
                   const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.withOpacity(0.2))),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                         Text("Total Trades", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                         Text("13", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
+                  _buildStatBox("Pending", "${_user['stats']?['pending'] ?? 0}", theme, isDark, valueColor: Colors.orange),
+                  const SizedBox(height: 10),
+                  
+                  Row(
+                    children: [
+                      Expanded(child: _buildStatBox("Successful", "${_user['stats']?['successful'] ?? 0}", theme, isDark, valueColor: Colors.green)),
+                      const SizedBox(width: 10),
+                      Expanded(child: _buildStatBox("Rejected", "${_user['stats']?['rejected'] ?? 0}", theme, isDark, valueColor: Colors.red)),
+                    ],
                   ),
                   const SizedBox(height: 10),
+
+                  _buildStatBox("Total Received (₵)", "₵ ${(_user['stats']?['totalReceivedGHS'] ?? 0).toStringAsFixed(2)}", theme, isDark, isFullWidth: true),
+                  const SizedBox(height: 10),
+                  _buildStatBox("Total Volume (\$)", "\$ ${(_user['stats']?['totalVolumeUSD'] ?? 0).toStringAsFixed(2)}", theme, isDark, isFullWidth: true, valueColor: const Color(0xFF2563EB)),
+                  
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: TextButton(
                       onPressed: _logout,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[50],
-                        foregroundColor: Colors.red[700],
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text("Logout"),
+                      child: const Text("Log Out", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -355,12 +748,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDrawerItem(String title, {bool isSelected = false}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        if (title == "My Trades") {
+          Navigator.pop(context); // Close Drawer
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const TradesScreen()));
+        } else if (title == "Leaderboard") {
+          Navigator.pop(context);
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaderboardScreen()));
+        } else if (title == "Referrals") {
+          Navigator.pop(context);
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralsScreen()));
+        } else if (title == "Settings" || title == "Security & Sessions") {
+          Navigator.pop(context);
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+        }
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         child: Text(
@@ -368,9 +779,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF475569),
+            color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white70 : const Color(0xFF475569)),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatBox(String title, String value, ThemeData theme, bool isDark, {Color? valueColor, bool isFullWidth = true}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
+        boxShadow: isDark ? [] : [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: valueColor ?? theme.colorScheme.onSurface,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -77,6 +77,25 @@ export async function POST(request: Request) {
             }
         });
 
+        // Fetch lifetime stats
+        const trades = await prisma.trade.findMany({
+            where: { userId: user.id },
+            select: {
+                status: true,
+                faceValue: true,
+                calculatedPayout: true,
+            }
+        });
+
+        const stats = {
+            totalTrades: trades.length,
+            pending: trades.filter(t => ['PENDING', 'UNDER_REVIEW', 'REVIEWING'].includes(t.status)).length,
+            successful: trades.filter(t => ['PAID', 'COMPLETED'].includes(t.status)).length,
+            rejected: trades.filter(t => t.status === 'REJECTED').length,
+            totalReceivedGHS: trades.filter(t => ['PAID', 'COMPLETED'].includes(t.status)).reduce((sum, t) => sum + (t.calculatedPayout || 0), 0),
+            totalVolumeUSD: trades.filter(t => ['PAID', 'COMPLETED'].includes(t.status)).reduce((sum, t) => sum + (t.faceValue || 0), 0),
+        };
+
         return NextResponse.json({
             token,
             user: {
@@ -84,6 +103,9 @@ export async function POST(request: Request) {
                 username: user.username,
                 email: user.email,
                 role: user.role,
+                rewardBalance: user.rewardBalance,
+                completedTradesCount: user.completedTradesCount,
+                stats,
             }
         }, { status: 200 });
 

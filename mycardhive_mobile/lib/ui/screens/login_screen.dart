@@ -3,6 +3,7 @@ import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/ui/screens/signup_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/dashboard_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/forgot_password_screen.dart';
+import 'package:mycardhive_mobile/services/biometric_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,51 +19,139 @@ class _LoginScreenState extends State<LoginScreen> {
   
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = false;
+  bool _canCheckBiometrics = false;
+  bool _biometricsEnabled = false;
+  bool _promptShown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometrics();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _checkBiometrics() async {
+    final canCheck = await BiometricService.canCheckBiometrics();
+    final enabled = await _authService.isBiometricsEnabled();
+    final promptShown = await _authService.wasBiometricPromptShown();
+    setState(() {
+      _canCheckBiometrics = canCheck;
+      _biometricsEnabled = enabled;
+      _promptShown = promptShown;
+    });
+
+    if (enabled && canCheck) {
+      _handleBiometricLogin();
+    }
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final creds = await _authService.getSavedCredentials();
+    if (creds['username'] != null) {
+      setState(() {
+        _emailController.text = creds['username']!;
+        _passwordController.text = creds['password']!;
+        _rememberMe = true;
+      });
+    }
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    final authenticated = await BiometricService.authenticate();
+    if (authenticated) {
+      final creds = await _authService.getSavedCredentials();
+      if (creds['username'] != null && creds['password'] != null) {
+        _emailController.text = creds['username']!;
+        _passwordController.text = creds['password']!;
+        _handleLogin();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in manually first to enable Biometrics')),
+        );
+      }
+    }
+  }
 
   Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password'), backgroundColor: Colors.red),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter email and password'), backgroundColor: Colors.red),
+        );
+      }
       return;
     }
 
     setState(() => _isLoading = true);
 
-    final result = await _authService.login(email, password);
+    final result = await _authService.login(email, password, rememberMe: _rememberMe);
 
     setState(() => _isLoading = false);
 
     if (!mounted) return;
 
     if (result['success']) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Welcome back, ${result['user']['username']}!'), backgroundColor: Colors.green),
-      );
-      Navigator.pushAndRemoveUntil(
-        context, 
-        MaterialPageRoute(builder: (context) => DashboardScreen(user: result['user'])), 
-        (route) => false,
-      );
+      if (_canCheckBiometrics && !_biometricsEnabled && !_promptShown) {
+        _showBiometricPrompt(result['user']);
+      } else {
+        _navigateToDashboard(result['user']);
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['error']), backgroundColor: Colors.red),
+        SnackBar(content: Text(result['error'] ?? 'Login failed'), backgroundColor: Colors.red),
       );
     }
   }
 
+  void _showBiometricPrompt(dynamic user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Enable Biometrics?"),
+        content: const Text("Would you like to enable Fingerprint/FaceID for faster access next time?"),
+        actions: [
+          TextButton(onPressed: () async {
+            await _authService.setBiometricPromptShown(true);
+            _navigateToDashboard(user);
+          }, child: const Text("Later")),
+          ElevatedButton(
+            onPressed: () async {
+              await _authService.setBiometricsEnabled(true);
+              await _authService.setBiometricPromptShown(true);
+              Navigator.pop(context);
+              _navigateToDashboard(user);
+            },
+            child: const Text("Enable"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToDashboard(dynamic user) {
+    Navigator.pushAndRemoveUntil(
+      context, 
+      MaterialPageRoute(builder: (context) => DashboardScreen(user: user)), 
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Sync parity with global.css --background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back_ios_new, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -70,16 +159,20 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Container(
-              // The exact "authCard" CSS recreation
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset('assets/logo.png', height: 250),
+                const SizedBox(height: 10),
+                Container(
+                  // The exact "authCard" CSS recreation
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF), // --surface
-                borderRadius: BorderRadius.circular(12), // --radius-lg
-                border: Border.all(color: const Color(0xFFE2E8F0)), // --border
-                boxShadow: const [
-                  // --shadow-sm
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.dividerColor),
+                boxShadow: isDark ? [] : const [
                   BoxShadow(color: Color(0x0D000000), offset: Offset(0, 1), blurRadius: 2)
                 ],
               ),
@@ -93,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9), // surface-hover
+                        color: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Center(
@@ -102,46 +195,59 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     "Welcome Back",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     "Sign in to Card Hive to track your trades",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 15, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 15, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
                   ),
                   const SizedBox(height: 32),
                   
-                  _buildLabel("Username or Email"),
+                  _buildLabel("Username or Email", theme, isDark),
                   _buildTextField(
                     controller: _emailController,
                     hint: "Enter username or email",
+                    theme: theme, isDark: isDark,
                   ),
                   
                   const SizedBox(height: 20),
                   
-                  _buildLabel("Password"),
-                  _buildPasswordField(),
+                  _buildLabel("Password", theme, isDark),
+                  _buildPasswordField(theme, isDark),
                   
-                  const SizedBox(height: 6),
-                  
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()));
-                      },
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(50, 30),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        alignment: Alignment.centerRight,
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: _rememberMe,
+                              onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                              activeColor: const Color(0xFF2563EB),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => setState(() => _rememberMe = !_rememberMe),
+                            child: Text("Remember Me", style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 13)),
+                          ),
+                        ],
                       ),
-                      child: const Text("Forgot Password?", style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.w500, fontSize: 13)),
-                    ),
+                      TextButton(
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPasswordScreen())),
+                        style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(50, 30), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                        child: const Text("Forgot Password?", style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.w500, fontSize: 13)),
+                      ),
+                    ],
                   ),
                   
                   const SizedBox(height: 24),
@@ -153,14 +259,27 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2563EB),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        elevation: 0, // Disable material default
-                        shadowColor: Colors.transparent,
+                        elevation: 0,
                       ),
                       child: _isLoading
                           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                           : const Text("Sign In", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
                     ),
                   ),
+
+                  if (_canCheckBiometrics && _biometricsEnabled) ...[
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: _handleBiometricLogin,
+                      icon: const Icon(Icons.fingerprint),
+                      label: const Text("Use Biometrics"),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                        side: BorderSide(color: theme.dividerColor),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ],
                   
                   const SizedBox(height: 20),
                   const Divider(color: Color(0xFFE2E8F0)),
@@ -181,40 +300,42 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, ThemeData theme, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)), // Sync to w500
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: theme.colorScheme.onSurface), // Sync to w500
       ),
     );
   }
 
-  Widget _buildTextField({required TextEditingController controller, required String hint}) {
+  Widget _buildTextField({required TextEditingController controller, required String hint, required ThemeData theme, required bool isDark}) {
     // Stripped icons exactly as dictated by web protocol
     return TextField(
       controller: controller,
-      style: const TextStyle(fontSize: 15),
+      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+        hintStyle: TextStyle(color: isDark ? Colors.white24 : const Color(0xFF94A3B8)),
         filled: true,
-        fillColor: const Color(0xFFF8FAFC), // --background
+        fillColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC), // --background
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8), // --radius-md
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1), // --border
+          borderSide: BorderSide(color: theme.dividerColor, width: 1), // --border
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          borderSide: BorderSide(color: theme.dividerColor, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -224,16 +345,16 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildPasswordField() {
+  Widget _buildPasswordField(ThemeData theme, bool isDark) {
     return TextField(
       controller: _passwordController,
       obscureText: _obscurePassword,
-      style: const TextStyle(fontSize: 15),
+      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
       decoration: InputDecoration(
         hintText: "••••••••",
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+        hintStyle: TextStyle(color: isDark ? Colors.white24 : const Color(0xFF94A3B8)),
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC),
         suffixIcon: Padding(
           padding: const EdgeInsets.only(right: 8.0),
           child: TextButton(
@@ -247,8 +368,8 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: theme.dividerColor, width: 1)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2)),
       ),
     );

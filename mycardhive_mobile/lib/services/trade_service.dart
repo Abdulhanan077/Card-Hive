@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mycardhive_mobile/services/auth_service.dart';
+import 'package:mycardhive_mobile/services/cache_service.dart';
 
 class TradeService {
   final AuthService _authService = AuthService();
@@ -68,7 +69,7 @@ class TradeService {
       }
 
       // Send Request
-      var streamedResponse = await request.send();
+      var streamedResponse = await request.send().timeout(const Duration(seconds: 30));
       var response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 201) {
@@ -84,6 +85,83 @@ class TradeService {
       }
     } catch (e) {
       return {'success': false, 'error': 'Connection failed: $e'};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getTrades() async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) {
+        throw Exception('Unauthorized. Please login again.');
+      }
+
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl}/trades'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'next-auth.session-token=$token',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        final List<Map<String, dynamic>> trades = data.cast<Map<String, dynamic>>();
+        
+        // Cache the fresh data
+        await CacheService.cacheTrades(trades);
+        
+        return trades;
+      } else {
+        // If server returns error, try to fallback to cache
+        final cached = CacheService.getCachedTrades();
+        if (cached != null) return cached;
+        
+        throw Exception('Failed to load trades. Server returned ${response.statusCode}');
+      }
+    } catch (e) {
+      // On network failure, always try to fallback to cache
+      final cached = CacheService.getCachedTrades();
+      if (cached != null) return cached;
+      
+      throw Exception('Failed to fetch trades: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRecentTrades() async {
+    final trades = await getTrades();
+    return trades.take(3).toList();
+  }
+
+  Future<Map<String, dynamic>> getTradeById(String id) async {
+    final trades = await getTrades();
+    return trades.firstWhere(
+      (t) => t['id'].toString() == id || t['tradeId'] == id,
+      orElse: () => throw Exception('Trade not found'),
+    );
+  }
+
+  Future<Map<String, dynamic>> confirmTradeReceipt(String tradeId) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl}/mobile/trades/confirm'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'next-auth.session-token=$token',
+        },
+        body: json.encode({'tradeId': tradeId}),
+      ).timeout(const Duration(seconds: 15));
+
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true};
+      } else {
+        return {'success': false, 'error': data['message'] ?? 'Failed to confirm trade'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
     }
   }
 }

@@ -1,52 +1,178 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mycardhive_mobile/services/cache_service.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class AuthService {
-  // Replace with your computer's local IP address when testing on a physical device
-  // e.g., 'http://192.168.1.10:3000/api'
-  static const String baseUrl = 'http://192.168.168.52:3000/api';
+  // Production API URL
+  static const String baseUrl = 'https://mycardhive.com/api';
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
 
-  Future<Map<String, dynamic>> login(String username, String password) async {
+  Future<String> _getDeviceString() async {
     try {
+      if (Platform.isAndroid) {
+        final androidInfo = await _deviceInfo.androidInfo;
+        return 'Android ${androidInfo.version.release} (${androidInfo.model})';
+      } else if (Platform.isIOS) {
+        final iosInfo = await _deviceInfo.iosInfo;
+        return 'iOS ${iosInfo.systemVersion} (${iosInfo.name})';
+      }
+    } catch (_) {}
+    return 'Mobile App (Unknown Device)';
+  }
+
+  Future<Map<String, dynamic>> login(String username, String password, {bool rememberMe = false}) async {
+    try {
+      final deviceString = await _getDeviceString();
       final response = await http.post(
         Uri.parse('$baseUrl/mobile/login'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'CardHiveMobile/1.0.0 ($deviceString)',
+        },
         body: json.encode({
           'username': username,
           'password': password,
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       final data = json.decode(response.body);
 
       if (response.statusCode == 200) {
         // Save the JWT token securely
         await _storage.write(key: 'jwt_token', value: data['token']);
-        // Save minimal user details
         await _storage.write(key: 'user_id', value: data['user']['id'].toString());
         await _storage.write(key: 'username', value: data['user']['username']);
         
+        // Handle "Remember Me" - if enabled, save credentials for auto-login fallback
+        if (rememberMe) {
+          await _storage.write(key: 'saved_username', value: username);
+          await _storage.write(key: 'saved_password', value: password);
+          await _storage.write(key: 'remember_me', value: 'true');
+        } else {
+          await _storage.delete(key: 'saved_username');
+          await _storage.delete(key: 'saved_password');
+          await _storage.write(key: 'remember_me', value: 'false');
+        }
+
         return {'success': true, 'user': data['user']};
       } else {
         return {'success': false, 'error': data['error'] ?? 'Login failed'};
       }
     } catch (e) {
-      return {'success': false, 'error': 'Cannot connect to server. Check your computer IP.'};
+      return {'success': false, 'error': 'Connection failed. Please check your internet connectivity.'};
     }
+  }
+
+  // --- Auto Login Logic ---
+  Future<Map<String, dynamic>> tryAutoLogin() async {
+    final token = await _storage.read(key: 'jwt_token');
+    final rememberMe = await _storage.read(key: 'remember_me') == 'true';
+    
+    if (token != null) {
+      try {
+        final deviceString = await _getDeviceString();
+        final response = await http.get(
+          Uri.parse('$baseUrl/mobile/user/validate'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': 'next-auth.session-token=$token',
+            'User-Agent': 'CardHiveMobile/1.0.0 ($deviceString)',
+          },
+        ).timeout(const Duration(seconds: 5));
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          if (data['success'] == true) {
+            // Update cached stats while we are at it
+            await CacheService.cacheDashboard(data['user']);
+            
+            return {
+              'success': true,
+              'user': data['user'],
+            };
+          }
+        }
+        
+        // If 401/403 or invalid, we should clear the token
+        if (response.statusCode == 401 || response.statusCode == 403) {
+           await logout();
+        }
+
+      } catch (e) {
+        // On network error during auto-login, fallback to cached data
+        final cachedDashboard = CacheService.getCachedDashboard() ?? {};
+        final userId = await _storage.read(key: 'user_id');
+        final username = await _storage.read(key: 'username');
+        
+        if (userId != null && username != null) {
+          return {
+            'success': true, 
+            'user': {
+              'id': int.tryParse(userId),
+              'username': username,
+              ...cachedDashboard,
+            }
+          };
+        }
+      }
+    }
+    
+    // Fallback to "Remember Me" credentials if token expired but user wanted to stay logged in
+    if (rememberMe) {
+        final u = await _storage.read(key: 'saved_username');
+        final p = await _storage.read(key: 'saved_password');
+        if (u != null && p != null) {
+            return await login(u, p, rememberMe: true);
+        }
+    }
+
+    return {'success': false};
+  }
+
+  // --- Biometrics Preferences ---
+  Future<void> setBiometricsEnabled(bool enabled) async {
+    await _storage.write(key: 'biometrics_enabled', value: enabled.toString());
+  }
+
+  Future<bool> isBiometricsEnabled() async {
+    final val = await _storage.read(key: 'biometrics_enabled');
+    return val == 'true';
+  }
+
+  Future<void> setBiometricPromptShown(bool shown) async {
+    await _storage.write(key: 'biometric_prompt_shown', value: shown.toString());
+  }
+
+  Future<bool> wasBiometricPromptShown() async {
+    final val = await _storage.read(key: 'biometric_prompt_shown');
+    return val == 'true';
+  }
+
+  Future<Map<String, String?>> getSavedCredentials() async {
+    return {
+      'username': await _storage.read(key: 'saved_username'),
+      'password': await _storage.read(key: 'saved_password'),
+    };
+  }
+
+  Future<void> logout() async {
+    await _storage.delete(key: 'jwt_token');
+    await _storage.delete(key: 'user_id');
+    await _storage.delete(key: 'username');
   }
 
   Future<Map<String, dynamic>> sendOTP(String email, String username) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/send-otp'), // Points directly to the web app's existing OTP route
+        Uri.parse('$baseUrl/auth/send-otp'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': email, 'username': username, 'isSignup': true}),
       );
-
       final data = json.decode(response.body);
-
       if (response.statusCode == 200) {
         return {'success': true, 'message': data['message'] ?? 'OTP sent successfully!'};
       } else {
@@ -64,9 +190,7 @@ class AuthService {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': email}),
       );
-
       final data = json.decode(response.body);
-
       if (response.statusCode == 200) {
         return {'success': true, 'message': data['message'] ?? 'Reset code sent!'};
       } else {
@@ -84,9 +208,7 @@ class AuthService {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': email, 'otp': otp, 'newPassword': newPassword}),
       );
-
       final data = json.decode(response.body);
-
       if (response.statusCode == 200) {
         return {'success': true, 'message': data['message'] ?? 'Password reset successfully!'};
       } else {
@@ -112,14 +234,11 @@ class AuthService {
           'otp': otp,
         }),
       );
-
       final data = json.decode(response.body);
-
       if (response.statusCode == 201) {
         await _storage.write(key: 'jwt_token', value: data['token']);
         await _storage.write(key: 'user_id', value: data['user']['id'].toString());
         await _storage.write(key: 'username', value: data['user']['username']);
-        
         return {'success': true, 'user': data['user']};
       } else {
         return {'success': false, 'error': data['error'] ?? 'Registration failed'};
@@ -129,12 +248,6 @@ class AuthService {
     }
   }
 
-  Future<void> logout() async {
-    await _storage.delete(key: 'jwt_token');
-    await _storage.delete(key: 'user_id');
-    await _storage.delete(key: 'username');
-  }
-
   Future<bool> isLoggedIn() async {
     final token = await _storage.read(key: 'jwt_token');
     return token != null;
@@ -142,5 +255,17 @@ class AuthService {
 
   Future<String?> getToken() async {
     return await _storage.read(key: 'jwt_token');
+  }
+
+  Future<Map<String, dynamic>?> getCurrentUser() async {
+    final userId = await _storage.read(key: 'user_id');
+    final username = await _storage.read(key: 'username');
+    if (userId != null && username != null) {
+      return {
+        'id': int.tryParse(userId),
+        'username': username,
+      };
+    }
+    return null;
   }
 }
