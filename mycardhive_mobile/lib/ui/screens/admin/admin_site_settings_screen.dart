@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/admin_service.dart';
 import 'package:mycardhive_mobile/services/notification_service.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:mycardhive_mobile/providers/theme_provider.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
@@ -330,9 +331,29 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
                 subtitle: const Text("Ensure you receive real-time trade alerts", style: TextStyle(fontSize: 10, color: Colors.grey)),
                 trailing: OutlinedButton(
                   onPressed: () async {
-                    await NotificationService.init();
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Notification permissions requested.")));
+                    final status = await Permission.notification.status;
+                    if (status.isPermanentlyDenied) {
+                       if (mounted) {
+                         showDialog(
+                           context: context,
+                           builder: (context) => AlertDialog(
+                             title: const Text("Permission Blocked"),
+                             content: const Text("Notifications are blocked by your system settings. Please enable them in settings to receive trade alerts."),
+                             actions: [
+                               TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                               TextButton(onPressed: () {
+                                 openAppSettings();
+                                 Navigator.pop(context);
+                               }, child: const Text("Open Settings")),
+                             ],
+                           ),
+                         );
+                       }
+                    } else {
+                      await NotificationService.init();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Notification permissions requested.")));
+                      }
                     }
                   },
                   style: OutlinedButton.styleFrom(

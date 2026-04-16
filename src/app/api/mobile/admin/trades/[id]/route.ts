@@ -18,9 +18,15 @@ export async function GET(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
+        const tradeId = parseInt(params.id);
+        if (isNaN(tradeId)) {
+            console.error("Invalid Trade ID provided:", params.id);
+            return NextResponse.json({ error: "Invalid Trade ID" }, { status: 400 });
+        }
+
         const trade = await prisma.trade.findUnique({
             where: { 
-                id: parseInt(params.id) 
+                id: tradeId 
             },
             include: {
                 user: {
@@ -42,8 +48,12 @@ export async function GET(
         }
 
         return NextResponse.json({ success: true, trade });
-    } catch (error) {
-        console.error("Fetch Admin Trade Error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    } catch (error: any) {
+        console.error("ADMIN_FETCH_TRADE_ERROR:", error);
+        return NextResponse.json({ 
+            error: "Internal Server Error", 
+            details: error?.message || "Unknown error",
+            stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+        }, { status: 500 });
     }
 }
