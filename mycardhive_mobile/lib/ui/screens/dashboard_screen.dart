@@ -423,7 +423,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         padding: const EdgeInsets.all(24.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -437,27 +436,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   child: const Text("UPDATE", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
                                 ),
                                 Text(
-                                  "Just now",
+                                  _getTimeAgo(update['createdAt'] ?? ""),
                                   style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10),
                                 ),
                               ],
                             ),
-                            const Spacer(),
-                            Text(
-                              update['message'] ?? "",
-                              style: const TextStyle(
-                                color: Colors.white, 
-                                fontSize: 20, 
-                                fontWeight: FontWeight.bold,
-                                height: 1.4,
-                                fontStyle: FontStyle.italic,
-                                fontFamily: 'Georgia', // Serif-like font for formality
+                            const SizedBox(height: 12),
+                            Expanded(
+                              child: Center(
+                                child: SingleChildScrollView(
+                                  physics: const BouncingScrollPhysics(),
+                                  child: Text(
+                                    update['message'] ?? "",
+                                    style: const TextStyle(
+                                      color: Colors.white, 
+                                      fontSize: 18, 
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.4,
+                                      fontStyle: FontStyle.italic,
+                                      fontFamily: 'Georgia', 
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
                               ),
-                              textAlign: TextAlign.center,
-                              maxLines: 4,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            const Spacer(),
+                            const SizedBox(height: 8),
                           ],
                         ),
                       ),
@@ -481,6 +485,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ],
     );
+  }
+
+  String _getTimeAgo(String dateString) {
+    if (dateString.isEmpty) return "Just now";
+    try {
+      final date = DateTime.parse(dateString);
+      final diff = DateTime.now().difference(date);
+
+      if (diff.inMinutes < 1) return "Just now";
+      if (diff.inMinutes < 60) return "${diff.inMinutes}m ago";
+      if (diff.inHours < 24) return "${diff.inHours}h ago";
+      return "${diff.inDays}d ago";
+    } catch (e) {
+      return "Just now";
+    }
   }
 
   String _getUpdateTitle(Map<String, dynamic> update) {
