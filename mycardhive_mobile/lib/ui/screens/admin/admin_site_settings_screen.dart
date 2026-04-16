@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/admin_service.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:mycardhive_mobile/providers/theme_provider.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_storage_screen.dart';
 
 class AdminSiteSettingsScreen extends StatefulWidget {
   const AdminSiteSettingsScreen({super.key});
@@ -108,7 +111,34 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                   _buildSection(
+                  _buildSection(
+                    title: "Application Appearance",
+                    icon: Icons.palette_outlined,
+                    isDark: isDark,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Dark Mode", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              Text("Toggle application theme", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                            ],
+                          ),
+                          Switch(
+                            value: isDark,
+                            activeColor: const Color(0xFF2563EB),
+                            onChanged: (val) {
+                              Provider.of<ThemeProvider>(context, listen: false).toggleTheme(val);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSection(
                     title: "Branding & Contact",
                     icon: Icons.branding_watermark_outlined,
                     isDark: isDark,
@@ -155,6 +185,33 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
                         controller: _usdtRateController, 
                         isDark: isDark,
                         suffix: "GHS",
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSection(
+                    title: "Advanced Storage Management",
+                    icon: Icons.storage_rounded,
+                    isDark: isDark,
+                    children: [
+                      const Text(
+                        "Access the raw image database to view or delete old trade images. Images can only be deleted if they are older than 3 days.",
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AdminStorageScreen()));
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            side: const BorderSide(color: Colors.red),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text("Manage All Images", style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
                       ),
                     ],
                   ),
