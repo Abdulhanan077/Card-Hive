@@ -46,6 +46,7 @@ class AuthService {
         await _storage.write(key: 'jwt_token', value: data['token']);
         await _storage.write(key: 'user_id', value: data['user']['id'].toString());
         await _storage.write(key: 'username', value: data['user']['username']);
+        await _storage.write(key: 'role', value: data['user']['role']);
         
         // Handle "Remember Me" - if enabled, save credentials for auto-login fallback
         if (rememberMe) {
@@ -103,10 +104,10 @@ class AuthService {
         }
 
       } catch (e) {
-        // On network error during auto-login, fallback to cached data
         final cachedDashboard = CacheService.getCachedDashboard() ?? {};
         final userId = await _storage.read(key: 'user_id');
         final username = await _storage.read(key: 'username');
+        final role = await _storage.read(key: 'role');
         
         if (userId != null && username != null) {
           return {
@@ -114,6 +115,7 @@ class AuthService {
             'user': {
               'id': int.tryParse(userId),
               'username': username,
+              'role': role ?? 'USER',
               ...cachedDashboard,
             }
           };
@@ -163,6 +165,7 @@ class AuthService {
     await _storage.delete(key: 'jwt_token');
     await _storage.delete(key: 'user_id');
     await _storage.delete(key: 'username');
+    await _storage.delete(key: 'role');
   }
 
   Future<Map<String, dynamic>> sendOTP(String email, String username) async {
@@ -239,6 +242,7 @@ class AuthService {
         await _storage.write(key: 'jwt_token', value: data['token']);
         await _storage.write(key: 'user_id', value: data['user']['id'].toString());
         await _storage.write(key: 'username', value: data['user']['username']);
+        await _storage.write(key: 'role', value: data['user']['role']);
         return {'success': true, 'user': data['user']};
       } else {
         return {'success': false, 'error': data['error'] ?? 'Registration failed'};
@@ -260,10 +264,12 @@ class AuthService {
   Future<Map<String, dynamic>?> getCurrentUser() async {
     final userId = await _storage.read(key: 'user_id');
     final username = await _storage.read(key: 'username');
+    final role = await _storage.read(key: 'role');
     if (userId != null && username != null) {
       return {
         'id': int.tryParse(userId),
         'username': username,
+        'role': role ?? 'USER',
       };
     }
     return null;

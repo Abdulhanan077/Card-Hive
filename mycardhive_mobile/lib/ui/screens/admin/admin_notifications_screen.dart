@@ -139,10 +139,10 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
     final data = notif['data'];
     if (data == null) return;
 
-    final route = data['route'];
+    final route = data['route']?.toString();
     final id = data['tradeId'] ?? data['redemptionId'];
 
-    if (route == 'TRADE' || route == 'CHAT') {
+    if (route == 'TRADE' || route == 'CHAT' || (route == null && data['tradeId'] != null)) {
       Navigator.of(context).push(MaterialPageRoute(builder: (context) => AdminTradeDetailScreen(tradeId: id.toString())));
     } else if (route == 'REDEMPTION') {
       // In future we could navigate to redemptions list, for now just show alert
