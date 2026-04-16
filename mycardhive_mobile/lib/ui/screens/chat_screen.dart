@@ -148,12 +148,38 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_messageController.text.trim().isEmpty) return;
     final content = _messageController.text;
     _messageController.clear();
-    _chatService.sendTypingStatus(_parsedTradeId, false); // Clear typing status
+    _chatService.sendTypingStatus(_parsedTradeId, false);
+
+    // Optimistic Update
+    final tempId = DateTime.now().millisecondsSinceEpoch;
+    final tempMsg = {
+      'id': tempId,
+      'content': content,
+      'senderId': _currentUserId,
+      'createdAt': DateTime.now().toIso8601String(),
+      'sender': {'id': _currentUserId, 'username': 'You', 'role': 'USER'},
+      'isSending': true,
+    };
+
+    setState(() {
+      _messages.add(tempMsg);
+      _scrollToBottom();
+    });
 
     final result = await _chatService.sendMessage(_parsedTradeId, content);
-    if (result['success'] == true) {
-      // Local addition is handled by Pusher 'new-message' event usually, 
-      // but for better UX we could add it here if Pusher is slow.
+    
+    if (mounted) {
+      setState(() {
+        _messages.removeWhere((m) => m['id'] == tempId);
+        if (result['success'] == true) {
+          // The Pusher event will handle adding the real message to avoid duplicates, 
+          // or we can add it here if it's missing.
+          if (!_messages.any((m) => m['id'] == result['message']['id'])) {
+            _messages.add(result['message']);
+          }
+        }
+      });
+      _scrollToBottom();
     }
   }
 
@@ -161,19 +187,45 @@ class _ChatScreenState extends State<ChatScreen> {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image == null) return;
 
-    setState(() => _isUploading = true);
+    final tempId = DateTime.now().millisecondsSinceEpoch;
+    final tempMsg = {
+      'id': tempId,
+      'content': "Sending image...",
+      'senderId': _currentUserId,
+      'createdAt': DateTime.now().toIso8601String(),
+      'sender': {'id': _currentUserId, 'username': 'You', 'role': 'USER'},
+      'isSending': true,
+      'fileUrl': null, // Show a placeholder or something if possible
+    };
+
+    setState(() {
+      _messages.add(tempMsg);
+      _isUploading = true;
+      _scrollToBottom();
+    });
     
     final uploadResponse = await _chatService.uploadFile(File(image.path));
     if (uploadResponse['success'] == true) {
       final fileUrl = uploadResponse['fileUrl'];
-      await _chatService.sendMessage(_parsedTradeId, "Sent an image", fileUrl: fileUrl, fileType: 'IMAGE');
+      final result = await _chatService.sendMessage(_parsedTradeId, "Sent an image", fileUrl: fileUrl, fileType: 'IMAGE');
+      
+      if (mounted) {
+        setState(() {
+          _messages.removeWhere((m) => m['id'] == tempId);
+          if (result['success'] == true && !_messages.any((m) => m['id'] == result['message']['id'])) {
+            _messages.add(result['message']);
+          }
+        });
+      }
     } else {
       if (mounted) {
+        setState(() => _messages.removeWhere((m) => m['id'] == tempId));
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(uploadResponse['error'] ?? "Upload failed")));
       }
     }
     
-    setState(() => _isUploading = false);
+    if (mounted) setState(() => _isUploading = false);
+    _scrollToBottom();
   }
 
   @override
@@ -241,6 +293,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final bool isMe = sender['id'] == _currentUserId;
     final bool isAdmin = sender['role'] == 'ADMIN';
     final bool isRead = msg['isRead'] == true;
+    final bool isSending = msg['isSending'] == true;
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -264,7 +317,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: isMe ? const Color(0xFF2563EB) : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                color: isMe ? const Color(0xFF2563EB).withOpacity(isSending ? 0.6 : 1.0) : (isDark ? const Color(0xFF1E293B) : Colors.white),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -272,7 +325,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   bottomRight: Radius.circular(isMe ? 4 : 16),
                 ),
                 border: isMe ? null : Border.all(color: Colors.black.withOpacity(0.05)),
-                boxShadow: isMe ? [BoxShadow(color: Colors.blue.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))] : [],
+                boxShadow: (isMe && !isSending) ? [BoxShadow(color: Colors.blue.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))] : [],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,18 +353,25 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    DateFormat('HH:mm').format(DateTime.parse(msg['createdAt'].toString())),
-                    style: const TextStyle(fontSize: 9, color: Colors.grey),
-                  ),
-                  if (isMe) ...[
-                    const SizedBox(width: 4),
-                    Icon(
-                      isRead ? Icons.done_all : Icons.done,
-                      size: 12,
-                      color: isRead ? Colors.green : Colors.grey,
+                  if (isSending)
+                    const Text(
+                      "Sending...",
+                      style: TextStyle(fontSize: 9, color: Colors.grey, fontStyle: FontStyle.italic),
+                    )
+                  else ...[
+                    Text(
+                      DateFormat('HH:mm').format(DateTime.parse(msg['createdAt'].toString())),
+                      style: const TextStyle(fontSize: 9, color: Colors.grey),
                     ),
-                  ]
+                    if (isMe) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        isRead ? Icons.done_all : Icons.done,
+                        size: 12,
+                        color: isRead ? Colors.green : Colors.grey,
+                      ),
+                    ]
+                  ],
                 ],
               ),
             ),
