@@ -2,8 +2,29 @@ import * as admin from 'firebase-admin';
 
 if (!admin.apps.length) {
     try {
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}');
+        let rawEnv = process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}';
+        
+        // Rapid fixes for common Vercel & Local .env parsing discrepancies
+        if (rawEnv.startsWith("'") && rawEnv.endsWith("'")) {
+            rawEnv = rawEnv.slice(1, -1);
+        }
+        
+        let serviceAccount: any;
+        try {
+            serviceAccount = JSON.parse(rawEnv);
+        } catch (parseError) {
+            // Fallback for Vercel formatting anomalies (Bad Escaped Characters)
+            // Replaces real newlines or incorrectly escaped slashes
+            const cleanedEnv = rawEnv.replace(/\\n/g, '\\n').replace(/\n/g, '\\n');
+            serviceAccount = JSON.parse(cleanedEnv);
+        }
+
         if (Object.keys(serviceAccount).length > 0) {
+            // Firebase private key requires real backslash+n
+            if (serviceAccount.private_key) {
+                serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+            }
+            
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount)
             });
