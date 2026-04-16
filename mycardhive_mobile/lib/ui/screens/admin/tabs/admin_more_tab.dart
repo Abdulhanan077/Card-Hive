@@ -7,6 +7,8 @@ import 'package:mycardhive_mobile/ui/screens/admin/admin_leaderboard_screen.dart
 import 'package:mycardhive_mobile/ui/screens/admin/admin_site_settings_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_support_sessions_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_rewards_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_status_updates_screen.dart';
 
 class AdminMoreTab extends StatelessWidget {
   final dynamic user;
@@ -66,6 +68,26 @@ class AdminMoreTab extends StatelessWidget {
               isDark: isDark,
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(builder: (context) => AdminSupportSessionsScreen(user: user)));
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildActionItem(
+              title: "Reward Redemptions",
+              icon: Icons.redeem_rounded,
+              color: Colors.green,
+              isDark: isDark,
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AdminRewardsScreen()));
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildActionItem(
+              title: "Public Status Updates",
+              icon: Icons.campaign_rounded,
+              color: Colors.teal,
+              isDark: isDark,
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AdminStatusUpdatesScreen()));
               },
             ),
             const SizedBox(height: 12),

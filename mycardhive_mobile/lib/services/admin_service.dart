@@ -416,4 +416,115 @@ class AdminService {
       return {'success': false, 'error': 'Connection failed'};
     }
   }
+
+  // REWARDS MANAGEMENT
+  Future<Map<String, dynamic>> fetchRewardsQueue() async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl}/mobile/admin/rewards'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+        },
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Connection failed'};
+    }
+  }
+
+  Future<Map<String, dynamic>> processRewardAction(int id, String status) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl}/mobile/admin/rewards'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+        },
+        body: json.encode({'id': id, 'status': status}),
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Connection failed'};
+    }
+  }
+
+  // STATUS UPDATES MANAGEMENT
+  Future<Map<String, dynamic>> fetchStatusUpdatesAdmin() async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl}/api/status-updates'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      final data = json.decode(response.body);
+      return {'success': true, 'updates': data['updates'] ?? []};
+    } catch (e) {
+      return {'success': false, 'error': 'Connection failed'};
+    }
+  }
+
+  Future<Map<String, dynamic>> postStatusUpdate(String message, {String? imagePath}) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${AuthService.baseUrl}/api/admin/status-updates'),
+      );
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+      });
+
+      request.fields['message'] = message;
+
+      if (imagePath != null && imagePath.isNotEmpty) {
+        request.files.add(await http.MultipartFile.fromPath('image', imagePath));
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Connection failed'};
+    }
+  }
+
+  Future<Map<String, dynamic>> deleteStatusUpdate(int id) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      final response = await http.delete(
+        Uri.parse('${AuthService.baseUrl}/api/admin/status-updates?id=$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+        },
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Connection failed'};
+    }
+  }
 }

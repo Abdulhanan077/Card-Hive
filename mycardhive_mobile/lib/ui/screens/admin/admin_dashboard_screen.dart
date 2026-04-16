@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_trades_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_rewards_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_status_updates_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_rates_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_users_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final dynamic user;
@@ -245,7 +249,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           color: const Color(0xFF10B981),
           isDark: isDark,
           onTap: () {
-            // TODO: Navigate to Rates Editor
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminRatesScreen()));
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildMenuItem(
+          title: "Redemptions",
+          subtitle: "Process reward requests",
+          icon: Icons.redeem_rounded,
+          color: Colors.orange,
+          isDark: isDark,
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminRewardsScreen()));
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildMenuItem(
+          title: "Status Updates",
+          subtitle: "Post public broadcasts",
+          icon: Icons.campaign_rounded,
+          color: Colors.teal,
+          isDark: isDark,
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminStatusUpdatesScreen()));
           },
         ),
         const SizedBox(height: 12),
@@ -256,18 +282,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           color: const Color(0xFF8B5CF6),
           isDark: isDark,
           onTap: () {
-             // TODO: Navigate to User List
-          },
-        ),
-        const SizedBox(height: 12),
-        _buildMenuItem(
-          title: "Profit Analytics",
-          subtitle: "Revenue and performance",
-          icon: Icons.pie_chart_rounded,
-          color: const Color(0xFFF59E0B),
-          isDark: isDark,
-          onTap: () {
-             // TODO: Navigate to Analytics
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminUsersScreen()));
           },
         ),
       ],
