@@ -217,4 +217,35 @@ class AdminService {
       return {'success': false, 'error': 'Connection failed'};
     }
   }
+
+  Future<List<Map<String, dynamic>>> fetchLoginLogs({String? portal, String? success, String? query}) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return [];
+
+      final queryParams = <String, String>{};
+      if (portal != null) queryParams['portal'] = portal;
+      if (success != null) queryParams['success'] = success;
+      if (query != null) queryParams['query'] = query;
+
+      final uri = Uri.parse('${AuthService.baseUrl}/mobile/admin/logins').replace(queryParameters: queryParams);
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return List<Map<String, dynamic>>.from(data['logs'] ?? []);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
 }
