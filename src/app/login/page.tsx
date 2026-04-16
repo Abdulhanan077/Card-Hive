@@ -40,7 +40,7 @@ export default function LoginPage() {
         } else if (res?.ok) {
             showNotification('SUCCESS', "Logged in successfully!");
             // Hard navigation prevents Next.js client-cache race conditions
-            window.location.href = "/user/trades";
+            window.location.href = "/user";
         }
     };
 
