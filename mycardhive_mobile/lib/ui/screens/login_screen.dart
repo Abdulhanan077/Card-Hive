@@ -4,6 +4,7 @@ import 'package:mycardhive_mobile/ui/screens/signup_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/dashboard_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/forgot_password_screen.dart';
 import 'package:mycardhive_mobile/services/biometric_service.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -133,11 +134,19 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToDashboard(dynamic user) {
-    Navigator.pushAndRemoveUntil(
-      context, 
-      MaterialPageRoute(builder: (context) => DashboardScreen(user: user)), 
-      (route) => false,
-    );
+    if (user['role'] == 'ADMIN') {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => AdminDashboardScreen(user: user)),
+        (route) => false,
+      );
+    } else {
+      Navigator.pushAndRemoveUntil(
+        context, 
+        MaterialPageRoute(builder: (context) => DashboardScreen(user: user)), 
+        (route) => false,
+      );
+    }
   }
 
   @override
