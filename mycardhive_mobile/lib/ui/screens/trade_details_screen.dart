@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mycardhive_mobile/services/trade_service.dart';
 import 'package:mycardhive_mobile/services/chat_service.dart';
+import 'package:mycardhive_mobile/services/admin_service.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:intl/intl.dart';
 
@@ -21,6 +22,7 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
   final TradeService _tradeService = TradeService();
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
+  final AdminService _adminService = AdminService();
   
   bool _isConfirming = false;
   late String _status;
@@ -50,14 +52,28 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
 
   Future<void> _fetchTradeDetails() async {
     try {
-      final trade = await _tradeService.getTradeById(widget.tradeId!);
+      final user = await _authService.getCurrentUser();
+      final isAdmin = user != null && user['role'] == 'ADMIN';
+      
+      final dynamic tradeResponse;
+      if (isAdmin) {
+        final res = await _adminService.fetchTradeById(widget.tradeId!);
+        tradeResponse = res['success'] == true ? res['trade'] : null;
+      } else {
+        tradeResponse = await _tradeService.getTradeById(widget.tradeId!);
+      }
+
       if (mounted) {
-        setState(() {
-          _fullTrade = trade;
-          _status = trade['status'] ?? "PENDING";
-          _isLoading = false;
-        });
-        _loadInitialData();
+        if (tradeResponse != null) {
+          setState(() {
+            _fullTrade = tradeResponse;
+            _status = tradeResponse['status'] ?? "PENDING";
+            _isLoading = false;
+          });
+          _loadInitialData();
+        } else {
+          setState(() => _isLoading = false);
+        }
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
