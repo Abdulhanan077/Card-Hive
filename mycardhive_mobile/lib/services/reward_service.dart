@@ -16,7 +16,7 @@ class RewardService {
         Uri.parse('${AuthService.baseUrl}/mobile/user/redeem'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
         body: json.encode({
           'points': points,
@@ -38,7 +38,7 @@ class RewardService {
         Uri.parse('${AuthService.baseUrl}/mobile/user/redeem/history'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
       );
 

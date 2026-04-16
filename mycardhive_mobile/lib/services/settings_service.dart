@@ -14,7 +14,7 @@ class SettingsService {
         Uri.parse('${AuthService.baseUrl}/mobile/user/settings'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
       );
 
@@ -42,7 +42,7 @@ class SettingsService {
         Uri.parse('${AuthService.baseUrl}/mobile/user/settings'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
         body: json.encode(body),
       );

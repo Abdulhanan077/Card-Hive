@@ -25,8 +25,12 @@ class TradeService {
       // NextAuth determines session via Cookie headers usually
       // Because we use encode() from next-auth/jwt to create our JWT, the web /api/trades route
       // expects it in the "next-auth.session-token" cookie.
+      final cookieName = AuthService.baseUrl.startsWith('https') 
+          ? '__Secure-next-auth.session-token' 
+          : 'next-auth.session-token';
+
       request.headers.addAll({
-        'Cookie': 'next-auth.session-token=$token',
+        'Cookie': '$cookieName=$token',
       });
 
       // Payload strings
@@ -99,7 +103,7 @@ class TradeService {
         Uri.parse('${AuthService.baseUrl}/trades'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
       ).timeout(const Duration(seconds: 15));
 
