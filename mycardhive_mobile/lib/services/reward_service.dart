@@ -15,6 +15,7 @@ class RewardService {
       final response = await http.post(
         Uri.parse('${AuthService.baseUrl}/mobile/user/redeem'),
         headers: {
+          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
           'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
@@ -37,6 +38,7 @@ class RewardService {
       final response = await http.get(
         Uri.parse('${AuthService.baseUrl}/mobile/user/redeem/history'),
         headers: {
+          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
           'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },

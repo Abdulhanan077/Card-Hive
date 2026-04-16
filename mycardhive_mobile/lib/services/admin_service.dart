@@ -466,7 +466,7 @@ class AdminService {
       if (token == null) return {'success': false, 'error': 'Unauthorized'};
 
       final response = await http.get(
-        Uri.parse('${AuthService.baseUrl}/api/status-updates'),
+        Uri.parse('${AuthService.baseUrl}/status-updates'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -486,7 +486,7 @@ class AdminService {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('${AuthService.baseUrl}/api/admin/status-updates'),
+        Uri.parse('${AuthService.baseUrl}/mobile/admin/status-updates'),
       );
 
       request.headers.addAll({
@@ -515,7 +515,7 @@ class AdminService {
       if (token == null) return {'success': false, 'error': 'Unauthorized'};
 
       final response = await http.delete(
-        Uri.parse('${AuthService.baseUrl}/api/admin/status-updates?id=$id'),
+        Uri.parse('${AuthService.baseUrl}/mobile/admin/status-updates?id=$id'),
         headers: {
           'Authorization': 'Bearer $token',
           'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',

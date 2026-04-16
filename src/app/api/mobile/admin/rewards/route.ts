@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { verifyMobileToken } from "@/lib/mobileAuth";
 import { prisma } from "@/lib/prisma";
 
 /**
  * Mobile API for Admins to manage reward redemptions.
- * Requires ADMIN role via session.
+ * Requires ADMIN role via mobile JWT token.
  */
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user || session.user.role !== "ADMIN") {
+        const authHeader = req.headers.get("Authorization");
+        const token = authHeader?.split(" ")[1];
+        if (!token) {
+            return NextResponse.json({ success: false, message: "No token provided" }, { status: 401 });
+        }
+
+        const user = await verifyMobileToken(token);
+        if (!user || user.role !== "ADMIN") {
             return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
         }
 
@@ -37,8 +42,14 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user || session.user.role !== "ADMIN") {
+        const authHeader = req.headers.get("Authorization");
+        const token = authHeader?.split(" ")[1];
+        if (!token) {
+            return NextResponse.json({ success: false, message: "No token provided" }, { status: 401 });
+        }
+
+        const user = await verifyMobileToken(token);
+        if (!user || user.role !== "ADMIN") {
             return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
         }
 

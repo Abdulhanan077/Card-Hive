@@ -1,16 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { verifyMobileToken } from "@/lib/mobileAuth";
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.id) {
+        const authHeader = request.headers.get("Authorization");
+        const token = authHeader?.split(" ")[1];
+        if (!token) {
+            return NextResponse.json({ success: false, error: "No token provided" }, { status: 401 });
+        }
+
+        const decodedUser = await verifyMobileToken(token);
+        if (!decodedUser) {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const userId = parseInt(session.user.id);
+        const userId = parseInt(decodedUser.id);
 
         const history = await prisma.rewardRedemption.findMany({
             where: { userId },
