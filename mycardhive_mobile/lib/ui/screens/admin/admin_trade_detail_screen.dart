@@ -220,11 +220,20 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
           _dataRow("Face Value", "\$${trade['faceValue']}"),
           _dataRow("Currency", trade['currency'] ?? "USD"),
           const Divider(height: 24),
+          _dataRow("Payout Method", trade['payoutMethod']?.toString().replaceAll('_', ' ') ?? "N/A"),
+          if (trade['payoutPhoneNumber'] != null && trade['payoutPhoneNumber'].toString().isNotEmpty) ...[
+            _dataRow("Network", trade['payoutNetwork'] ?? "N/A"),
+            _dataRow("Phone Number", trade['payoutPhoneNumber']),
+            if (trade['payoutAccountName'] != null)
+              _dataRow("Account Name", trade['payoutAccountName']),
+          ],
+          if (trade['cryptoReceiverId'] != null && trade['cryptoReceiverId'].toString().isNotEmpty) ...[
+            _dataRow("Crypto Coin", trade['cryptoCoin'] ?? "N/A"),
+            _dataRow("Network", trade['cryptoNetwork'] ?? "N/A"),
+            _dataRow("Receiver ID", trade['cryptoReceiverId']),
+          ],
+          const Divider(height: 24),
           _dataRow("Amount Payable", "GHS ${trade['calculatedPayout']?.toStringAsFixed(2) ?? '0.00'}", isHighlight: true),
-          if (trade['payoutPhoneNumber'] != null)
-             _dataRow("Mobile Money", trade['payoutPhoneNumber']),
-          if (trade['cryptoAddress'] != null)
-             _dataRow("Crypto Addr", trade['cryptoAddress']),
           const Divider(height: 24),
           _dataRow("Submitted", DateFormat('MMM dd, yyyy - HH:mm').format(DateTime.parse(trade['createdAt']))),
         ],
