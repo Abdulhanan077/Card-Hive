@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { RiCustomerService2Fill, RiSendPlaneFill, RiCloseLine } from "react-icons/ri";
 import { pusherClient } from "@/lib/pusher";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 
 const SupportChat = () => {
     const { data: session } = useSession();
+    const pathname = usePathname();
     const [isMounted, setIsMounted] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [sessionId, setSessionId] = useState<string>("");
@@ -95,6 +97,9 @@ const SupportChat = () => {
     };
 
     if (!isMounted) return null;
+
+    // Hide support chat on Dashboard pages (User / Admin)
+    if (pathname?.startsWith("/user") || pathname?.startsWith("/admin")) return null;
 
     return (
         <div style={{ position: "fixed", bottom: "30px", right: "30px", zIndex: 9999, fontFamily: "inherit" }}>
