@@ -12,8 +12,9 @@ import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 
 class AdminTradeDetailScreen extends StatefulWidget {
-  final Map<String, dynamic> trade;
-  const AdminTradeDetailScreen({super.key, required this.trade});
+  final Map<String, dynamic>? trade;
+  final String? tradeId;
+  const AdminTradeDetailScreen({super.key, this.trade, this.tradeId});
 
   @override
   State<AdminTradeDetailScreen> createState() => _AdminTradeDetailScreenState();
@@ -23,6 +24,8 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
   final AdminService _adminService = AdminService();
   bool _isUpdating = false;
   late String _currentStatus;
+  Map<String, dynamic>? _tradeData;
+  bool _isLoading = false;
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _refController = TextEditingController();
   final ChatService _chatService = ChatService();
@@ -33,10 +36,34 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _currentStatus = widget.trade['status'];
+    if (widget.trade != null) {
+      _tradeData = widget.trade;
+      _currentStatus = _tradeData!['status'];
+    } else if (widget.tradeId != null) {
+      _isLoading = true;
+      _currentStatus = 'PENDING';
+      _fetchTrade();
+    }
+  }
+
+  Future<void> _fetchTrade() async {
+    final res = await _adminService.fetchTradeById(widget.tradeId!);
+    if (mounted) {
+      if (res['success'] == true) {
+        setState(() {
+          _tradeData = res['trade'];
+          _currentStatus = _tradeData!['status'];
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['error'] ?? "Failed to load trade"), backgroundColor: Colors.red));
+      }
+    }
   }
 
   Future<void> _updateStatus(String newStatus) async {
+    if (_tradeData == null) return;
     setState(() => _isUpdating = true);
     
     String? receiptUrl;
@@ -50,7 +77,7 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
     }
 
     final result = await _adminService.updateTradeStatus(
-      widget.trade['tradeId'], 
+      _tradeData!['tradeId'], 
       newStatus, 
       _notesController.text,
       paymentReceiptUrl: receiptUrl,
@@ -75,11 +102,19 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(appBar: AppBar(title: const Text("Loading Trade...")), body: const Center(child: CircularProgressIndicator()));
+    }
+    
+    if (_tradeData == null) {
+      return Scaffold(appBar: AppBar(title: const Text("Error")), body: const Center(child: Text("Trade details could not be loaded.")));
+    }
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final trade = widget.trade;
+    final trade = _tradeData!;
     final isBatch = trade['isBatch'] ?? false;
-    final date = DateTime.parse(trade['createdAt']);
+    final date = DateTime.parse(trade['createdAt'] ?? DateTime.now().toIso8601String());
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -157,7 +192,7 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
                   style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: const Color(0xFF2563EB)),
                 ),
                 Text(
-                  "Trade ID: ${widget.trade['tradeId']}",
+                  "Trade ID: ${_tradeData!['tradeId']}",
                   style: GoogleFonts.outfit(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54),
                 ),
               ],

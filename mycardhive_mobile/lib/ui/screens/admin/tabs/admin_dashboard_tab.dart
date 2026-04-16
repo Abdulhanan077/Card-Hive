@@ -482,56 +482,62 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
             ),
           ],
         ),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
-            boxShadow: [
-              if (!isDark) BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                  color: isBatch ? const Color(0xFF2563EB).withOpacity(0.1) : Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => AdminTradeDetailScreen(trade: trade)));
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
+              boxShadow: [
+                if (!isDark) BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48, height: 48,
+                  decoration: BoxDecoration(
+                    color: isBatch ? const Color(0xFF2563EB).withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    isBatch ? Icons.layers_outlined : Icons.credit_card_rounded,
+                    color: isBatch ? const Color(0xFF2563EB) : Colors.orange,
+                  ),
                 ),
-                child: Icon(
-                  isBatch ? Icons.layers_outlined : Icons.credit_card_rounded,
-                  color: isBatch ? const Color(0xFF2563EB) : Colors.orange,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "@${trade['user']['username']}",
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 15, color: theme.colorScheme.onSurface),
+                      ),
+                      Text(
+                        isBatch ? "${trade['cardCount']} Cards" : "${trade['cardBrand']} - ${trade['cardType']}",
+                        style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      "@${trade['user']['username']}",
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 15, color: theme.colorScheme.onSurface),
+                      "\$${(isBatch ? (trade['totalValue'] ?? 0) : (trade['faceValue'] ?? 0)).toStringAsFixed(0)}",
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 17, color: const Color(0xFF2563EB)),
                     ),
-                    Text(
-                      isBatch ? "${trade['cardCount']} Cards" : "${trade['cardBrand']} - ${trade['cardType']}",
-                      style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey),
-                    ),
+                    Text(timeStr, style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey)),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    "\$${(isBatch ? (trade['totalValue'] ?? 0) : (trade['faceValue'] ?? 0)).toStringAsFixed(0)}",
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 17, color: const Color(0xFF2563EB)),
-                  ),
-                  Text(timeStr, style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey)),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

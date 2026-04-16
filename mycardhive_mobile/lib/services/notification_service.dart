@@ -98,12 +98,18 @@ class NotificationService {
         return [];
       }
 
-      debugPrint("Notification Check: Fetching...");
+      final userData = await authService.getCurrentUser();
+      final isAdmin = userData != null && userData['role'] == 'ADMIN';
+      
+      final endpoint = isAdmin ? '/mobile/admin/notifications' : '/mobile/user/notifications';
+
+      debugPrint("Notification Check: Fetching from $endpoint...");
       final response = await http.get(
-        Uri.parse('${AuthService.baseUrl}/mobile/user/notifications'),
+        Uri.parse('${AuthService.baseUrl}$endpoint'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
       ).timeout(const Duration(seconds: 20));
 

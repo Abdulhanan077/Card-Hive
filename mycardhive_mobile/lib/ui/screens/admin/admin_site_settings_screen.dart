@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/admin_service.dart';
+import 'package:mycardhive_mobile/services/notification_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:mycardhive_mobile/providers/theme_provider.dart';
@@ -170,6 +171,8 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 24),
+                  _buildAlertsSection(isDark, theme),
                   if (_canCheckBiometrics) ...[
                     const SizedBox(height: 24),
                     _buildSection(

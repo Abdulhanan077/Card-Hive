@@ -9,10 +9,10 @@ import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:intl/intl.dart';
 
 class TradeDetailsScreen extends StatefulWidget {
-  final Map<String, dynamic>? trade;
   final String? tradeId;
+  final bool isAdmin;
 
-  const TradeDetailsScreen({super.key, this.trade, this.tradeId}) : assert(trade != null || tradeId != null);
+  const TradeDetailsScreen({super.key, this.trade, this.tradeId, this.isAdmin = false});
 
   @override
   State<TradeDetailsScreen> createState() => _TradeDetailsScreenState();
@@ -52,8 +52,7 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
 
   Future<void> _fetchTradeDetails() async {
     try {
-      final user = await _authService.getCurrentUser();
-      final isAdmin = user != null && user['role'] == 'ADMIN';
+      final isAdmin = widget.isAdmin;
       
       final dynamic tradeResponse;
       if (isAdmin) {
@@ -76,6 +75,7 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
         }
       }
     } catch (e) {
+      debugPrint("Trade Fetch Details Error: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }

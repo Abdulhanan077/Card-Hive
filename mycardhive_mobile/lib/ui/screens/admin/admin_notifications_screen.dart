@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/admin_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:mycardhive_mobile/ui/screens/trade_details_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_trade_detail_screen.dart';
 
 class AdminNotificationsScreen extends StatefulWidget {
   const AdminNotificationsScreen({super.key});
@@ -143,7 +143,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
     final id = data['tradeId'] ?? data['redemptionId'];
 
     if (route == 'TRADE' || route == 'CHAT') {
-      Navigator.of(context).push(MaterialPageRoute(builder: (context) => TradeDetailsScreen(tradeId: id.toString())));
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => AdminTradeDetailScreen(tradeId: id.toString())));
     } else if (route == 'REDEMPTION') {
       // In future we could navigate to redemptions list, for now just show alert
        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action required on Reward Redemptions list.")));
