@@ -346,6 +346,7 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
           ),
         ),
       ],
+    );
   }
 
   Widget _buildSection({required String title, required IconData icon, required bool isDark, required List<Widget> children}) {
