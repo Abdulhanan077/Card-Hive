@@ -37,10 +37,10 @@ export default function LoginPage() {
             setError(res.error);
             showNotification('ERROR', res.error === "CredentialsSignin" ? "Invalid username or password" : res.error);
             setLoading(false);
-        } else {
+        } else if (res?.ok) {
             showNotification('SUCCESS', "Logged in successfully!");
-            router.push("/user");
-            router.refresh();
+            // Hard navigation prevents Next.js client-cache race conditions
+            window.location.href = "/user/trades";
         }
     };
 

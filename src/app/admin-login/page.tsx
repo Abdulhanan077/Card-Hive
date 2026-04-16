@@ -37,10 +37,9 @@ export default function AdminLoginPage() {
             setError(res.error);
             showNotification('ERROR', res.error === "CredentialsSignin" ? "Invalid admin credentials" : res.error);
             setLoading(false);
-        } else {
+        } else if (res?.ok) {
             showNotification('SUCCESS', "Admin login successful!");
-            router.push("/admin");
-            router.refresh();
+            window.location.href = "/admin";
         }
     };
 
