@@ -5,6 +5,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_notifications_screen.dart';
 
 class AdminDashboardTab extends StatefulWidget {
   final dynamic user;
@@ -23,6 +24,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
   List<dynamic> _securityAlerts = [];
   List<Map<String, dynamic>> _pendingTrades = [];
   bool _isLoading = true;
+  int _unreadCount = 0;
 
   @override
   void initState() {
@@ -44,8 +46,10 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
       }
 
       final trades = await _adminService.fetchAllTrades(status: 'PENDING');
+      final notifs = await _adminService.fetchNotifications();
       setState(() {
         _pendingTrades = trades;
+        _unreadCount = notifs['unreadCount'] ?? 0;
       });
     } catch (e) {
       debugPrint("Dashboard load error: $e");
@@ -86,9 +90,29 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
               ),
             ),
             actions: [
-              IconButton(
-                icon: Icon(Icons.notifications_none_rounded, color: theme.colorScheme.onSurface),
-                onPressed: () {},
+              Stack(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.notifications_none_rounded, color: theme.colorScheme.onSurface),
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminNotificationsScreen())).then((_) => _loadData());
+                    },
+                  ),
+                  if (_unreadCount > 0)
+                    Positioned(
+                      top: 10, right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          _unreadCount > 9 ? "9+" : "$_unreadCount",
+                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(width: 8),
             ],
