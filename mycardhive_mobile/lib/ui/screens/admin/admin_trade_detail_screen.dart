@@ -204,7 +204,7 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
   }
 
   Widget _buildSubmitterInfo(bool isDark, ThemeData theme) {
-    final user = widget.trade['user'];
+    final user = _tradeData!['user'];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -242,7 +242,7 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
   }
 
   Widget _buildTradeDataGrid(bool isDark, ThemeData theme) {
-    final trade = widget.trade;
+    final trade = _tradeData!;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(

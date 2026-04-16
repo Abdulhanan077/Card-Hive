@@ -296,7 +296,9 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
             ),
           ),
     );
-    Widget _buildAlertsSection(bool isDark, ThemeData theme) {
+  }
+
+  Widget _buildAlertsSection(bool isDark, ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -344,9 +346,7 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
           ),
         ),
       ],
-    );
   }
-}
 
   Widget _buildSection({required String title, required IconData icon, required bool isDark, required List<Widget> children}) {
     return Column(
