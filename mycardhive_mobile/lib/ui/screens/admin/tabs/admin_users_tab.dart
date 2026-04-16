@@ -124,7 +124,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       selectedColor: const Color(0xFF2563EB),
       backgroundColor: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: isSelected ? Colors.transparent : Colors.grey.withOpacity(0.2))),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: isSelected ? Colors.transparent : Colors.grey.withOpacity(0.2))),
     );
   }
 

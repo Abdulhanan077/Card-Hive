@@ -102,6 +102,8 @@ class AdminService {
     } catch (e) {
       return {'success': false, 'error': 'Connection failed'};
     }
+  }
+
   Future<List<Map<String, dynamic>>> fetchAllUsers({String query = '', String sort = 'newest'}) async {
     try {
       final token = await _authService.getToken();
