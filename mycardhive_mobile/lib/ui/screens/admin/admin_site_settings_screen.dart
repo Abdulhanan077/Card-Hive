@@ -3,6 +3,8 @@ import 'package:mycardhive_mobile/services/admin_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:mycardhive_mobile/providers/theme_provider.dart';
+import 'package:mycardhive_mobile/services/auth_service.dart';
+import 'package:mycardhive_mobile/services/biometric_service.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_storage_screen.dart';
 
 class AdminSiteSettingsScreen extends StatefulWidget {
@@ -25,6 +27,10 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
   
   bool _isLoading = true;
   bool _isSaving = false;
+  
+  bool _canCheckBiometrics = false;
+  bool _biometricsEnabled = false;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -36,6 +42,33 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
     _pointsCediController = TextEditingController();
     _usdtRateController = TextEditingController();
     _loadSettings();
+    _checkBiometricSupport();
+  }
+
+  Future<void> _checkBiometricSupport() async {
+    final canCheck = await BiometricService.canCheckBiometrics();
+    final enabled = await _authService.isBiometricsEnabled();
+    if (mounted) {
+      setState(() {
+        _canCheckBiometrics = canCheck;
+        _biometricsEnabled = enabled;
+      });
+    }
+  }
+
+  Future<void> _toggleBiometrics(bool value) async {
+    if (value) {
+      final authenticated = await BiometricService.authenticate();
+      if (!authenticated) return;
+    }
+    await _authService.setBiometricsEnabled(value);
+    setState(() => _biometricsEnabled = value);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(value ? "Biometric login enabled" : "Biometric login disabled"),
+        backgroundColor: Colors.green,
+      ));
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -137,6 +170,33 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
                       ),
                     ],
                   ),
+                  if (_canCheckBiometrics) ...[
+                    const SizedBox(height: 24),
+                    _buildSection(
+                      title: "Personal Security",
+                      icon: Icons.security_rounded,
+                      isDark: isDark,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Biometric Login", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                Text("Use Fingerprint or FaceID", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                              ],
+                            ),
+                            Switch(
+                              value: _biometricsEnabled,
+                              activeColor: const Color(0xFF10B981),
+                              onChanged: _toggleBiometrics,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   _buildSection(
                     title: "Branding & Contact",
