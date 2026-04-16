@@ -8,10 +8,20 @@ if (!admin.apps.length) {
         if (rawEnv.startsWith("'") && rawEnv.endsWith("'")) {
             rawEnv = rawEnv.slice(1, -1);
         }
-        
+        if (rawEnv.startsWith('"') && rawEnv.endsWith('"')) {
+            rawEnv = rawEnv.slice(1, -1);
+        }
+
         let serviceAccount: any;
         try {
-            serviceAccount = JSON.parse(rawEnv);
+            // NEW: Extremely robust Base64 decoding fallback for Vercel!
+            // If the raw text does not start with a JSON curly brace, we assume it's base64 encoded.
+            if (!rawEnv.trim().startsWith('{')) {
+                const decodedBytes = Buffer.from(rawEnv, 'base64').toString('utf-8');
+                serviceAccount = JSON.parse(decodedBytes);
+            } else {
+                serviceAccount = JSON.parse(rawEnv);
+            }
         } catch (parseError) {
             // Fallback for Vercel formatting anomalies (Bad Escaped Characters)
             // Replaces real newlines or incorrectly escaped slashes
