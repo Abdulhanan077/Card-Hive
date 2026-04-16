@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_rates_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_security_logs_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_leaderboard_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_site_settings_screen.dart';
 
 class AdminMoreTab extends StatelessWidget {
   final dynamic user;
@@ -61,7 +62,9 @@ class AdminMoreTab extends StatelessWidget {
               icon: Icons.settings_outlined,
               color: Colors.blueGrey,
               isDark: isDark,
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AdminSiteSettingsScreen()));
+              },
             ),
             const SizedBox(height: 32),
             _buildActionItem(

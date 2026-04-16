@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/admin_service.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class AdminLeaderboardScreen extends StatefulWidget {
   const AdminLeaderboardScreen({super.key});
@@ -146,8 +147,8 @@ class _AdminLeaderboardScreenState extends State<AdminLeaderboardScreen> with Si
   Widget _buildEntryRow(dynamic entry, String unit, bool isDark) {
     final rank = entry['rank'];
     final username = entry['username'];
-    final monthly = entry['monthlyValue'];
-    final points = entry['pointsEarned'];
+    final monthly = entry['monthlyValue'] as num;
+    final points = entry['pointsEarned'] as num;
 
     String rankIcon = "#$rank";
     if (rank == 1) rankIcon = "🥇";
@@ -228,7 +229,7 @@ class _AdminLeaderboardScreenState extends State<AdminLeaderboardScreen> with Si
         children: [
           Text(board['name'], style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 4),
-          Text("Leader: ${board['unit'] == '₵' ? "₵${board['leader'].toLocaleString()}" : "${board['leader']} ${board['unit']}"}", style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          Text("Leader: ${board['unit'] == '₵' ? "₵${(board['leader'] as num).toLocaleString()}" : "${board['leader']} ${board['unit']}"}", style: const TextStyle(fontSize: 11, color: Colors.grey)),
           const SizedBox(height: 20),
           Row(
             children: [
@@ -288,7 +289,7 @@ class _AdminLeaderboardScreenState extends State<AdminLeaderboardScreen> with Si
   }
 }
 
-extension NumberFormatting on dynamic {
+extension NumberFormatting on num {
   String toLocaleString() {
     return NumberFormat('#,###.##').format(this);
   }
