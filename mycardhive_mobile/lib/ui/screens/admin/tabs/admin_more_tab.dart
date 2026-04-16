@@ -5,6 +5,7 @@ import 'package:mycardhive_mobile/ui/screens/admin/admin_rates_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_security_logs_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_leaderboard_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_site_settings_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
 
 class AdminMoreTab extends StatelessWidget {
   final dynamic user;
@@ -75,7 +76,10 @@ class AdminMoreTab extends StatelessWidget {
               onTap: () async {
                 await authService.logout();
                 if (context.mounted) {
-                   Navigator.of(context, rootNavigator: true).pushReplacementNamed('/login');
+                   Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                     MaterialPageRoute(builder: (context) => const HomeScreen()),
+                     (route) => false
+                   );
                 }
               },
             ),
