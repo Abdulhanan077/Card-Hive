@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "874588730991",
+    "project_id": "card-hive-60d38",
+    "storage_bucket": "card-hive-60d38.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874588730991:android:8145898dc3f2f673a7bf9a",
+        "android_client_info": {
+          "package_name": "com.mycardhive.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2kZnHVnlwQZzZ9-HMK2hNFDoVwE1qPxw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -6,6 +6,7 @@ import 'package:mycardhive_mobile/ui/screens/admin/admin_security_logs_screen.da
 import 'package:mycardhive_mobile/ui/screens/admin/admin_leaderboard_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_site_settings_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_support_sessions_screen.dart';
 
 class AdminMoreTab extends StatelessWidget {
   final dynamic user;
@@ -55,6 +56,16 @@ class AdminMoreTab extends StatelessWidget {
               isDark: isDark,
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AdminLeaderboardScreen()));
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildActionItem(
+              title: "Live Support Inbox",
+              icon: Icons.forum_rounded,
+              color: const Color(0xFF2563EB),
+              isDark: isDark,
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => AdminSupportSessionsScreen(user: user)));
               },
             ),
             const SizedBox(height: 12),

@@ -39,6 +39,7 @@ model User {
 
   trades                 Trade[]
   messages               Message[]               @relation("UserMessages")
+  supportMessages        SupportMessage[]        @relation("UserSupportMessages")
   redemptions            RewardRedemption[]
   accounts               Account[]
   sessions               Session[]
@@ -46,9 +47,10 @@ model User {
   leaderboardAdjustments LeaderboardAdjustment[]
   leaderboardHistory     LeaderboardHistory[]
 
-  theme     String   @default("light")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  theme             String   @default("light")
+  fcmToken          String?  // Firebase Cloud Messaging Token
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Account {
@@ -181,6 +183,18 @@ model Message {
   fileType  String? // IMAGE or FILE
   isEdited  Boolean   @default(false)
   createdAt DateTime  @default(now())
+}
+
+model SupportMessage {
+  id          Int      @id @default(autoincrement())
+  sessionId   String   // Unique ID from localStorage for anonymous users
+  userId      Int?     // Link to User if they are logged in or register later
+  user        User?    @relation("UserSupportMessages", fields: [userId], references: [id])
+  senderName  String?  // Optional name from visitor
+  isAdmin     Boolean  @default(false)
+  content     String   @db.Text
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 model RewardRedemption {

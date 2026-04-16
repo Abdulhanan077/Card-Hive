@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/mobileAuth";
 import { calculateVipTier } from "@/lib/vipTiers";
 import { sendTradeStatusUpdateEmail, sendPaymentSentEmail } from "@/lib/email";
+import { sendFcmNotification } from "@/lib/fcm";
 
 export async function POST(request: Request) {
     try {
@@ -106,6 +107,20 @@ export async function POST(request: Request) {
                 
                 const { checkAndAwardMilestones } = await import("@/lib/leaderboard-actions");
                 await checkAndAwardMilestones(user.id);
+            }
+        }
+
+        // --- FCM Push Notification ---
+        if (targetTrade.user.fcmToken) {
+            try {
+                const title = `Trade ${status}`;
+                const body = `Your ${targetTrade.cardBrand} trade (${targetTrade.tradeId}) is now ${status}.`;
+                await sendFcmNotification(targetTrade.user.fcmToken, title, body, {
+                    type: 'STATUS_UPDATE',
+                    tradeId: targetTrade.id.toString(),
+                });
+            } catch (fcmErr) {
+                console.error("FCM Send Error (Admin Status):", fcmErr);
             }
         }
 

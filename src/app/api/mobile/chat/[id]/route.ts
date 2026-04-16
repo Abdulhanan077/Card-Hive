@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pusherServer } from "@/lib/pusher";
+import { sendFcmNotification } from "@/lib/fcm";
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
     try {
@@ -77,6 +78,48 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
         // Trigger Pusher for real-time
         await pusherServer.trigger(`trade-${tradeId}`, "new-message", message);
+
+        // --- FCM Push Notification ---
+        try {
+            const trade = await prisma.trade.findUnique({
+                where: { id: tradeId },
+                include: { user: true }
+            });
+
+            if (trade) {
+                const isFromAdmin = message.sender.role === 'ADMIN';
+                if (isFromAdmin) {
+                    // Send notification to the user
+                    if (trade.user.fcmToken) {
+                        await sendFcmNotification(
+                            trade.user.fcmToken,
+                            "New Message",
+                            `${message.sender.username}: ${message.content || 'Sent a file'}`,
+                            { type: 'CHAT_MESSAGE', tradeId: tradeId.toString() }
+                        );
+                    }
+                } else {
+                    // Send notification to all admins with tokens
+                    const admins = await prisma.user.findMany({
+                        where: { role: 'ADMIN', fcmToken: { not: null } },
+                        select: { fcmToken: true }
+                    });
+                    
+                    for (const admin of admins) {
+                        if (admin.fcmToken) {
+                            await sendFcmNotification(
+                                admin.fcmToken,
+                                "User Message",
+                                `${message.sender.username} (${trade.tradeId}): ${message.content || 'Sent a file'}`,
+                                { type: 'CHAT_MESSAGE', tradeId: tradeId.toString() }
+                            );
+                        }
+                    }
+                }
+            }
+        } catch (fcmErr) {
+            console.error("FCM Send Error (Chat):", fcmErr);
+        }
 
         return NextResponse.json({ success: true, message });
     } catch (error) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycardhive_mobile/ui/screens/general_support_chat_screen.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/main.dart';
 import 'package:mycardhive_mobile/ui/screens/sell_card_screen.dart';
@@ -133,9 +134,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // Mark current notifications as "seen" locally to clear status updates from badge
                   final notifications = await NotificationService.checkAndNotify(_authService);
                   for (var n in notifications) {
-                    if (n['type'] == 'STATUS') {
-                      NotificationService.markStatusAsSeenLocally(n['id']);
-                    }
+                    NotificationService.markStatusAsSeenLocally(n['id']);
                   }
                   
                   setState(() => _unreadCount = 0);
@@ -221,6 +220,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       }),
                       _buildQuickAction(Icons.settings, "Settings", const Color(0xFF0284C7), theme, isDark, onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                      }),
+                      _buildQuickAction(Icons.support_agent_rounded, "Support", const Color(0xFF16A34A), theme, isDark, onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => GeneralSupportChatScreen(user: _user)));
                       }),
                     ],
                    ),
@@ -701,6 +703,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             _buildDrawerItem("Dashboard Home", isSelected: true),
             _buildDrawerItem("My Trades"),
+            _buildDrawerItem("Support Chat", onTap: () {
+              Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (context) => GeneralSupportChatScreen(user: _user)));
+            }),
             _buildDrawerItem("Leaderboard"),
             _buildDrawerItem("Referrals"),
             _buildDrawerItem("Settings"),
@@ -753,12 +759,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   );
 }
 
-  Widget _buildDrawerItem(String title, {bool isSelected = false}) {
+  Widget _buildDrawerItem(String title, {bool isSelected = false, VoidCallback? onTap}) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return InkWell(
-      onTap: () {
+      onTap: onTap ?? () {
         if (title == "My Trades") {
           Navigator.pop(context); // Close Drawer
           Navigator.push(context, MaterialPageRoute(builder: (_) => const TradesScreen()));

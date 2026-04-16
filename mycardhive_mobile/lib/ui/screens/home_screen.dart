@@ -6,6 +6,7 @@ import 'package:mycardhive_mobile/ui/widgets/rates_calculator.dart';
 import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/signup_screen.dart';
 import 'package:mycardhive_mobile/models/rate.dart';
+import 'package:mycardhive_mobile/ui/screens/general_support_chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -88,6 +89,10 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildDrawerItem(context, 'Check Balance', () {
                 Navigator.pop(context);
                 launchUrl(Uri.parse("https://mycardhive.com/check-balance"));
+              }),
+              _buildDrawerItem(context, 'Support Chat', () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const GeneralSupportChatScreen()));
               }),
               _buildDrawerItem(context, 'Login', () {
                 Navigator.pop(context);
@@ -186,6 +191,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const GeneralSupportChatScreen()));
+        },
+        backgroundColor: const Color(0xFF2563EB),
+        child: const Icon(Icons.support_agent_rounded, color: Colors.white),
       ),
     );
   }

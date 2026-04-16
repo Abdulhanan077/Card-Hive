@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:math';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -33,6 +34,20 @@ class NotificationService {
     // Initialize timezone data
     tz.initializeTimeZones();
 
+    // 1. Setup Firebase Messaging listeners
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint("FCM Foreground Message: ${message.notification?.title}");
+      if (message.notification != null) {
+        showNotification(
+          id: message.hashCode,
+          title: message.notification!.title!,
+          body: message.notification!.body!,
+        );
+      }
+    });
+
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
     // Request permissions for Android 13+
     await _notificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
@@ -40,6 +55,25 @@ class NotificationService {
 
     // Schedule daily reminder
     await scheduleDailyReminder();
+  }
+
+  @pragma('vm:entry-point')
+  static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+    debugPrint("Handling background FCM message: ${message.messageId}");
+  }
+
+  static Future<void> syncFcmToken(AuthService authService) async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+      final token = await messaging.getToken();
+      
+      if (token != null) {
+        debugPrint("FCM Token: $token");
+        await authService.updateFcmToken(token);
+      }
+    } catch (e) {
+      debugPrint("FCM Token Sync Error: $e");
+    }
   }
 
   static Set<String> _seenStatusLocally = {};
@@ -63,10 +97,7 @@ class NotificationService {
     if (_seenStatusLocally.isEmpty) await _loadSeenStatus();
     
     return all.where((n) {
-      if (n['type'] == 'STATUS') {
-        return !_seenStatusLocally.contains(n['id']);
-      }
-      return true; // Messages always show if returned by server (unread)
+      return !_seenStatusLocally.contains(n['id']);
     }).toList();
   }
 

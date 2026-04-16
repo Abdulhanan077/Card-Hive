@@ -48,6 +48,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     <Link href="/admin/rates" className="sidebar-link">Manage Rates</Link>
                     <Link href="/admin/status-updates" className="sidebar-link">Status Updates</Link>
                     <Link href="/admin/leaderboard" className="sidebar-link">Leaderboard</Link>
+                    <Link href="/admin/support" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        Live Support
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#ef4444' }}></div>
+                    </Link>
                     <Link href="/admin/settings" className="sidebar-link">Site Settings</Link>
                     <Link href="/admin/logins" className="sidebar-link">Security Logs</Link>
                     <Link href="/admin/balance-checkers" className="sidebar-link">Balance Checkers</Link>

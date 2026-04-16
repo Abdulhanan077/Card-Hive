@@ -19,6 +19,7 @@ import 'package:mycardhive_mobile/services/biometric_service.dart';
 import 'package:mycardhive_mobile/services/sync_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:workmanager/workmanager.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 const String kBackgroundNotificationTask = "com.cardhive.notification_job";
 
@@ -45,19 +46,28 @@ void main() async {
   await CacheService.init();
   await NotificationService.init();
 
+  // Initialize Firebase (Requires google-services.json / firebase_options.dart)
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Firebase Init Error: $e (Make sure google-services.json is added)");
+  }
+
   // Initialize Background Workmanager
   await Workmanager().initialize(
     callbackDispatcher,
     isInDebugMode: false,
   );
 
-  // Register Periodic Task
+  // Register Unique Periodic Task for better reliability across updates/reboots
   await Workmanager().registerPeriodicTask(
-    "1", 
+    "com.cardhive.notification_job_unique", 
     kBackgroundNotificationTask,
-    frequency: const Duration(minutes: 15), // Flutter minimum
+    frequency: const Duration(minutes: 15),
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
     constraints: Constraints(
       networkType: NetworkType.connected,
+      requiresBatteryNotLow: false, // Allow even if battery is low as trades are critical
     ),
   );
   
@@ -115,6 +125,8 @@ class _MyCardHiveAppState extends State<MyCardHiveApp> {
           _startScreen = DashboardScreen(user: result['user']);
         }
       });
+      // Sync FCM Token
+      NotificationService.syncFcmToken(_authService);
     } else {
       setState(() {
         _startScreen = const HomeScreen();

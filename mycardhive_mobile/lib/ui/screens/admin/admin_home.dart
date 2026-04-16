@@ -77,7 +77,12 @@ class _AdminHomeState extends State<AdminHome> {
             children: [
               IconButton(
                 icon: Icon(Icons.notifications_none_rounded, color: theme.colorScheme.onSurface),
-                onPressed: () {
+                onPressed: () async {
+                  final notifications = await NotificationService.checkAndNotify(AuthService());
+                  for (var n in notifications) {
+                    NotificationService.markStatusAsSeenLocally(n['id']);
+                  }
+                  setState(() => _unreadCount = 0);
                   Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminNotificationsScreen())).then((_) => _checkNotifications());
                 },
               ),

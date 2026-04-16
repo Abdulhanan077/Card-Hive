@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,7 @@ import 'package:mycardhive_mobile/ui/screens/chat_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:mycardhive_mobile/utils/image_utils.dart';
 
 class AdminTradeDetailScreen extends StatefulWidget {
   final Map<String, dynamic>? trade;
@@ -116,6 +118,20 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
     final isBatch = trade['isBatch'] ?? false;
     final date = DateTime.parse(trade['createdAt'] ?? DateTime.now().toIso8601String());
 
+    // Multiple Images Support
+    List<String> imageUrls = [];
+    final imgData = trade['imageUrls'];
+    if (imgData != null) {
+      if (imgData is String && imgData.isNotEmpty) {
+        try {
+          final parsed = json.decode(imgData);
+          if (parsed is List) imageUrls = List<String>.from(parsed);
+        } catch (_) {}
+      } else if (imgData is List) {
+        imageUrls = List<String>.from(imgData);
+      }
+    }
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -151,10 +167,16 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
             const SizedBox(height: 12),
             _buildTradeDataGrid(isDark, theme),
             const SizedBox(height: 24),
-            if (trade['imageUrl'] != null && trade['imageUrl'].isNotEmpty) ...[
-              Text("Card Image", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
+
+            Text("Card Credentials", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 12),
+            _buildCardCredentialsCard(isDark),
+            const SizedBox(height: 24),
+
+            if (imageUrls.isNotEmpty) ...[
+              Text("Uploaded Proofs", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 12),
-              _buildImageCard(trade['imageUrl']),
+              _buildImagesGrid(imageUrls),
               const SizedBox(height: 24),
             ],
             Text("Admin Actions", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -270,9 +292,93 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
             _dataRow("Receiver ID", trade['cryptoReceiverId'].toString(), isCopyable: true),
           ],
           const Divider(height: 24),
-          _dataRow("Amount Payable", "GHS ${trade['calculatedPayout']?.toStringAsFixed(2) ?? '0.00'}", isHighlight: true, isCopyable: true),
+          _dataRow("Amount Payable", "GHS ${double.tryParse(trade['calculatedPayout']?.toString() ?? '0')?.toStringAsFixed(2) ?? '0.00'}", isHighlight: true, isCopyable: true),
           const Divider(height: 24),
           _dataRow("Submitted", DateFormat('MMM dd, yyyy - HH:mm').format(DateTime.parse(trade['createdAt'] ?? DateTime.now().toIso8601String()))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardCredentialsCard(bool isDark) {
+    final trade = _tradeData!;
+    final cardCode = trade['cardCode']?.toString() ?? "N/A";
+    final serialNumber = trade['serialNumber']?.toString() ?? "";
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2563EB).withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.key_rounded, color: Color(0xFF2563EB), size: 18),
+                  const SizedBox(width: 8),
+                  Text("GIFT CARD CODE", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: const Color(0xFF2563EB))),
+                ],
+              ),
+              InkWell(
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: cardCode));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Card Code Copied!"), duration: Duration(seconds: 1)),
+                    );
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(8)),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.copy_rounded, size: 12, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text("COPY", style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SelectableText(
+            cardCode,
+            style: GoogleFonts.outfit(
+              fontSize: 22, 
+              fontWeight: FontWeight.w900, 
+              color: isDark ? Colors.white : Colors.black87, 
+              letterSpacing: 1.2,
+            ),
+          ),
+          if (serialNumber.isNotEmpty) ...[
+            const Divider(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("SERIAL NUMBER:", style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                InkWell(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: serialNumber));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Serial Copied!"), duration: Duration(seconds: 1)),
+                      );
+                    }
+                  },
+                  child: Text(serialNumber, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.black54)),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -328,30 +434,39 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
     );
   }
 
-  Widget _buildImageCard(String url) {
-    // Correct URL for local testing or production
-    final fullUrl = url.startsWith('http') ? url : '${AuthService.baseUrl.replaceAll('/api', '')}$url';
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => _ImageViewer(url: fullUrl)));
-      },
-      child: Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white10),
-          image: DecorationImage(image: NetworkImage(fullUrl), fit: BoxFit.cover),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Colors.black54, Colors.transparent]),
-          ),
-          child: const Center(child: Icon(Icons.zoom_in_rounded, color: Colors.white, size: 40)),
-        ),
+  Widget _buildImagesGrid(List<String> urls) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: urls.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2, 
+        crossAxisSpacing: 12, 
+        mainAxisSpacing: 12,
+        childAspectRatio: 1,
       ),
+      itemBuilder: (context, index) {
+        final url = urls[index].startsWith('http') ? urls[index] : '${AuthService.baseUrl.replaceAll('/api', '')}${urls[index]}';
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => _ImageViewer(url: url)));
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white10),
+              image: DecorationImage(image: NetworkImage(url), fit: BoxFit.cover),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Colors.black54, Colors.transparent]),
+              ),
+              child: const Center(child: Icon(Icons.zoom_in_rounded, color: Colors.white, size: 24)),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -457,7 +572,17 @@ class _ImageViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.black, iconTheme: const IconThemeData(color: Colors.white)),
+      appBar: AppBar(
+        backgroundColor: Colors.black, 
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download_rounded, color: Colors.white),
+            onPressed: () => ImageUtils.saveNetworkImage(context, url),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: PhotoView(
         imageProvider: NetworkImage(url),
         loadingBuilder: (context, event) => const Center(child: CircularProgressIndicator()),

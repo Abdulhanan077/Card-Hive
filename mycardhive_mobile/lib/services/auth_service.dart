@@ -4,10 +4,11 @@ import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mycardhive_mobile/services/cache_service.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:mycardhive_mobile/config.dart';
 
 class AuthService {
-  // Production API URL
-  static const String baseUrl = 'http://192.168.101.52:3000/api';
+  // Base URL managed in lib/config.dart
+  static const String baseUrl = AppConfig.baseUrl;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
 
@@ -273,5 +274,21 @@ class AuthService {
       };
     }
     return null;
+  }
+
+  Future<void> updateFcmToken(String fcmToken) async {
+    final token = await getToken();
+    if (token == null) return;
+
+    try {
+      await http.post(
+        Uri.parse('$baseUrl/mobile/user/fcm-token'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'next-auth.session-token=$token',
+        },
+        body: json.encode({'fcmToken': fcmToken}),
+      ).timeout(const Duration(seconds: 10));
+    } catch (_) {}
   }
 }
