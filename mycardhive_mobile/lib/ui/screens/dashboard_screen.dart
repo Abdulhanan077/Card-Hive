@@ -18,6 +18,8 @@ import 'dart:async';
 import 'package:mycardhive_mobile/services/notification_service.dart';
 import 'package:mycardhive_mobile/ui/screens/notifications_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mycardhive_mobile/services/public_service.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -32,10 +34,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final AuthService _authService = AuthService();
   final TradeService _tradeService = TradeService();
   final RateService _rateService = RateService();
+  final PublicService _publicService = PublicService();
   
   List<Map<String, dynamic>> _topRates = [];
   List<Map<String, dynamic>> _recentTrades = [];
+  List<Map<String, dynamic>> _statusUpdates = [];
   Map<String, dynamic> _user = {};
+  final PageController _statusController = PageController();
   bool _isRefreshing = false;
   int _unreadCount = 0;
   bool _initialCheckDone = false;
@@ -74,12 +79,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         await CacheService.cacheDashboard(_user);
       }
 
-      // 2. Load trades and rates
+      // 2. Load trades, rates, and status updates
       final trades = await _tradeService.getTrades();
       final rates = await _rateService.getTopRates();
+      final updates = await _publicService.getStatusUpdates();
+      
       setState(() {
         _recentTrades = trades.take(3).toList();
         _topRates = rates;
+        _statusUpdates = updates;
       });
     } catch (e) {
       debugPrint("Dashboard Refresh Error: $e");
@@ -97,6 +105,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     StatusPollingService.stopPolling();
     _notifTimer?.cancel();
+    _statusController.dispose();
     super.dispose();
   }
 
@@ -323,39 +332,122 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
   Widget _buildStatusCarousel(bool isDark, ThemeData theme) {
-     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    if (_statusUpdates.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
         ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Latest Promotions", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text(
-            "Discover the best exchange rates and start selling your gift cards today.",
-            style: TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen())),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF6366F1),
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Latest Promotions", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text(
+              "Discover the best exchange rates and start selling your gift cards today.",
+              style: TextStyle(color: Colors.white70, fontSize: 13),
             ),
-            child: const Text("Sell Now", style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen())),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF6366F1),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text("Sell Now", style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            controller: _statusController,
+            itemCount: _statusUpdates.length,
+            itemBuilder: (context, index) {
+              final update = _statusUpdates[index];
+              final hasImage = update['imageUrl'] != null;
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  border: Border.all(color: theme.dividerColor),
+                  image: hasImage ? DecorationImage(
+                    image: NetworkImage(update['imageUrl']),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken),
+                  ) : null,
+                  gradient: !hasImage ? const LinearGradient(
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ) : null,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _getUpdateTitle(update),
+                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        update['message'] ?? "",
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const Spacer(),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: Text(
+                          "Just now", // You can calculate time ago here
+                          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        SmoothPageIndicator(
+          controller: _statusController,
+          count: _statusUpdates.length,
+          effect: ScrollingDotsEffect(
+            dotWidth: 6,
+            dotHeight: 6,
+            activeDotColor: theme.primaryColor,
+            dotColor: isDark ? Colors.white24 : Colors.grey.withOpacity(0.3),
+          ),
+        ),
+      ],
     );
+  }
+
+  String _getUpdateTitle(Map<String, dynamic> update) {
+    if (update['message'] != null && update['message'].toString().contains("paid")) return "Payment Confirmed! ✅";
+    return "New Update 📢";
   }
 
   Widget _buildColoredInfoCard({
