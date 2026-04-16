@@ -7,6 +7,7 @@ import 'package:mycardhive_mobile/ui/screens/leaderboard_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/referrals_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/settings_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/rewards_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
 import 'package:mycardhive_mobile/services/cache_service.dart';
 import 'package:mycardhive_mobile/services/status_service.dart';
 import 'package:mycardhive_mobile/services/trade_service.dart';
@@ -101,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _logout() async {
     await _authService.logout();
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (route) => false);
+    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => HomeScreen()), (route) => false);
   }
 
   @override

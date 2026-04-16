@@ -76,10 +76,10 @@ class AdminMoreTab extends StatelessWidget {
               onTap: () async {
                 await authService.logout();
                 if (context.mounted) {
-                   Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                     MaterialPageRoute(builder: (context) => const HomeScreen()),
-                     (route) => false
-                   );
+                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                      (route) => false
+                    );
                 }
               },
             ),
