@@ -52,8 +52,10 @@ const SupportChat = () => {
         const channel = pusherClient.subscribe(`support-${sessionId}`);
         channel.bind("new-message", (msg: any) => {
             setMessages((prev) => {
-                if (prev.find(m => m.id === msg.id)) return prev;
-                return [...prev, msg];
+                // Remove any optimistic messages
+                const filtered = prev.filter(m => !m.isSending);
+                if (filtered.find(m => m.id === msg.id)) return filtered;
+                return [...filtered, msg];
             });
             if (!isOpen) setUnreadCount((prev) => prev + 1);
         });
@@ -72,9 +74,21 @@ const SupportChat = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() || isLoading) return;
-
         const content = input.trim();
+        if (!content) return;
+
+        // Optimistic message
+        const tempId = Date.now();
+        const optimisticMsg = {
+            id: tempId,
+            content,
+            senderName: session?.user?.name || "Visitor",
+            createdAt: new Date().toISOString(),
+            isAdmin: false,
+            isSending: true
+        };
+
+        setMessages((prev) => [...prev, optimisticMsg]);
         setInput("");
         setIsLoading(true);
 
@@ -89,9 +103,12 @@ const SupportChat = () => {
                     senderName: session?.user?.name || "Visitor"
                 })
             });
+            // Pusher bound event handles official update
         } catch (err) {
             console.error("Support Chat Send Error:", err);
+            setMessages((prev) => prev.filter(m => m.id !== tempId));
         } finally {
+            setIsLoading(true); // Keep input disabled slightly or handle as needed
             setIsLoading(false);
         }
     };
@@ -155,10 +172,14 @@ const SupportChat = () => {
                                         backgroundColor: msg.isAdmin ? "#f1f3f5" : "#2563EB",
                                         color: msg.isAdmin ? "#1E293B" : "#fff",
                                         fontSize: "13px",
-                                        boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
+                                        boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                                        opacity: msg.isSending ? 0.6 : 1
                                     }}
                                 >
                                     {msg.content}
+                                    {msg.isSending && (
+                                        <div style={{ fontSize: "9px", opacity: 0.7, marginTop: "2px", textAlign: "right", fontStyle: "italic" }}>Sending...</div>
+                                    )}
                                 </div>
                             ))}
                         </div>

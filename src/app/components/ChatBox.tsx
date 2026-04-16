@@ -59,8 +59,11 @@ export default function ChatBox({
 
         channel.bind("new-message", (data: Message) => {
             setMessages((prev) => {
-                if (prev.find(m => m.id === data.id)) return prev;
-                return [...prev, data];
+                // Remove any optimistic messages that might match this sender and content
+                // Or just filter out all negative (temp) IDs if we are sure the real one is coming
+                const filtered = prev.filter(m => m.id > 0); 
+                if (filtered.find(m => m.id === data.id)) return filtered;
+                return [...filtered, data];
             });
 
             // If the message is not from me, mark it as read immediately
@@ -101,16 +104,35 @@ export default function ChatBox({
 
     const handleSend = async (e?: React.FormEvent, fileUrl?: string, fileType?: 'IMAGE' | 'FILE') => {
         if (e) e.preventDefault();
-        if (!content.trim() && !fileUrl) return;
+        const messageContent = content.trim();
+        if (!messageContent && !fileUrl) return;
 
-        setLoading(true);
+        // Optimistic message
+        const tempId = -Math.floor(Math.random() * 1000000);
+        const optimisticMsg: any = {
+            id: tempId,
+            content: messageContent,
+            createdAt: new Date(),
+            isRead: false,
+            sender: { id: currentUserId, username: currentUsername, role: "USER" },
+            fileUrl,
+            fileType,
+            isSending: true
+        };
+
+        setMessages(prev => [...prev, optimisticMsg]);
+        setContent("");
+
         try {
-            await postMessage(tradeId, content, path, fileUrl, fileType);
-            setContent("");
+            await postMessage(tradeId, messageContent, path, fileUrl, fileType);
+            // We don't need to manually remove the optimistic message if Pusher is working correctly,
+            // because channel.bind("new-message") will add the real one and temp messages should be filtered
+            // However, to be safe and avoid "ghost" messages if Pusher is slow:
+            // We keep the optimistic one until the real one arrives via Pusher (handled in useEffect)
         } catch (err) {
             console.error("Failed to send message", err);
-        } finally {
-            setLoading(false);
+            setMessages(prev => prev.filter(m => m.id !== tempId));
+            toast.error("Failed to send message");
         }
     };
 
@@ -121,9 +143,24 @@ export default function ChatBox({
         setUploading(true);
         try {
             for (const file of files) {
+                // Show optimistic message for file immediately
+                const tempId = -Math.floor(Math.random() * 1000000);
+                const optimisticMsg: any = {
+                    id: tempId,
+                    content: "Uploading attachment...",
+                    createdAt: new Date(),
+                    isRead: false,
+                    sender: { id: currentUserId, username: currentUsername, role: "USER" },
+                    isSending: true
+                };
+                setMessages(prev => [...prev, optimisticMsg]);
+
                 const formData = new FormData();
                 formData.append("file", file);
                 const result = await uploadChatFileAction(formData);
+                
+                // Remove the "Uploading..." placeholder and send the real message
+                setMessages(prev => prev.filter(m => m.id !== tempId));
                 await handleSend(undefined, result.url, result.type as any);
             }
         } catch (err) {
@@ -212,9 +249,10 @@ export default function ChatBox({
                         <p>No messages yet. Send a greeting or upload a file.</p>
                     </div>
                 ) : (
-                    messages.map((msg) => {
+                    messages.map((msg: any) => {
                         const isMe = msg.sender.id === currentUserId;
                         const isAdminMsg = msg.sender.role === "ADMIN";
+                        const isSending = msg.isSending === true;
 
                         return (
                             <div key={msg.id} style={{
@@ -222,7 +260,8 @@ export default function ChatBox({
                                 maxWidth: "80%",
                                 display: "flex",
                                 flexDirection: "column",
-                                gap: "4px"
+                                gap: "4px",
+                                opacity: isSending ? 0.6 : 1
                             }}>
                                 <div style={{
                                     fontSize: "0.75rem",
@@ -249,26 +288,26 @@ export default function ChatBox({
                                             {isAdminMsg ? "A" : "U"}
                                         </div>
                                     )}
-                                    {isMe ? "Sent" : `@${msg.sender.username}`} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {isMe ? (isSending ? "Sending..." : "Sent") : `@${msg.sender.username}`} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                                 <div
                                     onMouseEnter={() => setShowMenuId(msg.id)}
                                     onMouseLeave={() => setShowMenuId(null)}
                                     style={{
-                                        backgroundColor: isMe ? "var(--primary)" : "var(--surface)",
+                                         backgroundColor: isMe ? (isSending ? "#94a3b8" : "var(--primary)") : "var(--surface)",
                                         color: isMe ? "white" : "var(--foreground)",
                                         padding: "0.75rem 1rem",
                                         borderRadius: "16px",
                                         borderBottomRightRadius: isMe ? "4px" : "16px",
                                         borderBottomLeftRadius: !isMe ? "4px" : "16px",
-                                        boxShadow: isMe ? "0 4px 15px -3px rgba(37, 99, 235, 0.3)" : "var(--shadow-sm)",
+                                        boxShadow: (isMe && !isSending) ? "0 4px 15px -3px rgba(37, 99, 235, 0.3)" : "var(--shadow-sm)",
                                         wordWrap: "break-word",
                                         position: "relative",
                                         border: isMe ? "none" : "1px solid var(--border)"
                                     }}
                                 >
                                     {/* Edit/Delete Menu */}
-                                    {isMe && showMenuId === msg.id && !editingId && (
+                                    {isMe && showMenuId === msg.id && !editingId && !isSending && (
                                         <div style={{
                                             position: "absolute",
                                             top: "-32px",
@@ -403,7 +442,7 @@ export default function ChatBox({
                                         height: "12px",
                                         opacity: 0.8
                                     }}>
-                                        {isMe && (
+                                        {isMe && !isSending && (
                                             msg.isRead ? <IoCheckmarkDone size={14} /> : <IoCheckmark size={14} />
                                         )}
                                     </div>
