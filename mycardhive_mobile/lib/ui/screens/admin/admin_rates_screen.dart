@@ -236,31 +236,112 @@ class _RateEditorSheetState extends State<_RateEditorSheet> {
   final AdminService _adminService = AdminService();
   final _formKey = GlobalKey<FormState>();
 
-  late TextEditingController _brandController;
-  late TextEditingController _categoryController;
+  final List<String> _popularBrands = [
+    "Amazon", "Amex", "Apple/iTunes", "Best Buy", "ebay", "Footlocker", "GameStop", "Google Play", 
+    "JCPenney", "Macy's", "Nike", "Nordstrom", "PlayStation", "Razer Gold", "Roblox", "Sephora", 
+    "Steam", "Target", "Vanilla Visa", "Walmart", "Xbox"
+  ];
+
+  final List<String> _currencies = ["Global", "USD", "GBP", "EUR", "AUD", "CAD", "CHF"];
+  final List<String> _priceTags = [
+    "Any Amount", "10-49", "50", "51-99", "100", "101-149", "150", 
+    "151-199", "200", "201-249", "250", "251-299", "300", "301-349", 
+    "350", "351-399", "400", "401-449", "450", "451-499", "500+"
+  ];
+
+  late TextEditingController _customBrandController;
+  late TextEditingController _customPriceController;
   late TextEditingController _rateController;
   late TextEditingController _publicRateController;
+
+  String? _selectedBrand;
+  String? _selectedCurrency;
+  String? _selectedPriceTag;
   String _cardType = "Physical";
+  
+  bool _isCustomBrand = false;
+  bool _isCustomPrice = false;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _brandController = TextEditingController(text: widget.rate?['cardBrand'] ?? "");
-    _categoryController = TextEditingController(text: widget.rate?['cardCountry'] ?? "");
+    _customBrandController = TextEditingController();
+    _customPriceController = TextEditingController();
     _rateController = TextEditingController(text: widget.rate?['rate']?.toString() ?? "");
     _publicRateController = TextEditingController(text: widget.rate?['publicRate']?.toString() ?? "");
     _cardType = widget.rate?['cardType'] ?? "Physical";
+
+    if (widget.rate != null) {
+      final brand = widget.rate!['cardBrand'];
+      if (_popularBrands.contains(brand)) {
+        _selectedBrand = brand;
+      } else {
+        _selectedBrand = "Other";
+        _isCustomBrand = true;
+        _customBrandController.text = brand;
+      }
+
+      // Hacky parse for category (e.g., "USD ($100)")
+      final category = widget.rate!['cardCountry'].toString();
+      if (category == "Any Amount") {
+        _selectedCurrency = "Global";
+        _selectedPriceTag = "Any Amount";
+      } else {
+        // Simple attempt to find currency prefix
+        for (var c in _currencies) {
+          if (category.startsWith(c)) {
+            _selectedCurrency = c;
+            break;
+          }
+        }
+        _selectedCurrency ??= "Global";
+        
+        // Extract tag from bracket e.g. "USD ($100)" -> "100"
+        RegExp regExp = RegExp(r'\((?:\$|£|€)?([\d+-]+)\)');
+        var match = regExp.firstMatch(category);
+        if (match != null) {
+          String tag = match.group(1)!;
+          if (_priceTags.contains(tag)) {
+            _selectedPriceTag = tag;
+          } else {
+            _selectedPriceTag = "Other";
+            _isCustomPrice = true;
+            _customPriceController.text = tag;
+          }
+        } else {
+           // Fallback
+           _selectedPriceTag = category;
+        }
+      }
+    } else {
+      _selectedBrand = "Amazon";
+      _selectedCurrency = "USD";
+      _selectedPriceTag = "Any Amount";
+    }
+  }
+
+  String _formatCardCountry() {
+    final curr = _selectedCurrency ?? "USD";
+    final tag = _isCustomPrice ? _customPriceController.text : (_selectedPriceTag ?? "Any Amount");
+    
+    if (tag == "Any Amount") return tag;
+    if (curr == "Global") return "Global ($tag)";
+    
+    final symbol = curr == 'USD' ? '\$' : curr == 'GBP' ? '£' : curr == 'EUR' ? '€' : '';
+    return "$curr ($symbol$tag)";
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    final brand = _isCustomBrand ? _customBrandController.text : _selectedBrand;
+    
     final data = {
       if (widget.rate != null) 'id': widget.rate!['id'],
-      'cardBrand': _brandController.text,
-      'cardCountry': _categoryController.text,
+      'cardBrand': brand,
+      'cardCountry': _formatCardCountry(),
       'cardType': _cardType,
       'rate': double.parse(_rateController.text),
       'publicRate': _publicRateController.text.isEmpty ? null : double.parse(_publicRateController.text),
@@ -301,40 +382,86 @@ class _RateEditorSheetState extends State<_RateEditorSheet> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              _buildField("Card Brand (e.g. Amazon)", _brandController),
-              _buildField("Category (e.g. USD (100) / Global)", _categoryController),
+              
+              _buildModernDropdown(
+                label: "Card Brand", 
+                value: _isCustomBrand ? "Other" : _selectedBrand, 
+                items: [..._popularBrands, "Other"], 
+                onChanged: (val) {
+                  setState(() {
+                    _isCustomBrand = val == "Other";
+                    if (!_isCustomBrand) _selectedBrand = val;
+                  });
+                }
+              ),
+              if (_isCustomBrand)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: _buildTextField("Custom Brand Name", _customBrandController),
+                ),
+
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Card Type", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-                        const SizedBox(height: 4),
-                        DropdownButtonFormField<String>(
-                          value: _cardType,
-                          items: ["Physical", "E-code"].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                          onChanged: (val) => setState(() => _cardType = val!),
-                          decoration: _fieldDecoration(),
-                        ),
-                      ],
+                    child: _buildModernDropdown(
+                      label: "Currency", 
+                      value: _selectedCurrency, 
+                      items: _currencies, 
+                      onChanged: (val) => setState(() => _selectedCurrency = val),
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildField("Payout Rate", _rateController, isNumeric: true)),
+                  Expanded(
+                    child: _buildModernDropdown(
+                      label: "Price Tag", 
+                      value: _isCustomPrice ? "Other" : _selectedPriceTag, 
+                      items: [..._priceTags, "Other"], 
+                      onChanged: (val) {
+                         setState(() {
+                           _isCustomPrice = val == "Other";
+                           if (!_isCustomPrice) _selectedPriceTag = val;
+                         });
+                      }
+                    ),
+                  ),
                 ],
               ),
-              _buildField("Public Rate (Optional)", _publicRateController, isNumeric: true),
-              const SizedBox(height: 24),
+              if (_isCustomPrice)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: _buildTextField("Custom Price Tag", _customPriceController),
+                ),
+
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildModernDropdown(
+                      label: "Card Type", 
+                      value: _cardType, 
+                      items: ["Physical", "E-code"], 
+                      onChanged: (val) => setState(() => _cardType = val!),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(child: _buildTextField("Payout Rate", _rateController, isNumeric: true)),
+                ],
+              ),
+              const SizedBox(height: 16),
+             _buildTextField("Public Rate (Optional)", _publicRateController, isNumeric: true),
+
+              const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _isLoading ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
                 ),
-                child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text("Save Configuration", style: TextStyle(fontWeight: FontWeight.bold)),
+                child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text("Save Configuration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),
               const SizedBox(height: 12),
             ],
@@ -344,31 +471,53 @@ class _RateEditorSheetState extends State<_RateEditorSheet> {
     );
   }
 
-  Widget _buildField(String label, TextEditingController controller, {bool isNumeric = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-          const SizedBox(height: 4),
-          TextFormField(
-            controller: controller,
-            keyboardType: isNumeric ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
-            validator: (v) => v!.isEmpty && label.indexOf("Optional") == -1 ? "Required" : null,
-            decoration: _fieldDecoration(),
+  Widget _buildModernDropdown({required String label, required String? value, required List<String> items, required ValueChanged<String?> onChanged}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: value,
+          items: items.map((t) => DropdownMenuItem(value: t, child: Text(t, style: GoogleFonts.outfit(fontSize: 14)))).toList(),
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
-        ],
-      ),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
+          dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ],
     );
   }
 
-  InputDecoration _fieldDecoration() {
+  Widget _buildTextField(String label, TextEditingController controller, {bool isNumeric = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InputDecoration(
-      filled: true,
-      fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          keyboardType: isNumeric ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+          validator: (v) => v!.isEmpty && label.indexOf("Optional") == -1 ? "Required" : null,
+          style: GoogleFonts.outfit(fontSize: 14),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+        ),
+      ],
     );
   }
 }
+
