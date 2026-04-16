@@ -32,33 +32,28 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
+    
     try {
       final response = await _adminService.fetchStats();
-      // Since fetchStats only returned the 'stats' object in the previous version, 
-      // let's update AdminService or just handle it here if it's the raw map.
-      // Assuming AdminService fetchStats returns the 'stats' key or whole response.
-      // Re-examining AdminService.fetchStats... it returns `data['stats'] ?? {}`.
-      // I should update AdminService to return the full response or at least the charts/alerts.
-    } catch (e) {}
+      if (response.isNotEmpty) {
+        setState(() {
+          _stats = response['stats'] ?? {};
+          _charts = response['charts'] ?? {};
+          _securityAlerts = response['securityAlerts'] ?? [];
+        });
+      }
 
-    // Temporary: I'll actually fetch the raw response for more flexibility
-    final token = await _adminService.getToken(); 
-    final url = Uri.parse('${_adminService.baseUrl}/mobile/admin/stats');
-    final response = await _adminService.getWithAuth(url); // I'll add this helper to AdminService
-
-    if (response != null) {
+      final trades = await _adminService.fetchAllTrades(status: 'PENDING');
       setState(() {
-        _stats = response['stats'] ?? {};
-        _charts = response['charts'] ?? {};
-        _securityAlerts = response['securityAlerts'] ?? [];
+        _pendingTrades = trades;
       });
+    } catch (e) {
+      debugPrint("Dashboard load error: $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-
-    final trades = await _adminService.fetchAllTrades(status: 'PENDING');
-    setState(() {
-      _pendingTrades = trades;
-      _isLoading = false;
-    });
   }
 
   Future<void> _handleAction(String tradeId, String status, String notes) async {
@@ -329,9 +324,10 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
   }
 
   Widget _buildDonutChart(bool isDark, ThemeData theme) {
-    if (_charts.isEmpty) return const Center(child: CircularProgressIndicator());
+    if (_charts.isEmpty) return const Center(child: Text("No chart data"));
     
     final List<dynamic> data = _charts['statusDistribution'] ?? [];
+    if (data.isEmpty) return const Center(child: Text("No data to display yet"));
     
     return PieChart(
       PieChartData(
