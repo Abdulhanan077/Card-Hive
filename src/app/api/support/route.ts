@@ -68,17 +68,6 @@ export async function POST(request: Request) {
                         sessionId: sessionId
                     });
                 }
-                
-                // 2. Save Persistent DB Notification (guarantees Mobile App Polling finds it)
-                await prisma.notification.create({
-                    data: {
-                        userId: admin.id,
-                        title: notificationTitle,
-                        body: notificationBody,
-                        type: 'SUPPORT_MESSAGE',
-                        isRead: false
-                    }
-                });
             }
         } catch (notifErr) {
             console.error("Admin Notification Error (Support):", notifErr);
