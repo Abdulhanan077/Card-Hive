@@ -6,6 +6,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_notifications_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_trade_detail_screen.dart';
 
 class AdminDashboardTab extends StatefulWidget {
   final dynamic user;

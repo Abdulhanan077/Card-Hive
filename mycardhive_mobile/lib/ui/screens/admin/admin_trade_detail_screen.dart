@@ -260,19 +260,19 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
           _dataRow("Payout Method", trade['payoutMethod']?.toString().replaceAll('_', ' ') ?? "N/A"),
           if (trade['payoutPhoneNumber'] != null && trade['payoutPhoneNumber'].toString().isNotEmpty) ...[
             _dataRow("Network", trade['payoutNetwork'] ?? "N/A"),
-            _dataRow("Phone Number", trade['payoutPhoneNumber'], isCopyable: true),
+            _dataRow("Phone Number", trade['payoutPhoneNumber']?.toString() ?? '', isCopyable: true),
             if (trade['payoutAccountName'] != null)
-              _dataRow("Account Name", trade['payoutAccountName'], isCopyable: true),
+              _dataRow("Account Name", trade['payoutAccountName'].toString(), isCopyable: true),
           ],
           if (trade['cryptoReceiverId'] != null && trade['cryptoReceiverId'].toString().isNotEmpty) ...[
             _dataRow("Crypto Coin", trade['cryptoCoin'] ?? "N/A"),
             _dataRow("Network", trade['cryptoNetwork'] ?? "N/A"),
-            _dataRow("Receiver ID", trade['cryptoReceiverId'], isCopyable: true),
+            _dataRow("Receiver ID", trade['cryptoReceiverId'].toString(), isCopyable: true),
           ],
           const Divider(height: 24),
           _dataRow("Amount Payable", "GHS ${trade['calculatedPayout']?.toStringAsFixed(2) ?? '0.00'}", isHighlight: true, isCopyable: true),
           const Divider(height: 24),
-          _dataRow("Submitted", DateFormat('MMM dd, yyyy - HH:mm').format(DateTime.parse(trade['createdAt']))),
+          _dataRow("Submitted", DateFormat('MMM dd, yyyy - HH:mm').format(DateTime.parse(trade['createdAt'] ?? DateTime.now().toIso8601String()))),
         ],
       ),
     );

@@ -296,7 +296,57 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
             ),
           ),
     );
+    Widget _buildAlertsSection(bool isDark, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+           children: [
+             const Icon(Icons.notifications_active_rounded, size: 20, color: Color(0xFF2563EB)),
+             const SizedBox(width: 8),
+             Text("Security & Alerts", style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF2563EB))),
+           ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
+          ),
+          child: Column(
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), shape: BoxShape.circle),
+                  child: const Icon(Icons.notifications_active_rounded, color: Colors.blue, size: 20),
+                ),
+                title: const Text("System Notifications", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: const Text("Ensure you receive real-time trade alerts", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                trailing: OutlinedButton(
+                  onPressed: () async {
+                    await NotificationService.init();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Notification permissions requested.")));
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text("Enable", style: TextStyle(fontSize: 12)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
+}
 
   Widget _buildSection({required String title, required IconData icon, required bool isDark, required List<Widget> children}) {
     return Column(

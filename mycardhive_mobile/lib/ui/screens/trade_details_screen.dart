@@ -9,6 +9,7 @@ import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:intl/intl.dart';
 
 class TradeDetailsScreen extends StatefulWidget {
+  final Map<String, dynamic>? trade;
   final String? tradeId;
   final bool isAdmin;
 
