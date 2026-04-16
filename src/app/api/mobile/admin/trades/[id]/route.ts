@@ -4,9 +4,10 @@ import { verifyMobileToken } from "@/lib/mobileAuth";
 
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const token = request.headers.get("Authorization")?.split(" ")[1];
 
         if (!token) {
@@ -18,9 +19,9 @@ export async function GET(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        const tradeId = parseInt(params.id);
+        const tradeId = parseInt(id);
         if (isNaN(tradeId)) {
-            console.error("Invalid Trade ID provided:", params.id);
+            console.error("Invalid Trade ID provided:", id);
             return NextResponse.json({ error: "Invalid Trade ID" }, { status: 400 });
         }
 
