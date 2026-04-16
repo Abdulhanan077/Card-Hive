@@ -331,17 +331,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   );
 }
 
+  static const List<LinearGradient> _cardGradients = [
+    LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF06B6D4)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFFEF4444), Color(0xFFF97316)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFF10B981), Color(0xFF14B8A6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFFEC4899), Color(0xFFF43F5E)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFD946EF)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+  ];
+
   Widget _buildStatusCarousel(bool isDark, ThemeData theme) {
     if (_statusUpdates.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
+          gradient: _cardGradients[0],
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,7 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF6366F1),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               child: const Text("Sell Now", style: TextStyle(fontWeight: FontWeight.bold)),
             ),
@@ -371,56 +377,88 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       children: [
         SizedBox(
-          height: 180,
+          height: 220,
           child: PageView.builder(
             controller: _statusController,
             itemCount: _statusUpdates.length,
             itemBuilder: (context, index) {
               final update = _statusUpdates[index];
               final hasImage = update['imageUrl'] != null;
+              final gradient = _cardGradients[index % _cardGradients.length];
 
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(24),
                   color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  border: Border.all(color: theme.dividerColor),
+                  border: Border.all(color: Colors.white.withOpacity(0.2)),
                   image: hasImage ? DecorationImage(
                     image: NetworkImage(update['imageUrl']),
                     fit: BoxFit.cover,
-                    colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken),
+                    colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.6), BlendMode.darken),
                   ) : null,
-                  gradient: !hasImage ? const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ) : null,
+                  gradient: !hasImage ? gradient : null,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 15, offset: const Offset(0, 8)),
+                  ],
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Stack(
                     children: [
-                      Text(
-                        _getUpdateTitle(update),
-                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        update['message'] ?? "",
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const Spacer(),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: Text(
-                          "Just now", // You can calculate time ago here
-                          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
+                      if (!hasImage)
+                        Positioned(
+                          right: -30, bottom: -50,
+                          child: Container(
+                            width: 250, height: 250,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [Colors.white.withOpacity(0.15), Colors.white.withOpacity(0)],
+                              ),
+                            ),
+                          ),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Text("UPDATE", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                                ),
+                                Text(
+                                  "Just now",
+                                  style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Text(
+                              update['message'] ?? "",
+                              style: const TextStyle(
+                                color: Colors.white, 
+                                fontSize: 20, 
+                                fontWeight: FontWeight.bold,
+                                height: 1.4,
+                                fontStyle: FontStyle.italic,
+                                fontFamily: 'Georgia', // Serif-like font for formality
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 4,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const Spacer(),
+                          ],
                         ),
                       ),
                     ],
@@ -430,13 +468,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         SmoothPageIndicator(
           controller: _statusController,
           count: _statusUpdates.length,
           effect: ScrollingDotsEffect(
-            dotWidth: 6,
-            dotHeight: 6,
+            dotWidth: 7,
+            dotHeight: 7,
             activeDotColor: theme.primaryColor,
             dotColor: isDark ? Colors.white24 : Colors.grey.withOpacity(0.3),
           ),
