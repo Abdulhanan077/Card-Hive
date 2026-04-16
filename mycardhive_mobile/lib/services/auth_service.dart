@@ -7,7 +7,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 
 class AuthService {
   // Production API URL
-  static const String baseUrl = 'https://mycardhive.com/api';
+  static const String baseUrl = 'http://192.168.101.52:3000/api';
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
 

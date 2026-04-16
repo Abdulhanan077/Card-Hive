@@ -7,6 +7,7 @@ import 'package:mycardhive_mobile/ui/widgets/rates_calculator.dart';
 import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/signup_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/dashboard_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_home.dart';
 import 'package:provider/provider.dart';
 import 'package:mycardhive_mobile/providers/theme_provider.dart';
 import 'package:mycardhive_mobile/providers/connectivity_provider.dart';
@@ -107,7 +108,11 @@ class _MyCardHiveAppState extends State<MyCardHiveApp> {
       // If biometrics are enabled, we might want to prompt before dashboard
       // But for "Remember Me" logic, we typically go straight in unless it's a cold boot 'App Lock'
       setState(() {
-        _startScreen = DashboardScreen(user: result['user']);
+        if (result['user']['role'] == 'ADMIN') {
+          _startScreen = AdminHome(user: result['user']);
+        } else {
+          _startScreen = DashboardScreen(user: result['user']);
+        }
       });
     } else {
       setState(() {
