@@ -4,14 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_manage_user_screen.dart';
 
-class AdminUsersTab extends StatefulWidget {
-  const AdminUsersTab({super.key});
+class AdminUsersScreen extends StatefulWidget {
+  const AdminUsersScreen({super.key});
 
   @override
-  State<AdminUsersTab> createState() => _AdminUsersTabState();
+  State<AdminUsersScreen> createState() => _AdminUsersScreenState();
 }
 
-class _AdminUsersTabState extends State<AdminUsersTab> {
+class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final AdminService _adminService = AdminService();
   final TextEditingController _searchController = TextEditingController();
   
@@ -47,9 +47,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text("Manage Users", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        title: Text("Registered Users", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
         elevation: 0,
-        backgroundColor: Colors.transparent,
       ),
       body: Column(
         children: [
@@ -76,6 +75,10 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   Widget _buildSearchAndFilters(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).appBarTheme.backgroundColor,
+        borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+      ),
       child: Column(
         children: [
           TextField(
@@ -83,12 +86,10 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             onSubmitted: (_) => _loadUsers(),
             decoration: InputDecoration(
               hintText: "Search email, username, or phone...",
-              hintStyle: const TextStyle(fontSize: 14),
-              prefixIcon: const Icon(Icons.search, size: 20),
+              prefixIcon: const Icon(Icons.search),
               filled: true,
-              fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05))),
+              fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             ),
           ),
@@ -99,9 +100,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               children: [
                 _filterChip("Newest", "newest"),
                 const SizedBox(width: 8),
-                _filterChip("Trades", "trades_desc"),
+                _filterChip("Most Trades", "trades_desc"),
                 const SizedBox(width: 8),
-                _filterChip("Points", "points_desc"),
+                _filterChip("Highest Points", "points_desc"),
               ],
             ),
           ),
@@ -146,7 +147,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             context,
             MaterialPageRoute(builder: (context) => AdminManageUserScreen(user: user)),
           );
-          if (result == true || result != null) _loadUsers();
+          if (result == true) _loadUsers();
         },
         borderRadius: BorderRadius.circular(20),
         child: Padding(
@@ -157,14 +158,14 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CircleAvatar(
-                    radius: 20,
+                    radius: 24,
                     backgroundColor: (isActive ? Colors.green : Colors.red).withOpacity(0.1),
                     child: Text(
                       user['username'][0].toUpperCase(),
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isActive ? Colors.green : Colors.red),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: isActive ? Colors.green : Colors.red),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,21 +173,34 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("@${user['username']}", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text("@${user['username']}", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
                             _buildStatusDot(isActive),
                           ],
                         ),
-                        Text(user['email'], style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        Text(user['email'], style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey)),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            _statBadge(Icons.shopping_bag_rounded, "${user['tradesCount']}", const Color(0xFF2563EB)),
+                            _statBadge(Icons.shopping_bag_outlined, "${user['tradesCount']} Trades", const Color(0xFF2563EB)),
                             const SizedBox(width: 8),
-                            _statBadge(Icons.generating_tokens_rounded, "${user['rewardBalance']}", const Color(0xFFF59E0B)),
+                            _statBadge(Icons.generating_tokens_outlined, "${user['rewardBalance']} Pts", const Color(0xFFF59E0B)),
                           ],
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Joined ${DateFormat('MMM dd, yyyy').format(date)}", style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  Row(
+                    children: [
+                      Text("Manage", style: GoogleFonts.outfit(color: const Color(0xFF2563EB), fontWeight: FontWeight.w600, fontSize: 13)),
+                      const Icon(Icons.chevron_right, size: 16, color: Color(0xFF2563EB)),
+                    ],
                   ),
                 ],
               ),
@@ -199,14 +213,14 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
 
   Widget _statBadge(IconData icon, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 10, color: color),
+          Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
         ],
       ),
     );
@@ -214,8 +228,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
 
   Widget _buildStatusDot(bool active) {
     return Container(
-      width: 6,
-      height: 6,
+      width: 8,
+      height: 8,
       decoration: BoxDecoration(color: active ? Colors.green : Colors.red, shape: BoxShape.circle),
     );
   }
@@ -225,7 +239,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline_rounded, size: 64, color: Colors.grey.withOpacity(0.1)),
+          Icon(Icons.people_outline_rounded, size: 64, color: Colors.grey.withOpacity(0.2)),
           const SizedBox(height: 16),
           const Text("No users found.", style: TextStyle(color: Colors.grey)),
         ],

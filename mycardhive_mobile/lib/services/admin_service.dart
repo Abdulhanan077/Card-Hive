@@ -102,5 +102,52 @@ class AdminService {
     } catch (e) {
       return {'success': false, 'error': 'Connection failed'};
     }
+  Future<List<Map<String, dynamic>>> fetchAllUsers({String query = '', String sort = 'newest'}) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return [];
+
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl}/mobile/admin/users?query=$query&sort=$sort'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return List<Map<String, dynamic>>.from(data['users'] ?? []);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> performUserAction(int userId, String action, dynamic value) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl}/mobile/admin/users/action'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+        },
+        body: json.encode({
+          'userId': userId,
+          'action': action,
+          'value': value,
+        }),
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Connection failed'};
+    }
   }
 }
