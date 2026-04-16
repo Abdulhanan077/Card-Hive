@@ -152,4 +152,69 @@ class AdminService {
       return {'success': false, 'error': 'Connection failed'};
     }
   }
+
+  Future<List<Map<String, dynamic>>> fetchRates() async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return [];
+
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl}/mobile/admin/rates'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return List<Map<String, dynamic>>.from(data['rates'] ?? []);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> saveRate(Map<String, dynamic> rateData) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl}/mobile/admin/rates'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+        },
+        body: json.encode(rateData),
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Connection failed'};
+    }
+  }
+
+  Future<Map<String, dynamic>> deleteRate(int id) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      final response = await http.delete(
+        Uri.parse('${AuthService.baseUrl}/mobile/admin/rates?id=$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+        },
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Connection failed'};
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mycardhive_mobile/ui/screens/admin/admin_rates_screen.dart';
 
 class AdminMoreTab extends StatelessWidget {
   final dynamic user;
@@ -28,7 +29,9 @@ class AdminMoreTab extends StatelessWidget {
               icon: Icons.trending_up_rounded,
               color: Colors.blue,
               isDark: isDark,
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AdminRatesScreen()));
+              },
             ),
             const SizedBox(height: 12),
             _buildActionItem(
