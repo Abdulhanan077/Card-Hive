@@ -1,6 +1,5 @@
 import Flutter
 import UIKit
-import workmanager
 import FirebaseCore
 
 @main
@@ -12,10 +11,6 @@ import FirebaseCore
     FirebaseApp.configure()
     GeneratedPluginRegistrant.register(with: self)
     
-    WorkmanagerPlugin.setPluginRegistrantCallback { registry in
-        GeneratedPluginRegistrant.register(with: registry)
-    }
-
     if #available(iOS 10.0, *) {
       UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
     }
