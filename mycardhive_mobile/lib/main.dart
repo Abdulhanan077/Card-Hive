@@ -20,6 +20,7 @@ import 'package:mycardhive_mobile/services/sync_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:mycardhive_mobile/firebase_options.dart';
 
 const String kBackgroundNotificationTask = "com.cardhive.notification_job";
 
@@ -48,9 +49,11 @@ void main() async {
 
   // Initialize Firebase (Requires google-services.json / firebase_options.dart)
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
-    debugPrint("Firebase Init Error: $e (Make sure google-services.json is added)");
+    debugPrint("Firebase Init Error: $e");
   }
 
   // Initialize Background Workmanager
