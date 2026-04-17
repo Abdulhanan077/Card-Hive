@@ -41,9 +41,13 @@ void callbackDispatcher() {
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+  } catch (e) {
+    debugPrint("Binding Error: $e");
+  }
   
-  // 1. Initialize Firebase FIRST (Required for messaging)
+  // 1. Initialize Firebase (Safe check)
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -52,27 +56,38 @@ void main() async {
     debugPrint("Firebase Init Error: $e");
   }
 
-  // 2. Initialize Services (Now safe to access Firebase)
-  await CacheService.init();
-  await NotificationService.init();
+  // 2. Initialize Services (Individual Catching)
+  try {
+    await CacheService.init();
+  } catch (e) {
+    debugPrint("Cache Init Error: $e");
+  }
+  
+  try {
+    await NotificationService.init();
+  } catch (e) {
+    debugPrint("Notification Init Error: $e");
+  }
 
   // 3. Initialize Background Workmanager
-  await Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: false,
-  );
-
-  // Register Unique Periodic Task for better reliability across updates/reboots
-  await Workmanager().registerPeriodicTask(
-    "com.cardhive.notification_job_unique", 
-    kBackgroundNotificationTask,
-    frequency: const Duration(minutes: 15),
-    existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
-    constraints: Constraints(
-      networkType: NetworkType.connected,
-      requiresBatteryNotLow: false, // Allow even if battery is low as trades are critical
-    ),
-  );
+  try {
+    await Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: false,
+    );
+    
+    await Workmanager().registerPeriodicTask(
+      "com.cardhive.notification_job_unique", 
+      kBackgroundNotificationTask,
+      frequency: const Duration(minutes: 15),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+    );
+  } catch (e) {
+    debugPrint("Workmanager Error: $e");
+  }
   
   runApp(
     MultiProvider(
