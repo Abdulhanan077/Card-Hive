@@ -18,7 +18,7 @@ workflows:
       - name: Install CocoaPods
         script: |
           cd mycardhive_mobile/ios
-          pod install
+          pod install --repo-update
           
       - name: Build iOS Debug Application for Simulator
         script: |
