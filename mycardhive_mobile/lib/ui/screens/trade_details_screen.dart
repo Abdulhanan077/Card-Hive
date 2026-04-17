@@ -145,7 +145,10 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
       }
     }
 
-    final paymentReceiptUrl = _fullTrade!['paymentReceiptUrl'];
+    String? paymentReceiptUrl = _fullTrade!['paymentReceiptUrl'];
+    if (paymentReceiptUrl != null && !paymentReceiptUrl.startsWith('http')) {
+      paymentReceiptUrl = '${AuthService.baseUrl.replaceAll('/api', '')}$paymentReceiptUrl';
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -406,7 +409,10 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
           itemCount: imageUrls.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1),
           itemBuilder: (context, index) {
-            final url = imageUrls[index];
+            String url = imageUrls[index];
+            if (!url.startsWith('http')) {
+              url = '${AuthService.baseUrl.replaceAll('/api', '')}$url';
+            }
             return GestureDetector(
               onTap: () => _viewImage(url),
               child: ClipRRect(
