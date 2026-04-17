@@ -15,6 +15,8 @@ end
 
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper.rb'), flutter_root)
 
+flutter_ios_podfile_setup
+
 platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats sync usage to help focus our efforts on the features you use most.
