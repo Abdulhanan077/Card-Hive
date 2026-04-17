@@ -8,11 +8,16 @@ import workmanager_apple
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Register the Workmanager launch handler (Required on iOS) - Move BEFORE GeneratedPluginRegistrant
+    
+    // 1. Register the Workmanager launch handler (Must be first)
     WorkmanagerPlugin.setPluginRegistrantCallback { registry in
         GeneratedPluginRegistrant.register(with: registry)
     }
-
+    
+    // 2. Explicitly register the task identifier (Crucial for iOS)
+    WorkmanagerPlugin.registerPeriodicTask(withIdentifier: "com.cardhive.notification_job")
+    
+    // 3. Register all other plugins
     GeneratedPluginRegistrant.register(with: self)
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

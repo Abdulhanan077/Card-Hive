@@ -76,9 +76,9 @@ void main() async {
       isInDebugMode: false,
     );
     
-    /*
+    // Register Unified Periodic Task (Matches Info.plist & AppDelegate)
     await Workmanager().registerPeriodicTask(
-      "com.cardhive.notification_job_unique", 
+      kBackgroundNotificationTask, 
       kBackgroundNotificationTask,
       frequency: const Duration(minutes: 15),
       existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
@@ -86,7 +86,6 @@ void main() async {
         networkType: NetworkType.connected,
       ),
     );
-    */
   } catch (e) {
     debugPrint("Workmanager Error: $e");
   }

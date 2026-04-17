@@ -54,7 +54,6 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.cardhive.notification_job</string>
-		<string>com.cardhive.notification_job_unique</string>
 	</array>
 </dict>
 </plist>
