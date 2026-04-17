@@ -1,5 +1,5 @@
 #!/bin/bash
-# Global Standardization Script (v6 - The 26.2 Alignment)
+# Global Standardization Script (v7 - The Deep-Root Fix)
 
 if [ -d "mycardhive_mobile" ]; then
     PROJECT_DIR="mycardhive_mobile"
@@ -11,31 +11,26 @@ else
 fi
 
 IOS_DIR="$PROJECT_DIR/ios"
-MACOS_DIR="$PROJECT_DIR/macos"
-TARGET_VER="26.2" # Align with MacinCloud SDK
+TARGET_VER="26.2"
 
-echo "Aligning project with MacinCloud SDK $TARGET_VER..."
+echo "Applying Deep-Root Fix for SDK $TARGET_VER..."
 
-# 1. iOS Alignment (Forcing SDK version to bypass eligibility block)
-if [ -d "$IOS_DIR" ]; then
-    PBXPROJ_IOS="$IOS_DIR/Runner.xcodeproj/project.pbxproj"
-    PODFILE_IOS="$IOS_DIR/Podfile"
-    sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = $TARGET_VER;/g" "$PBXPROJ_IOS"
-    sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '$TARGET_VER'/g" "$PODFILE_IOS"
-    
-    # Update Podfile loop to target 26.2
-    sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET'] = '[0-9.]*'/IPHONEOS_DEPLOYMENT_TARGET'] = '$TARGET_VER'/g" "$PODFILE_IOS"
-fi
+# 1. Deployment Target Alignment
+PBXPROJ_IOS="$IOS_DIR/Runner.xcodeproj/project.pbxproj"
+PODFILE_IOS="$IOS_DIR/Podfile"
 
-# 2. macOS Alignment
-if [ -d "$MACOS_DIR" ]; then
-    PBXPROJ_MACOS="$MACOS_DIR/Runner.xcodeproj/project.pbxproj"
-    sed -i '' 's/MACOSX_DEPLOYMENT_TARGET = [0-9.]*;/MACOSX_DEPLOYMENT_TARGET = 11.0;/g' "$PBXPROJ_MACOS"
-fi
+sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = $TARGET_VER;/g" "$PBXPROJ_IOS"
+sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '$TARGET_VER'/g" "$PODFILE_IOS"
+sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET'] = '[0-9.]*'/IPHONEOS_DEPLOYMENT_TARGET'] = '$TARGET_VER'/g" "$PODFILE_IOS"
 
-# 3. Link Pods for all configurations
-[ -f "$IOS_DIR/Flutter/Debug.xcconfig" ] && echo '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"' >> "$IOS_DIR/Flutter/Debug.xcconfig"
-[ -f "$IOS_DIR/Flutter/Release.xcconfig" ] && echo '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"' >> "$IOS_DIR/Flutter/Release.xcconfig"
-[ -f "$IOS_DIR/Flutter/Release.xcconfig" ] && echo '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"' >> "$IOS_DIR/Flutter/Release.xcconfig"
+# 2. Hard-Link the SDK (This is the breakthrough)
+# Changing SDKROOT from generic 'iphoneos' to the specific server name 'iphoneos26.2'
+sed -i '' "s/SDKROOT = iphoneos;/SDKROOT = iphoneos$TARGET_VER;/g" "$PBXPROJ_IOS"
 
-echo "Done! Run: cd $PROJECT_DIR && flutter pub get && cd ios && pod install && cd .."
+# 3. Purge xcuserdata which might hold the old 'Any iOS Device' reference
+rm -rf "$IOS_DIR/Runner.xcodeproj/project.xcworkspace/xcuserdata"
+rm -rf "$IOS_DIR/Runner.xcodeproj/xcuserdata"
+rm -rf ~/Library/Developer/Xcode/DerivedData/*
+
+echo "Done! Final build on Mac:"
+echo "cd $PROJECT_DIR && flutter pub get && cd ios && pod install && cd .. && flutter run"
