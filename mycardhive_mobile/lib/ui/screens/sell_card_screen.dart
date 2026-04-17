@@ -152,8 +152,9 @@ class _SellCardScreenState extends State<SellCardScreen> {
       return;
     }
 
-    if (_imagePaths.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Upload at least one receipt or card image')));
+    final hasPhysicalCard = _cards.any((c) => c.cardType == "Physical");
+    if (hasPhysicalCard && _imagePaths.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Upload at least one receipt or card image for your Physical cards')));
       return;
     }
 

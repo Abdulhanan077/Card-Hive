@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mycardhive_mobile/services/cache_service.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -26,6 +27,36 @@ class AuthService {
     return 'Mobile App (Unknown Device)';
   }
 
+  // --- Storage Helper with Fallback ---
+  Future<void> _writeSecure(String key, String value) async {
+    try {
+      await _storage.write(key: key, value: value);
+    } catch (e) {
+      debugPrint("Secure Storage Write Fallback for $key: $e");
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(key, value);
+    }
+  }
+
+  Future<String?> _readSecure(String key) async {
+    try {
+      final val = await _storage.read(key: key);
+      if (val != null) return val;
+    } catch (_) {}
+    
+    // Fallback
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key);
+  }
+
+  Future<void> _deleteSecure(String key) async {
+    try {
+      await _storage.delete(key: key);
+    } catch (_) {}
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(key);
+  }
+
   Future<Map<String, dynamic>> login(String username, String password, {bool rememberMe = false}) async {
     try {
       final deviceString = await _getDeviceString();
@@ -45,32 +76,21 @@ class AuthService {
 
       if (response.statusCode == 200) {
         // Save the JWT token securely
-        try {
-          await _storage.write(key: 'jwt_token', value: data['token']);
-          await _storage.write(key: 'user_id', value: data['user']['id'].toString());
-        } catch (e) {
-          debugPrint("Secure Storage Write Error (JWT): $e");
-          // On some simulators, secure storage fails even with entitlements.
-          // We allow the user to proceed for this session.
-        }
-        
-        try {
-          await _storage.write(key: 'username', value: data['user']['username']);
-          await _storage.write(key: 'role', value: data['user']['role']);
-        } catch (_) {}
+        await _writeSecure('jwt_token', data['token']);
+        await _writeSecure('user_id', data['user']['id'].toString());
+        await _writeSecure('username', data['user']['username']);
+        await _writeSecure('role', data['user']['role']);
         
         // Handle "Remember Me" - if enabled, save credentials for auto-login fallback
-        try {
-          if (rememberMe) {
-            await _storage.write(key: 'saved_username', value: username);
-            await _storage.write(key: 'saved_password', value: password);
-            await _storage.write(key: 'remember_me', value: 'true');
-          } else {
-            await _storage.delete(key: 'saved_username');
-            await _storage.delete(key: 'saved_password');
-            await _storage.write(key: 'remember_me', value: 'false');
-          }
-        } catch (_) {}
+        if (rememberMe) {
+          await _writeSecure('saved_username', username);
+          await _writeSecure('saved_password', password);
+          await _writeSecure('remember_me', 'true');
+        } else {
+          await _deleteSecure('saved_username');
+          await _deleteSecure('saved_password');
+          await _writeSecure('remember_me', 'false');
+        }
 
         return {'success': true, 'user': data['user']};
       } else {
@@ -87,12 +107,8 @@ class AuthService {
     String? token;
     bool rememberMe = false;
     
-    try {
-      token = await _storage.read(key: 'jwt_token');
-      rememberMe = await _storage.read(key: 'remember_me') == 'true';
-    } catch (e) {
-      debugPrint("Secure Storage Read Error: $e");
-    }
+    token = await _readSecure('jwt_token');
+    rememberMe = await _readSecure('remember_me') == 'true';
     
     if (token != null) {
       try {
@@ -126,15 +142,9 @@ class AuthService {
 
       } catch (e) {
         final cachedDashboard = CacheService.getCachedDashboard() ?? {};
-        String? userId;
-        String? username;
-        String? role;
-        
-        try {
-          userId = await _storage.read(key: 'user_id');
-          username = await _storage.read(key: 'username');
-          role = await _storage.read(key: 'role');
-        } catch (_) {}
+        final userId = await _readSecure('user_id');
+        final username = await _readSecure('username');
+        final role = await _readSecure('role');
         
         if (userId != null && username != null) {
           return {
@@ -152,13 +162,11 @@ class AuthService {
     
     // Fallback to "Remember Me" credentials if token expired but user wanted to stay logged in
     if (rememberMe) {
-        try {
-          final u = await _storage.read(key: 'saved_username');
-          final p = await _storage.read(key: 'saved_password');
-          if (u != null && p != null) {
-              return await login(u, p, rememberMe: true);
-          }
-        } catch (_) {}
+        final u = await _readSecure('saved_username');
+        final p = await _readSecure('saved_password');
+        if (u != null && p != null) {
+            return await login(u, p, rememberMe: true);
+        }
     }
 
     return {'success': false};
@@ -166,53 +174,35 @@ class AuthService {
 
   // --- Biometrics Preferences ---
   Future<void> setBiometricsEnabled(bool enabled) async {
-    try {
-      await _storage.write(key: 'biometrics_enabled', value: enabled.toString());
-    } catch (_) {}
+    await _writeSecure('biometrics_enabled', enabled.toString());
   }
 
   Future<bool> isBiometricsEnabled() async {
-    try {
-      final val = await _storage.read(key: 'biometrics_enabled');
-      return val == 'true';
-    } catch (_) {
-      return false;
-    }
+    final val = await _readSecure('biometrics_enabled');
+    return val == 'true';
   }
 
   Future<void> setBiometricPromptShown(bool shown) async {
-    try {
-      await _storage.write(key: 'biometric_prompt_shown', value: shown.toString());
-    } catch (_) {}
+    await _writeSecure('biometric_prompt_shown', shown.toString());
   }
 
   Future<bool> wasBiometricPromptShown() async {
-    try {
-      final val = await _storage.read(key: 'biometric_prompt_shown');
-      return val == 'true';
-    } catch (_) {
-      return false;
-    }
+    final val = await _readSecure('biometric_prompt_shown');
+    return val == 'true';
   }
 
   Future<Map<String, String?>> getSavedCredentials() async {
-    try {
-      return {
-        'username': await _storage.read(key: 'saved_username'),
-        'password': await _storage.read(key: 'saved_password'),
-      };
-    } catch (_) {
-      return {'username': null, 'password': null};
-    }
+    return {
+      'username': await _readSecure('saved_username'),
+      'password': await _readSecure('saved_password'),
+    };
   }
 
   Future<void> logout() async {
-    try {
-      await _storage.delete(key: 'jwt_token');
-      await _storage.delete(key: 'user_id');
-      await _storage.delete(key: 'username');
-      await _storage.delete(key: 'role');
-    } catch (_) {}
+    await _deleteSecure('jwt_token');
+    await _deleteSecure('user_id');
+    await _deleteSecure('username');
+    await _deleteSecure('role');
   }
 
   Future<Map<String, dynamic>> sendOTP(String email, String username) async {
@@ -301,35 +291,25 @@ class AuthService {
   }
 
   Future<bool> isLoggedIn() async {
-    try {
-      final token = await _storage.read(key: 'jwt_token');
-      return token != null;
-    } catch (_) {
-      return false;
-    }
+    final token = await _readSecure('jwt_token');
+    return token != null;
   }
 
   Future<String?> getToken() async {
-    try {
-      return await _storage.read(key: 'jwt_token');
-    } catch (_) {
-      return null;
-    }
+    return await _readSecure('jwt_token');
   }
 
   Future<Map<String, dynamic>?> getCurrentUser() async {
-    try {
-      final userId = await _storage.read(key: 'user_id');
-      final username = await _storage.read(key: 'username');
-      final role = await _storage.read(key: 'role');
-      if (userId != null && username != null) {
-        return {
-          'id': int.tryParse(userId),
-          'username': username,
-          'role': role ?? 'USER',
-        };
-      }
-    } catch (_) {}
+    final userId = await _readSecure('user_id');
+    final username = await _readSecure('username');
+    final role = await _readSecure('role');
+    if (userId != null && username != null) {
+      return {
+        'id': int.tryParse(userId),
+        'username': username,
+        'role': role ?? 'USER',
+      };
+    }
     return null;
   }
 
