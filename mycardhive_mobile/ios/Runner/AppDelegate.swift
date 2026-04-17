@@ -14,8 +14,7 @@ import workmanager_apple
         GeneratedPluginRegistrant.register(with: registry)
     }
     
-    // 2. Register the periodic task with the mandatory frequency parameter
-    // Using 15 minutes (900 seconds) as the frequency
+    // 2. Register the periodic task
     WorkmanagerPlugin.registerPeriodicTask(
         withIdentifier: "com.cardhive.notification_job_unique",
         frequency: NSNumber(value: 15 * 60)
