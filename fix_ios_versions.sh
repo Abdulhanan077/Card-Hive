@@ -1,5 +1,5 @@
 #!/bin/bash
-# Global Standardization Script (v7 - The Deep-Root Fix)
+# Global Standardization Script (v8 - Simulator Bypass)
 
 if [ -d "mycardhive_mobile" ]; then
     PROJECT_DIR="mycardhive_mobile"
@@ -13,24 +13,29 @@ fi
 IOS_DIR="$PROJECT_DIR/ios"
 TARGET_VER="26.2"
 
-echo "Applying Deep-Root Fix for SDK $TARGET_VER..."
+echo "Applying Simulator-Only Bypass for SDK $TARGET_VER..."
 
-# 1. Deployment Target Alignment
+# 1. Strip Real-Device Platforms and Lock to Simulator SDK
 PBXPROJ_IOS="$IOS_DIR/Runner.xcodeproj/project.pbxproj"
 PODFILE_IOS="$IOS_DIR/Podfile"
 
-sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = $TARGET_VER;/g" "$PBXPROJ_IOS"
+# Replace iphoneos with iphonesimulator and set explicit SDK
+sed -i '' "s/SDKROOT = iphoneos;/SDKROOT = iphonesimulator$TARGET_VER;/g" "$PBXPROJ_IOS"
+sed -i '' "s/SUPPORTED_PLATFORMS = \"iphonesimulator iphoneos\";/SUPPORTED_PLATFORMS = iphonesimulator;/g" "$PBXPROJ_IOS"
+sed -i '' "s/SUPPORTED_PLATFORMS = iphoneos;/SUPPORTED_PLATFORMS = iphonesimulator;/g" "$PBXPROJ_IOS"
+
+# Force version in Podfile
 sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '$TARGET_VER'/g" "$PODFILE_IOS"
-sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET'] = '[0-9.]*'/IPHONEOS_DEPLOYMENT_TARGET'] = '$TARGET_VER'/g" "$PODFILE_IOS"
 
-# 2. Hard-Link the SDK (This is the breakthrough)
-# Changing SDKROOT from generic 'iphoneos' to the specific server name 'iphoneos26.2'
-sed -i '' "s/SDKROOT = iphoneos;/SDKROOT = iphoneos$TARGET_VER;/g" "$PBXPROJ_IOS"
+# 2. Comprehensive XCConfig Alignment
+echo "IPHONEOS_DEPLOYMENT_TARGET = $TARGET_VER" >> "$IOS_DIR/Flutter/Debug.xcconfig"
+echo "SDKROOT = iphonesimulator$TARGET_VER" >> "$IOS_DIR/Flutter/Debug.xcconfig"
+echo "SUPPORTED_PLATFORMS = iphonesimulator" >> "$IOS_DIR/Flutter/Debug.xcconfig"
 
-# 3. Purge xcuserdata which might hold the old 'Any iOS Device' reference
+# 3. Purge xcuserdata & Hidden Files
 rm -rf "$IOS_DIR/Runner.xcodeproj/project.xcworkspace/xcuserdata"
 rm -rf "$IOS_DIR/Runner.xcodeproj/xcuserdata"
 rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
-echo "Done! Final build on Mac:"
-echo "cd $PROJECT_DIR && flutter pub get && cd ios && pod install && cd .. && flutter run"
+echo "Done! Final build command (Generic Simulator):"
+echo "xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Debug -sdk iphonesimulator$TARGET_VER -destination 'generic/platform=iOS Simulator' build"
