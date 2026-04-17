@@ -55,6 +55,7 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
         setState(() {
           _tradeData = res['trade'];
           _currentStatus = _tradeData!['status'];
+          _notesController.text = _tradeData!['adminNotes'] ?? "";
           _isLoading = false;
         });
       } else {
@@ -69,11 +70,13 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
     setState(() => _isUpdating = true);
     
     String? receiptUrl;
-    if (newStatus == 'PAID' && _receiptFile != null) {
+    if (_receiptFile != null) {
       setState(() => _isUploadingFile = true);
       final uploadRes = await _chatService.uploadFile(_receiptFile!);
       if (uploadRes['success']) {
         receiptUrl = uploadRes['fileUrl'];
+      } else {
+         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Receipt upload failed, continuing status update..."), backgroundColor: Colors.orange));
       }
       setState(() => _isUploadingFile = false);
     }
@@ -86,7 +89,10 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
     );
     
     if (result['success']) {
-      setState(() => _currentStatus = newStatus);
+      setState(() {
+        _currentStatus = newStatus;
+        _receiptFile = null; // Clear after success
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Status updated to $newStatus"), backgroundColor: Colors.green),
@@ -485,36 +491,42 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
          ),
          const SizedBox(height: 16),
           const SizedBox(height: 16),
-          if (_currentStatus == 'PENDING' || _currentStatus == 'UNDER_REVIEW') ...[
-             Container(
-               padding: const EdgeInsets.all(12),
-               decoration: BoxDecoration(
-                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                 borderRadius: BorderRadius.circular(16),
-                 border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
-               ),
-               child: Column(
-                 children: [
-                   if (_receiptFile != null) ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(_receiptFile!, height: 100, width: double.infinity, fit: BoxFit.cover),
-                      ),
-                      const SizedBox(height: 10),
-                   ],
-                   TextButton.icon(
-                     onPressed: () async {
-                       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-                       if (image != null) setState(() => _receiptFile = File(image.path));
-                     },
-                     icon: Icon(_receiptFile == null ? Icons.add_a_photo_rounded : Icons.change_circle_rounded),
-                     label: Text(_receiptFile == null ? "Attach Payment Receipt" : "Change Receipt"),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+            ),
+            child: Column(
+              children: [
+                if (_receiptFile != null) ...[
+                   ClipRRect(
+                     borderRadius: BorderRadius.circular(12),
+                     child: Image.file(_receiptFile!, height: 100, width: double.infinity, fit: BoxFit.cover),
                    ),
-                 ],
-               ),
-             ),
-             const SizedBox(height: 16),
-          ],
+                   const SizedBox(height: 10),
+                ] else if (_tradeData!['paymentReceiptUrl'] != null) ...[
+                   const Text("Current Receipt:", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                   const SizedBox(height: 4),
+                   ClipRRect(
+                     borderRadius: BorderRadius.circular(12),
+                     child: Image.network(_tradeData!['paymentReceiptUrl'], height: 100, width: double.infinity, fit: BoxFit.cover),
+                   ),
+                   const SizedBox(height: 10),
+                ],
+                TextButton.icon(
+                  onPressed: () async {
+                    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) setState(() => _receiptFile = File(image.path));
+                  },
+                  icon: Icon(_receiptFile == null ? Icons.add_a_photo_rounded : Icons.change_circle_rounded),
+                  label: Text(_receiptFile == null ? "Attach Payment Receipt" : "Change Receipt"),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(

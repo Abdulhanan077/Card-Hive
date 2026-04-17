@@ -38,34 +38,36 @@ export async function POST(request: Request) {
         const isBatch = targetTrade.fullName && targetTrade.fullName.startsWith('BATCH-');
         const updateData: any = { 
             status, 
-            adminNotes: adminNotes || null,
-            paymentReceiptUrl: paymentReceiptUrl || null
+            adminNotes: adminNotes !== undefined ? adminNotes : targetTrade.adminNotes
         };
 
-        if (status === "PAID") {
-            updateData.paymentReference = paymentReference || `MOB-${Date.now()}`;
-            updateData.paidAt = new Date();
+        // Only update paymentReceiptUrl if provided, otherwise keep existing
+        if (paymentReceiptUrl) {
+            updateData.paymentReceiptUrl = paymentReceiptUrl;
         }
 
-        // Perform the update on all related trades (the batch) that aren't rejected
+        if (status === "PAID") {
+            updateData.paymentReference = paymentReference || targetTrade.paymentReference || `MOB-${Date.now()}`;
+            updateData.paidAt = targetTrade.paidAt || new Date();
+        }
+
+        // Perform the update on all related trades (the batch)
         const tradesToUpdate = await prisma.trade.findMany({
             where: {
                 fullName: isBatch ? targetTrade.fullName : undefined,
                 tradeId: isBatch ? undefined : tradeId,
-                status: { not: "REJECTED" }
             } as any,
             include: { user: true }
         });
 
         if (tradesToUpdate.length === 0) {
-            return NextResponse.json({ error: "No active trades found for this ID/Batch" }, { status: 400 });
+            return NextResponse.json({ error: "No trades found for this ID/Batch" }, { status: 404 });
         }
 
         await prisma.trade.updateMany({
             where: {
                 fullName: isBatch ? targetTrade.fullName : undefined,
                 tradeId: isBatch ? undefined : tradeId,
-                status: { not: "REJECTED" }
             } as any,
             data: updateData
         });
