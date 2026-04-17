@@ -60,15 +60,17 @@ class AuthService {
         } catch (_) {}
         
         // Handle "Remember Me" - if enabled, save credentials for auto-login fallback
-        if (rememberMe) {
-          await _storage.write(key: 'saved_username', value: username);
-          await _storage.write(key: 'saved_password', value: password);
-          await _storage.write(key: 'remember_me', value: 'true');
-        } else {
-          await _storage.delete(key: 'saved_username');
-          await _storage.delete(key: 'saved_password');
-          await _storage.write(key: 'remember_me', value: 'false');
-        }
+        try {
+          if (rememberMe) {
+            await _storage.write(key: 'saved_username', value: username);
+            await _storage.write(key: 'saved_password', value: password);
+            await _storage.write(key: 'remember_me', value: 'true');
+          } else {
+            await _storage.delete(key: 'saved_username');
+            await _storage.delete(key: 'saved_password');
+            await _storage.write(key: 'remember_me', value: 'false');
+          }
+        } catch (_) {}
 
         return {'success': true, 'user': data['user']};
       } else {
@@ -124,9 +126,15 @@ class AuthService {
 
       } catch (e) {
         final cachedDashboard = CacheService.getCachedDashboard() ?? {};
-        final userId = await _storage.read(key: 'user_id');
-        final username = await _storage.read(key: 'username');
-        final role = await _storage.read(key: 'role');
+        String? userId;
+        String? username;
+        String? role;
+        
+        try {
+          userId = await _storage.read(key: 'user_id');
+          username = await _storage.read(key: 'username');
+          role = await _storage.read(key: 'role');
+        } catch (_) {}
         
         if (userId != null && username != null) {
           return {
@@ -144,11 +152,13 @@ class AuthService {
     
     // Fallback to "Remember Me" credentials if token expired but user wanted to stay logged in
     if (rememberMe) {
-        final u = await _storage.read(key: 'saved_username');
-        final p = await _storage.read(key: 'saved_password');
-        if (u != null && p != null) {
-            return await login(u, p, rememberMe: true);
-        }
+        try {
+          final u = await _storage.read(key: 'saved_username');
+          final p = await _storage.read(key: 'saved_password');
+          if (u != null && p != null) {
+              return await login(u, p, rememberMe: true);
+          }
+        } catch (_) {}
     }
 
     return {'success': false};
@@ -156,7 +166,9 @@ class AuthService {
 
   // --- Biometrics Preferences ---
   Future<void> setBiometricsEnabled(bool enabled) async {
-    await _storage.write(key: 'biometrics_enabled', value: enabled.toString());
+    try {
+      await _storage.write(key: 'biometrics_enabled', value: enabled.toString());
+    } catch (_) {}
   }
 
   Future<bool> isBiometricsEnabled() async {
@@ -169,12 +181,18 @@ class AuthService {
   }
 
   Future<void> setBiometricPromptShown(bool shown) async {
-    await _storage.write(key: 'biometric_prompt_shown', value: shown.toString());
+    try {
+      await _storage.write(key: 'biometric_prompt_shown', value: shown.toString());
+    } catch (_) {}
   }
 
   Future<bool> wasBiometricPromptShown() async {
-    final val = await _storage.read(key: 'biometric_prompt_shown');
-    return val == 'true';
+    try {
+      final val = await _storage.read(key: 'biometric_prompt_shown');
+      return val == 'true';
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<Map<String, String?>> getSavedCredentials() async {
@@ -189,10 +207,12 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: 'jwt_token');
-    await _storage.delete(key: 'user_id');
-    await _storage.delete(key: 'username');
-    await _storage.delete(key: 'role');
+    try {
+      await _storage.delete(key: 'jwt_token');
+      await _storage.delete(key: 'user_id');
+      await _storage.delete(key: 'username');
+      await _storage.delete(key: 'role');
+    } catch (_) {}
   }
 
   Future<Map<String, dynamic>> sendOTP(String email, String username) async {
@@ -281,25 +301,35 @@ class AuthService {
   }
 
   Future<bool> isLoggedIn() async {
-    final token = await _storage.read(key: 'jwt_token');
-    return token != null;
+    try {
+      final token = await _storage.read(key: 'jwt_token');
+      return token != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<String?> getToken() async {
-    return await _storage.read(key: 'jwt_token');
+    try {
+      return await _storage.read(key: 'jwt_token');
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<Map<String, dynamic>?> getCurrentUser() async {
-    final userId = await _storage.read(key: 'user_id');
-    final username = await _storage.read(key: 'username');
-    final role = await _storage.read(key: 'role');
-    if (userId != null && username != null) {
-      return {
-        'id': int.tryParse(userId),
-        'username': username,
-        'role': role ?? 'USER',
-      };
-    }
+    try {
+      final userId = await _storage.read(key: 'user_id');
+      final username = await _storage.read(key: 'username');
+      final role = await _storage.read(key: 'role');
+      if (userId != null && username != null) {
+        return {
+          'id': int.tryParse(userId),
+          'username': username,
+          'role': role ?? 'USER',
+        };
+      }
+    } catch (_) {}
     return null;
   }
 
