@@ -1,5 +1,5 @@
 #!/bin/bash
-# Global Standardization Script (v4 - SDK Breakthrough)
+# Global Standardization Script (v5 - Universal Alignment)
 
 if [ -d "mycardhive_mobile" ]; then
     PROJECT_DIR="mycardhive_mobile"
@@ -11,38 +11,31 @@ else
 fi
 
 IOS_DIR="$PROJECT_DIR/ios"
-PBXPROJ="$IOS_DIR/Runner.xcodeproj/project.pbxproj"
-PODFILE="$IOS_DIR/Podfile"
+MACOS_DIR="$PROJECT_DIR/macos"
 
-echo "Applying SDK Breakthrough Fix to $PROJECT_DIR..."
+echo "Aligning iOS (15.0) and macOS (11.0)..."
 
-# 1. Deployment Target Lock (Force 15.0)
-sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' "$PBXPROJ"
-sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '15.0'/g" "$PODFILE"
-
-# 2. Force SDKROOT and SUPPORTED_PLATFORMS
-# This tells Xcode: "Use whatever iPhoneOS is standard, and we only support Simulator for now"
-# This often bypasses the 'Any iOS Device' eligibility block
-sed -i '' 's/SDKROOT = iphoneos;/SDKROOT = iphoneos;/g' "$PBXPROJ"
-# Explicitly add SUPPORTED_PLATFORMS override if missing
-if ! grep -q "SUPPORTED_PLATFORMS = \"iphonesimulator iphoneos\"" "$PBXPROJ"; then
-    sed -i '' '/SDKROOT = iphoneos;/a \
-				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";' "$PBXPROJ"
+# 1. iOS Alignment
+if [ -d "$IOS_DIR" ]; then
+    PBXPROJ_IOS="$IOS_DIR/Runner.xcodeproj/project.pbxproj"
+    PODFILE_IOS="$IOS_DIR/Podfile"
+    sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' "$PBXPROJ_IOS"
+    sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '15.0'/g" "$PODFILE_IOS"
 fi
 
-# 3. Comprehensive XCConfig Linking
-DEBUG_LINK='#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"'
-RELEASE_LINK='#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"'
-PROFILE_LINK='#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"'
+# 2. macOS Alignment (Fixes the 'gal' plugin error)
+if [ -d "$MACOS_DIR" ]; then
+    PBXPROJ_MACOS="$MACOS_DIR/Runner.xcodeproj/project.pbxproj"
+    PODFILE_MACOS="$MACOS_DIR/Podfile"
+    CONFIG_MACOS="$MACOS_DIR/Runner/Configs/AppInfo.xcconfig"
+    
+    sed -i '' 's/MACOSX_DEPLOYMENT_TARGET = [0-9.]*;/MACOSX_DEPLOYMENT_TARGET = 11.0;/g' "$PBXPROJ_MACOS"
+    [ -f "$PODFILE_MACOS" ] && sed -i '' "s/platform :osx, '[0-9.]*'/platform :osx, '11.0'/g" "$PODFILE_MACOS"
+fi
 
-[ -f "$IOS_DIR/Flutter/Debug.xcconfig" ] && ! grep -q "Pods-Runner.debug" "$IOS_DIR/Flutter/Debug.xcconfig" && echo "$DEBUG_LINK" >> "$IOS_DIR/Flutter/Debug.xcconfig"
-[ -f "$IOS_DIR/Flutter/Release.xcconfig" ] && ! grep -q "Pods-Runner.release" "$IOS_DIR/Flutter/Release.xcconfig" && echo "$RELEASE_LINK" >> "$IOS_DIR/Flutter/Release.xcconfig"
-[ -f "$IOS_DIR/Flutter/Release.xcconfig" ] && ! grep -q "Pods-Runner.profile" "$IOS_DIR/Flutter/Release.xcconfig" && echo "$PROFILE_LINK" >> "$IOS_DIR/Flutter/Release.xcconfig"
-
-# 4. Cleanup Ghost States
-echo "Purging Ghost States..."
-rm -rf "$IOS_DIR/Runner.xcodeproj/project.xcworkspace/xcuserdata"
-rm -rf "$IOS_DIR/Runner.xcodeproj/xcuserdata"
+# 3. Cleanup & Caches
+rm -rf "$IOS_DIR/Runner.xcodeproj/project.xcworkspace/xcuserdata" 2>/dev/null
+rm -rf "$IOS_DIR/Runner.xcodeproj/xcuserdata" 2>/dev/null
 rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
-echo "Done! Run: cd $PROJECT_DIR && flutter pub get && cd ios && pod install && cd .."
+echo "Done! Try building macOS now: cd $PROJECT_DIR && flutter run -d macos"
