@@ -43,11 +43,7 @@ void callbackDispatcher() {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Services
-  await CacheService.init();
-  await NotificationService.init();
-
-  // Initialize Firebase (Requires google-services.json / firebase_options.dart)
+  // 1. Initialize Firebase FIRST (Required for messaging)
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -56,7 +52,11 @@ void main() async {
     debugPrint("Firebase Init Error: $e");
   }
 
-  // Initialize Background Workmanager
+  // 2. Initialize Services (Now safe to access Firebase)
+  await CacheService.init();
+  await NotificationService.init();
+
+  // 3. Initialize Background Workmanager
   await Workmanager().initialize(
     callbackDispatcher,
     isInDebugMode: false,
