@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mycardhive_mobile/services/cache_service.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mycardhive_mobile/config.dart';
 
 class AuthService {
@@ -44,8 +45,12 @@ class AuthService {
 
       if (response.statusCode == 200) {
         // Save the JWT token securely
-        await _storage.write(key: 'jwt_token', value: data['token']);
-        await _storage.write(key: 'user_id', value: data['user']['id'].toString());
+        try {
+          await _storage.write(key: 'jwt_token', value: data['token']);
+          await _storage.write(key: 'user_id', value: data['user']['id'].toString());
+        } catch (e) {
+          debugPrint("Secure Storage Write Error: $e");
+        }
         await _storage.write(key: 'username', value: data['user']['username']);
         await _storage.write(key: 'role', value: data['user']['role']);
         
@@ -71,8 +76,15 @@ class AuthService {
 
   // --- Auto Login Logic ---
   Future<Map<String, dynamic>> tryAutoLogin() async {
-    final token = await _storage.read(key: 'jwt_token');
-    final rememberMe = await _storage.read(key: 'remember_me') == 'true';
+    String? token;
+    bool rememberMe = false;
+    
+    try {
+      token = await _storage.read(key: 'jwt_token');
+      rememberMe = await _storage.read(key: 'remember_me') == 'true';
+    } catch (e) {
+      debugPrint("Secure Storage Read Error: $e");
+    }
     
     if (token != null) {
       try {
