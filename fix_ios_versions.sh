@@ -1,5 +1,5 @@
 #!/bin/bash
-# Global Standardization Script (v10 - Ultimate Stability)
+# Global Standardization Script (v11 - macOS Lock)
 
 if [ -d "mycardhive_mobile" ]; then
     PROJECT_DIR="mycardhive_mobile"
@@ -13,7 +13,7 @@ fi
 IOS_DIR="$PROJECT_DIR/ios"
 MACOS_DIR="$PROJECT_DIR/macos"
 
-echo "Applying Ultimate Stability Alignment..."
+echo "Locking iOS (15.0) and macOS (11.0)..."
 
 # 1. iOS Standard (15.0)
 if [ -d "$IOS_DIR" ]; then
@@ -23,22 +23,29 @@ if [ -d "$IOS_DIR" ]; then
     sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '15.0'/g" "$PODFILE_IOS"
 fi
 
-# 2. macOS Standard (11.0) - Fixes 'gal' and other plugins
+# 2. macOS Standard (11.0)
 if [ -d "$MACOS_DIR" ]; then
     PBXPROJ_MACOS="$MACOS_DIR/Runner.xcodeproj/project.pbxproj"
     PODFILE_MACOS="$MACOS_DIR/Podfile"
+    XCCONFIG_MACOS="$MACOS_DIR/Runner/Configs/AppInfo.xcconfig"
+    
+    # Update pbxproj
     sed -i '' 's/MACOSX_DEPLOYMENT_TARGET = [0-9.]*;/MACOSX_DEPLOYMENT_TARGET = 11.0;/g' "$PBXPROJ_MACOS"
+    
+    # Update Podfile
     [ -f "$PODFILE_MACOS" ] && sed -i '' "s/platform :osx, '[0-9.]*'/platform :osx, '11.0'/g" "$PODFILE_MACOS"
+    
+    # Update AppInfo.xcconfig (Crucial for Flutter macOS)
+    if [ -f "$XCCONFIG_MACOS" ]; then
+        if grep -q "MACOSX_DEPLOYMENT_TARGET" "$XCCONFIG_MACOS"; then
+            sed -i '' 's/MACOSX_DEPLOYMENT_TARGET = [0-9.]*/MACOSX_DEPLOYMENT_TARGET = 11.0/g' "$XCCONFIG_MACOS"
+        else
+            echo "MACOSX_DEPLOYMENT_TARGET = 11.0" >> "$XCCONFIG_MACOS"
+        fi
+    fi
 fi
 
-# 3. Comprehensive CocoaPods Linking
-[ -f "$IOS_DIR/Flutter/Debug.xcconfig" ] && echo '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"' >> "$IOS_DIR/Flutter/Debug.xcconfig"
-[ -f "$IOS_DIR/Flutter/Release.xcconfig" ] && echo '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"' >> "$IOS_DIR/Flutter/Release.xcconfig"
-[ -f "$IOS_DIR/Flutter/Release.xcconfig" ] && echo '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"' >> "$IOS_DIR/Flutter/Release.xcconfig"
-
-# 4. Burn cached UI data
-rm -rf "$IOS_DIR/Runner.xcodeproj/project.xcworkspace/xcuserdata"
-rm -rf "$IOS_DIR/Runner.xcodeproj/xcuserdata"
+# 3. Purge Caches
 rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
-echo "Alignment Complete. Launching Stability Pivot..."
+echo "Alignment Complete!"
