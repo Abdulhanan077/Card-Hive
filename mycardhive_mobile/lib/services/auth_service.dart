@@ -49,10 +49,15 @@ class AuthService {
           await _storage.write(key: 'jwt_token', value: data['token']);
           await _storage.write(key: 'user_id', value: data['user']['id'].toString());
         } catch (e) {
-          debugPrint("Secure Storage Write Error: $e");
+          debugPrint("Secure Storage Write Error (JWT): $e");
+          // On some simulators, secure storage fails even with entitlements.
+          // We allow the user to proceed for this session.
         }
-        await _storage.write(key: 'username', value: data['user']['username']);
-        await _storage.write(key: 'role', value: data['user']['role']);
+        
+        try {
+          await _storage.write(key: 'username', value: data['user']['username']);
+          await _storage.write(key: 'role', value: data['user']['role']);
+        } catch (_) {}
         
         // Handle "Remember Me" - if enabled, save credentials for auto-login fallback
         if (rememberMe) {
@@ -155,8 +160,12 @@ class AuthService {
   }
 
   Future<bool> isBiometricsEnabled() async {
-    final val = await _storage.read(key: 'biometrics_enabled');
-    return val == 'true';
+    try {
+      final val = await _storage.read(key: 'biometrics_enabled');
+      return val == 'true';
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> setBiometricPromptShown(bool shown) async {
@@ -169,10 +178,14 @@ class AuthService {
   }
 
   Future<Map<String, String?>> getSavedCredentials() async {
-    return {
-      'username': await _storage.read(key: 'saved_username'),
-      'password': await _storage.read(key: 'saved_password'),
-    };
+    try {
+      return {
+        'username': await _storage.read(key: 'saved_username'),
+        'password': await _storage.read(key: 'saved_password'),
+      };
+    } catch (_) {
+      return {'username': null, 'password': null};
+    }
   }
 
   Future<void> logout() async {
