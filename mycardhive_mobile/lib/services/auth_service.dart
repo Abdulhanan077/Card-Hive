@@ -70,7 +70,8 @@ class AuthService {
         return {'success': false, 'error': data['error'] ?? 'Login failed'};
       }
     } catch (e) {
-      return {'success': false, 'error': 'Connection failed. Please check your internet connectivity.'};
+      debugPrint("Login Error: $e");
+      return {'success': false, 'error': 'Connection failed ($e). Please check your internet connectivity.'};
     }
   }
 
@@ -261,7 +262,8 @@ class AuthService {
         return {'success': false, 'error': data['error'] ?? 'Registration failed'};
       }
     } catch (e) {
-      return {'success': false, 'error': 'Cannot connect to server.'};
+      debugPrint("Signup Error: $e");
+      return {'success': false, 'error': 'Cannot connect to server ($e).'};
     }
   }
 
