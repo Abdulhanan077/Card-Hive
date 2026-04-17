@@ -78,7 +78,7 @@ void main() async {
     
     // Register Unified Periodic Task (Matches Info.plist & AppDelegate)
     await Workmanager().registerPeriodicTask(
-      kBackgroundNotificationTask, 
+      "com.cardhive.notification_job_unique", 
       kBackgroundNotificationTask,
       frequency: const Duration(minutes: 15),
       existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
