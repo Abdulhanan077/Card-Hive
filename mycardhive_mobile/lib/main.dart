@@ -76,6 +76,7 @@ void main() async {
       isInDebugMode: false,
     );
     
+    /*
     await Workmanager().registerPeriodicTask(
       "com.cardhive.notification_job_unique", 
       kBackgroundNotificationTask,
@@ -85,6 +86,7 @@ void main() async {
         networkType: NetworkType.connected,
       ),
     );
+    */
   } catch (e) {
     debugPrint("Workmanager Error: $e");
   }
