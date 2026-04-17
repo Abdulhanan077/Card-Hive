@@ -1,6 +1,6 @@
 import Flutter
 import UIKit
-import workmanager
+import Workmanager
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
