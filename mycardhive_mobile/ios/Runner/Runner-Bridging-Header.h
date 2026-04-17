@@ -1,2 +1,2 @@
 #import "GeneratedPluginRegistrant.h"
-#import <workmanager/WorkmanagerPlugin.h>
+#import <workmanager_apple/WorkmanagerPlugin.h>

@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import workmanager_apple
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -10,7 +11,6 @@ import UIKit
     GeneratedPluginRegistrant.register(with: self)
     
     // Register the Workmanager launch handler (Required on iOS)
-    // This uses the header imported in the Bridging Header
     WorkmanagerPlugin.setPluginRegistrantCallback { registry in
         GeneratedPluginRegistrant.register(with: registry)
     }
