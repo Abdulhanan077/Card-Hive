@@ -1,5 +1,5 @@
 #!/bin/bash
-# Global Standardization Script (v5 - Universal Alignment)
+# Global Standardization Script (v6 - The 26.2 Alignment)
 
 if [ -d "mycardhive_mobile" ]; then
     PROJECT_DIR="mycardhive_mobile"
@@ -12,30 +12,30 @@ fi
 
 IOS_DIR="$PROJECT_DIR/ios"
 MACOS_DIR="$PROJECT_DIR/macos"
+TARGET_VER="26.2" # Align with MacinCloud SDK
 
-echo "Aligning iOS (15.0) and macOS (11.0)..."
+echo "Aligning project with MacinCloud SDK $TARGET_VER..."
 
-# 1. iOS Alignment
+# 1. iOS Alignment (Forcing SDK version to bypass eligibility block)
 if [ -d "$IOS_DIR" ]; then
     PBXPROJ_IOS="$IOS_DIR/Runner.xcodeproj/project.pbxproj"
     PODFILE_IOS="$IOS_DIR/Podfile"
-    sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' "$PBXPROJ_IOS"
-    sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '15.0'/g" "$PODFILE_IOS"
+    sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = $TARGET_VER;/g" "$PBXPROJ_IOS"
+    sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '$TARGET_VER'/g" "$PODFILE_IOS"
+    
+    # Update Podfile loop to target 26.2
+    sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET'] = '[0-9.]*'/IPHONEOS_DEPLOYMENT_TARGET'] = '$TARGET_VER'/g" "$PODFILE_IOS"
 fi
 
-# 2. macOS Alignment (Fixes the 'gal' plugin error)
+# 2. macOS Alignment
 if [ -d "$MACOS_DIR" ]; then
     PBXPROJ_MACOS="$MACOS_DIR/Runner.xcodeproj/project.pbxproj"
-    PODFILE_MACOS="$MACOS_DIR/Podfile"
-    CONFIG_MACOS="$MACOS_DIR/Runner/Configs/AppInfo.xcconfig"
-    
     sed -i '' 's/MACOSX_DEPLOYMENT_TARGET = [0-9.]*;/MACOSX_DEPLOYMENT_TARGET = 11.0;/g' "$PBXPROJ_MACOS"
-    [ -f "$PODFILE_MACOS" ] && sed -i '' "s/platform :osx, '[0-9.]*'/platform :osx, '11.0'/g" "$PODFILE_MACOS"
 fi
 
-# 3. Cleanup & Caches
-rm -rf "$IOS_DIR/Runner.xcodeproj/project.xcworkspace/xcuserdata" 2>/dev/null
-rm -rf "$IOS_DIR/Runner.xcodeproj/xcuserdata" 2>/dev/null
-rm -rf ~/Library/Developer/Xcode/DerivedData/*
+# 3. Link Pods for all configurations
+[ -f "$IOS_DIR/Flutter/Debug.xcconfig" ] && echo '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"' >> "$IOS_DIR/Flutter/Debug.xcconfig"
+[ -f "$IOS_DIR/Flutter/Release.xcconfig" ] && echo '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"' >> "$IOS_DIR/Flutter/Release.xcconfig"
+[ -f "$IOS_DIR/Flutter/Release.xcconfig" ] && echo '#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"' >> "$IOS_DIR/Flutter/Release.xcconfig"
 
-echo "Done! Try building macOS now: cd $PROJECT_DIR && flutter run -d macos"
+echo "Done! Run: cd $PROJECT_DIR && flutter pub get && cd ios && pod install && cd .."
