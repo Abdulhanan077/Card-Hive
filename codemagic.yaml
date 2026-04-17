@@ -33,11 +33,3 @@ workflows:
 
     artifacts:
       - mycardhive_mobile/build/ios/iphonesimulator/*.zip
-      
-    publishing:
-      email:
-        recipients:
-          - ${BUILD_SENDER_EMAIL}
-        notify:
-          success: true
-          failure: true
