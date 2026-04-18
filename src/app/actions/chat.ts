@@ -55,8 +55,14 @@ export async function postMessage(tradeId: number, content: string, path: string
                 sender: newMessage.sender.username
             });
 
+            // NEW: FCM for Admins
+            const admins = await prisma.user.findMany({ where: { role: 'ADMIN', fcmToken: { not: null } }, select: { fcmToken: true } });
+            const { sendFcmNotification } = await import("@/lib/fcm");
+            for (const admin of admins) {
+                if (admin.fcmToken) await sendFcmNotification(admin.fcmToken, `New Message: @${newMessage.sender.username}`, content.length > 50 ? content.substring(0, 47) + '...' : content);
+            }
+
             // Send email to admin
-            // We need the tradeId string (GC-...) not the numeric ID
             const trade = await prisma.trade.findUnique({
                 where: { id: tradeId },
                 select: { tradeId: true }
@@ -74,7 +80,7 @@ export async function postMessage(tradeId: number, content: string, path: string
             // Fetch the trade to determine which user to notify
             const trade = await prisma.trade.findUnique({
                 where: { id: tradeId },
-                select: { userId: true }
+                include: { user: { select: { id: true, fcmToken: true } } }
             });
             if (trade) {
                 // Trigger an event on the user-specific notification channel
@@ -82,6 +88,12 @@ export async function postMessage(tradeId: number, content: string, path: string
                     tradeId: tradeId,
                     sender: "Admin"
                 });
+
+                // NEW: FCM for User
+                if (trade.user.fcmToken) {
+                    const { sendFcmNotification } = await import("@/lib/fcm");
+                    await sendFcmNotification(trade.user.fcmToken, "New Message from Admin", content.length > 50 ? content.substring(0, 47) + '...' : content);
+                }
             }
         } catch (error) {
             console.error("Failed to trigger user pusher notification", error);

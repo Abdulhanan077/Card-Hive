@@ -132,6 +132,20 @@ export async function checkAndAwardMilestones(userId: number) {
                     year
                 }
             });
+
+            // NEW: FCM for Milestone Achievement
+            try {
+                const user = await prisma.user.findUnique({ where: { id: userId }, select: { fcmToken: true } });
+                if (user?.fcmToken) {
+                    const { sendFcmNotification } = await import("@/lib/fcm");
+                    await sendFcmNotification(
+                        user.fcmToken, 
+                        "Milestone Achieved! 🏆", 
+                        `You've earned ${config.points} bonus points for reaching the ${config.boardType} threshold!`
+                    );
+                }
+            } catch (fcmErr) { console.error("FCM Milestone Error:", fcmErr); }
+
             console.log(`[Milestone] Awarded ${config.points} to user ${userId} for ${milestoneKey}`);
         }
     }

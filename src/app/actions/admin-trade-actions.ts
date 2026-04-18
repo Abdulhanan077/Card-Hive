@@ -128,6 +128,25 @@ export async function updateBatchStatusAction(formData: FormData, pageTradeId: s
             await sendTradeStatusUpdateEmail({ email: firstTrade.user.email, username: firstTrade.user.username }, tradesToUpdate, "UNKNOWN", status);
         }
 
+        // NEW: FCM Notification for Status Change
+        try {
+            const { sendFcmNotification } = await import("@/lib/fcm");
+            // Group by user since a batch update usually affects one user
+            const distinctUsers = Array.from(new Set(tradesToUpdate.map(t => t.user)));
+            for (const user of distinctUsers) {
+                if (user.fcmToken) {
+                    const title = `Trade ${status.replaceAll('_', ' ')}`;
+                    const body = `Your trade (${firstTrade.tradeId}${tradesToUpdate.length > 1 ? ' and others' : ''}) is now ${status.replaceAll('_', ' ')}.`;
+                    await sendFcmNotification(user.fcmToken, title, body, {
+                        type: 'STATUS_UPDATE',
+                        tradeId: firstTrade.id.toString(),
+                    });
+                }
+            }
+        } catch (fcmErr) {
+            console.error("FCM Status Update Error:", fcmErr);
+        }
+
         // 4. Special Handling for PAID status (Rewards + Extra Email)
         if (status === "PAID") {
             // Group newly paid trades by user to update each user once

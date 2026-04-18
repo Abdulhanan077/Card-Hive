@@ -160,6 +160,27 @@ export async function POST(req: Request) {
                     }
                     await sendAdminNewTradeEmail(createdTrades, { username: user.username, email: user.email, phoneNumber: user.phoneNumber }).catch(err => console.error("Admin email failed", err));
                 }
+
+                // NEW: FCM for Admin (New Trade Submission)
+                try {
+                    const { sendFcmNotification } = await import("@/lib/fcm");
+                    const admins = await prisma.user.findMany({ 
+                        where: { role: 'ADMIN', fcmToken: { not: null } },
+                        select: { fcmToken: true } 
+                    });
+                    
+                    for (const admin of admins) {
+                        if (admin.fcmToken) {
+                            await sendFcmNotification(
+                                admin.fcmToken, 
+                                "🚨 New Trade Submitted", 
+                                `${user?.username || 'A user'} just submitted a ${createdTrades[0].cardBrand} trade.`
+                            );
+                        }
+                    }
+                } catch (fcmErr) {
+                    console.error("Admin trade submission FCM failed", fcmErr);
+                }
             } catch (bgError) {
                 console.error("Background email process failed:", bgError);
             }
