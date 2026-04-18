@@ -188,11 +188,40 @@ export default function SellGiftCardPage() {
             formData.set("cryptoReceiverIdType", cryptoReceiverIdType);
         }
 
-        // Append files manually
+        // --- New Direct Upload Strategy for Web ---
+        const uploadedUrls = await Promise.all(
+            files.map(async (file) => {
+                try {
+                    // 1. Get presigned URL
+                    const presignedRes = await fetch("/api/uploads/presigned", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ fileName: file.name, fileType: file.type }),
+                    });
+                    if (!presignedRes.ok) return null;
+                    const { uploadUrl, publicUrl } = await presignedRes.json();
+
+                    // 2. Upload directly to R2
+                    const uploadRes = await fetch(uploadUrl, {
+                        method: "PUT",
+                        body: file,
+                        headers: { "Content-Type": file.type },
+                    });
+
+                    return uploadRes.ok ? publicUrl : null;
+                } catch (e) {
+                    console.error("Direct upload failed for", file.name, e);
+                    return null;
+                }
+            })
+        );
+
+        // Filter out any failed uploads and add to formData
+        const finalUrls = uploadedUrls.filter(url => url !== null);
+        formData.set("preUploadedUrls", JSON.stringify(finalUrls));
+
+        // Remove the binary images from formData to keep the payload small
         formData.delete("images");
-        files.forEach((file: File) => {
-            formData.append("images", file);
-        });
 
         try {
             const res = await fetch("/api/trades", {
