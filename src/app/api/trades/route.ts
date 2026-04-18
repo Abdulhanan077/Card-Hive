@@ -189,17 +189,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ tradeId: createdTrades[0].tradeId, batchId }, { status: 201 });
     } catch (error: any) {
         console.error("❌ Trade submission failed:", error);
-        
-        // Write error to a persistent log file for debugging
-        const errorLogPath = path.join(process.cwd(), "api_error.log");
-        const errorMessage = `[${new Date().toISOString()}] ❌ ERROR: ${error.message}\nSTACK: ${error.stack}\nDEBUG_META: ${JSON.stringify(error.meta || {})}\n\n`;
-        try {
-            fs.appendFileSync(errorLogPath, errorMessage);
-            console.log("📝 Error written to api_error.log");
-        } catch (fsError) {
-            console.error("Failed to write to api_error.log:", fsError);
-        }
-
         return NextResponse.json(
             { message: error.message || "Internal server error", details: error.message },
             { status: 500 }

@@ -82,9 +82,18 @@ class TradeService {
       } else {
         String errMsg = 'Failed to submit trade';
         try {
-          final errData = json.decode(response.body);
-          errMsg = errData['message'] ?? errMsg;
-        } catch (_) {}
+          if (response.body.isNotEmpty) {
+            final errData = json.decode(response.body);
+            errMsg = errData['message'] ?? errData['error'] ?? 'Server Error: ${response.statusCode}';
+          } else {
+             errMsg = 'Server Error (Empty Response): ${response.statusCode}';
+          }
+        } catch (_) {
+          // If body is not JSON, show the first 100 chars of the body for debugging
+          errMsg = response.body.length > 100 
+            ? response.body.substring(0, 100) + "..." 
+            : response.body.isNotEmpty ? response.body : 'Server Error ${response.statusCode}';
+        }
         return {'success': false, 'error': errMsg};
       }
     } catch (e) {
