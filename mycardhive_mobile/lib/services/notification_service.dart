@@ -208,10 +208,8 @@ class NotificationService {
   static Future<void> scheduleDailyReminder() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      bool isScheduled = prefs.getBool('daily_reminder_set') ?? false;
-
-      // If already scheduled, don't do it again unless you want to rotate the time
-      if (isScheduled) return;
+      
+      // Re-randomize the time every time the app is opened to keep it feeling fresh.
 
       // Pick a random time between 9 AM and 8 PM
       final random = Random();
