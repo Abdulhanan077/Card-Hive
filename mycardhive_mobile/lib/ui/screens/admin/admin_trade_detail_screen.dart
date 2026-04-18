@@ -74,7 +74,7 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
       setState(() => _isUploadingFile = true);
       final uploadRes = await _chatService.uploadFile(_receiptFile!);
       if (uploadRes['success']) {
-        receiptUrl = uploadRes['fileUrl'];
+        receiptUrl = uploadRes['url'];
       } else {
          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Receipt upload failed, continuing status update..."), backgroundColor: Colors.orange));
       }

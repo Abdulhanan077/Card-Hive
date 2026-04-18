@@ -6,6 +6,7 @@ import ChatBox from "@/app/components/ChatBox";
 import Link from "next/link";
 import "@/app/trade-details.css";
 import SafeImage from "@/app/components/SafeImage";
+import ConfirmReceiptButton from "@/app/components/ConfirmReceiptButton";
 
 export default async function UserTradeDetailView(props: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
