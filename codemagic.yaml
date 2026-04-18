@@ -5,7 +5,7 @@ workflows:
     max_build_duration: 30
     environment:
       flutter: stable
-      xcode: latest
+      xcode: 15.4
       groups:
         - firebase # Optional: For any firebase related env vars if needed
     
@@ -24,13 +24,7 @@ workflows:
       - name: Build iOS Debug Application for Simulator
         script: |
           cd mycardhive_mobile
-          flutter build ios --debug --simulator --no-codesign
+          flutter build ios --simulator --debug
           
-      - name: Prepare Artifact for Appetize.io
-        script: |
-          cd mycardhive_mobile/build/ios/iphonesimulator
-          # Zip the .app bundle for Appetize.io
-          zip -r card_hive_simulator.zip Runner.app
-
     artifacts:
-      - mycardhive_mobile/build/ios/iphonesimulator/*.zip
+      - mycardhive_mobile/build/ios/iphonesimulator/Runner.app
