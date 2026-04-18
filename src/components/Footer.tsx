@@ -48,7 +48,7 @@ export default function Footer() {
                                 </a>
                             </li>
                         )}
-                        <li>Contact Us</li>
+                        <li><Link href="/contact">Contact Us</Link></li>
                         <li><Link href="/terms-of-service">Terms of Service</Link></li>
                         <li><Link href="/privacy-policy">Privacy Policy</Link></li>
                         <li style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
