@@ -1,0 +1,130 @@
+.legal-container {
+  display: flex;
+  gap: 3rem;
+  margin-top: 2rem;
+  align-items: flex-start;
+}
+
+.legal-sidebar {
+  flex: 0 0 260px;
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+  padding-right: 2rem;
+  border-right: 1px solid var(--border);
+}
+
+.legal-sidebar h3 {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--primary);
+  margin-bottom: 2rem;
+}
+
+.legal-nav {
+  list-style: none;
+  padding: 0;
+}
+
+.legal-nav li {
+  margin-bottom: 0.75rem;
+}
+
+.legal-nav a {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.legal-nav a:hover {
+  color: var(--primary);
+}
+
+.legal-content h1, .legal-content h2 {
+  color: #1e1b4b; /* Deep Navy for headers */
+  font-family: 'Outfit', sans-serif;
+}
+
+[data-theme='dark'] .legal-content h1, 
+[data-theme='dark'] .legal-content h2 {
+  color: var(--primary-light);
+}
+
+.legal-content p {
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+  color: #334155; /* Slate for better reading */
+  font-size: 1.05rem;
+  opacity: 1;
+}
+
+[data-theme='dark'] .legal-content p {
+  color: #cbd5e1;
+}
+
+.legal-content ul {
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.legal-content li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.summary-box {
+  background-color: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  margin: 2.5rem 0;
+}
+
+[data-theme='dark'] .summary-box {
+  background-color: var(--surface);
+}
+
+.summary-box h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-item {
+  margin-top: 1.5rem;
+}
+
+.summary-item h4 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.summary-item p {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.summary-item span {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 1024px) {
+  .legal-container {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .legal-sidebar {
+    display: none; /* Hide TOC on mobile for now, or could move to top */
+  }
+}

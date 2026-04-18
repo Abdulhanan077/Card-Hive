@@ -119,6 +119,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _confirmAccountDeletion() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Account?", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+        content: const Text(
+          "This action is permanent. Your personal information will be cleared, and you will be logged out. Your trade history will be kept for auditing purposes but disconnected from your PII.",
+          style: TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Delete Account", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      setState(() => _isSaving = true);
+      final result = await _authService.deleteAccount();
+      setState(() => _isSaving = false);
+
+      if (result['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account deleted. Logging out..."), backgroundColor: Colors.red));
+          // Navigate to login screen and clear history
+          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error'] ?? "Failed to delete account"), backgroundColor: Colors.red));
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -148,6 +187,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            if (_user?['status'] == 'DELETED')
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.red)),
+                child: const Text("This account is scheduled for deletion.", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              ),
             // Top Profile Card
             _buildProfileHeader(avatarLetter, cardColor, textColor, subTextColor, borderColor),
             const SizedBox(height: 16),
@@ -348,10 +395,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 32),
 
+            const SizedBox(height: 16),
+            
+            // Danger Zone
+            _buildSection(
+              title: "Danger Zone",
+              subtitle: "Irreversible actions for your account.",
+              icon: Icons.warning_amber_rounded,
+              cardColor: cardColor,
+              textColor: Colors.red,
+              subTextColor: subTextColor,
+              borderColor: Colors.red.withOpacity(0.3),
+              child: Column(
+                children: [
+                   ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("Delete My Account", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.red)),
+                    subtitle: const Text("Permanently remove your personal data and trade associations.", style: TextStyle(fontSize: 11, color: Colors.grey)),
+                    trailing: OutlinedButton(
+                      onPressed: _isSaving ? null : _confirmAccountDeletion,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text("Delete", style: TextStyle(fontSize: 12, color: Colors.red)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
             // Logout Button
             TextButton.icon(
               onPressed: () {
-                Navigator.pop(context);
+                _logout();
               },
               icon: const Icon(Icons.logout, color: Colors.red),
               label: const Text("Log Out", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
@@ -361,6 +440,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _logout() async {
+    await _authService.logout();
+    if (mounted) {
+       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+    }
   }
 
   Widget _buildProfileHeader(String initial, Color cardColor, Color textColor, Color subTextColor, Color borderColor) {

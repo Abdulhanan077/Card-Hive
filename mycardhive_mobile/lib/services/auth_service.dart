@@ -113,11 +113,17 @@ class AuthService {
 
         return {'success': true, 'user': data['user']};
       } else {
-        return {'success': false, 'error': data['error'] ?? 'Login failed'};
+        return {'success': false, 'error': data['error'] ?? data['message'] ?? 'Invalid username or password'};
       }
     } catch (e) {
+      String message = 'Service temporarily unavailable. Please try again later.';
+      if (e.toString().contains('SocketException') || e.toString().contains('Connection failed')) {
+        message = 'Connection error. Please check your internet and try again.';
+      } else if (e.toString().contains('TimeoutException')) {
+        message = 'Request timed out. The server is taking too long to respond.';
+      }
       debugPrint("Login Error: $e");
-      return {'success': false, 'error': 'Connection failed ($e). Please check your internet connectivity.'};
+      return {'success': false, 'error': message};
     }
   }
 
@@ -224,6 +230,37 @@ class AuthService {
     await _deleteSecure('role');
   }
 
+  Future<Map<String, dynamic>> deleteAccount() async {
+    try {
+      final token = await getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      final deviceString = await _getDeviceString();
+      final response = await http.post(
+        Uri.parse('$baseUrl/mobile/user/delete'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'next-auth.session-token=$token',
+          'User-Agent': 'CardHiveMobile/1.0.0 ($deviceString)',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          await logout(); // Clear local session
+          return {'success': true, 'message': data['message']};
+        }
+      }
+      
+      final data = json.decode(response.body);
+      return {'success': false, 'error': data['message'] ?? 'Failed to delete account'};
+    } catch (e) {
+      debugPrint("Delete Account Error: $e");
+      return {'success': false, 'error': 'Connection failed ($e). Please check your internet.'};
+    }
+  }
+
   Future<Map<String, dynamic>> sendOTP(String email, String username) async {
     try {
       final response = await http.post(
@@ -301,11 +338,15 @@ class AuthService {
         await _writeSecure('role', data['user']['role']);
         return {'success': true, 'user': data['user']};
       } else {
-        return {'success': false, 'error': data['error'] ?? 'Registration failed'};
+        return {'success': false, 'error': data['error'] ?? 'Registration failed. Please check your details.'};
       }
     } catch (e) {
+      String message = 'Registration failed due to a service error.';
+      if (e.toString().contains('SocketException')) {
+        message = 'Network error. Please check your internet connection.';
+      }
       debugPrint("Signup Error: $e");
-      return {'success': false, 'error': 'Cannot connect to server ($e).'};
+      return {'success': false, 'error': message};
     }
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 import ReferralLinkCopy from "@/components/ReferralLinkCopy"; // Might not directly use it, but keeping it in mind, we'll just display code for now
 
 type SettingsUser = {
@@ -20,6 +21,8 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
     const [loadingInfo, setLoadingInfo] = useState(false);
     const [loadingPassword, setLoadingPassword] = useState(false);
     const [updatingPrefs, setUpdatingPrefs] = useState(false);
+    const [loadingDelete, setLoadingDelete] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Form States
     const [fullName, setFullName] = useState(user.username);
@@ -64,6 +67,30 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
             setCurrentPassword("");
             setNewPassword("");
         }, 1000);
+    };
+
+    const handleDeleteAccount = async () => {
+        setLoadingDelete(true);
+        try {
+            const res = await fetch("/api/user/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                showNotification('SUCCESS', "Account successfully deactivated. Finalizing logout...");
+                setTimeout(() => {
+                    signOut({ callbackUrl: "/login?deleted=true" });
+                }, 2000);
+            } else {
+                showNotification('ERROR', data.message || "Failed to delete account");
+                setLoadingDelete(false);
+            }
+        } catch (err) {
+            showNotification('ERROR', "A network error occurred.");
+            setLoadingDelete(false);
+        }
     };
 
     // Avatar Initial
@@ -322,6 +349,61 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
                     </div>
 
                 </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="card" style={{ 
+                marginTop: '1.5rem', 
+                border: '1px solid #fee2e2', 
+                backgroundColor: '#fff1f1', 
+                padding: '2rem' 
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                        <h3 style={{ fontSize: '1.1rem', color: '#dc2626', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span>⚠️</span> Danger Zone
+                        </h3>
+                        <p style={{ fontSize: '0.85rem', color: '#991b1b', margin: 0 }}>
+                            Permanently delete your account and all associated personal data.
+                        </p>
+                    </div>
+                    
+                    {!showDeleteConfirm ? (
+                        <button 
+                            type="button" 
+                            className="btn btn-danger" 
+                            onClick={() => setShowDeleteConfirm(true)}
+                            style={{ backgroundColor: '#dc2626' }}
+                        >
+                            Delete Account
+                        </button>
+                    ) : (
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#dc2626' }}>Are you sure?</span>
+                            <button 
+                                type="button" 
+                                className="btn btn-danger" 
+                                onClick={handleDeleteAccount}
+                                disabled={loadingDelete}
+                                style={{ backgroundColor: '#dc2626', padding: '0.5rem 1rem' }}
+                            >
+                                {loadingDelete ? "Deleting..." : "Yes, Delete"}
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn" 
+                                onClick={() => setShowDeleteConfirm(false)}
+                                style={{ background: 'white', border: '1px solid #f87171', color: '#dc2626', padding: '0.5rem 1rem' }}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    )}
+                </div>
+                
+                <p style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: '#991b1b', opacity: 0.8, fontStyle: 'italic' }}>
+                    * Account deletion anonymizes your profile (Email, Name, Phone). Your trade records will be preserved for financial auditing but will no longer be linked to your identity.
+                </p>
             </div>
 
             <style dangerouslySetInnerHTML={{

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/ui/screens/dashboard_screen.dart';
 
@@ -91,6 +93,17 @@ class _SignupScreenState extends State<SignupScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result['error']), backgroundColor: Colors.red),
       );
+    }
+  }
+
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch $url')),
+        );
+      }
     }
   }
 
@@ -236,6 +249,36 @@ class _SignupScreenState extends State<SignupScreen> {
                       child: _isLoading
                           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                           : const Text("Create Account", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                          height: 1.5,
+                        ),
+                        children: [
+                          const TextSpan(text: "By continuing, you agree to Card-Hive "),
+                          TextSpan(
+                            text: "Terms of Use",
+                            style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold),
+                            recognizer: TapGestureRecognizer()..onTap = () => _launchURL("https://mycardhive.com/terms-of-service"),
+                          ),
+                          const TextSpan(text: " and confirm that you have read our "),
+                          TextSpan(
+                            text: "Privacy Policy",
+                            style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold),
+                            recognizer: TapGestureRecognizer()..onTap = () => _launchURL("https://mycardhive.com/privacy-policy"),
+                          ),
+                          const TextSpan(text: "."),
+                        ],
+                      ),
                     ),
                   ),
                 ],

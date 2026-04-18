@@ -27,32 +27,26 @@
 .logo-container {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
     text-decoration: none;
 }
 
 .header-logo-img {
-    height: 60px;
+    height: 70px; /* Slightly larger for prominence */
     width: auto;
     display: block;
 }
 
 .logo-slogan {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: #2d005f;
     /* Deep purple matched from logo */
     font-weight: 700;
-    margin-top: -2px;
-}
-
-@media (max-width: 768px) {
-    .header-logo-img {
-        height: 50px;
-    }
-
-    .logo-slogan {
-        font-size: 0.7rem;
-    }
+    margin-top: 0.5rem;
+    max-width: 220px; /* Force text to wrap into 2 rows, making 3 rows total with logo */
+    line-height: 1.2;
+    display: block;
 }
 
 .nav-links {
@@ -73,8 +67,30 @@
 }
 
 @media (max-width: 768px) {
+    .header-container {
+        justify-content: space-between;
+        position: static;
+    }
+
     .mobile-nav-toggle {
         display: block;
+        position: static;
+        transform: none;
+    }
+
+    .logo-container {
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .header-logo-img {
+        height: 50px;
+    }
+
+    .logo-slogan {
+        font-size: 0.75rem;
+        max-width: 160px; /* Maintain 3 rows even when left-aligned */
+        margin-top: 0.25rem;
     }
 
     .nav-links {

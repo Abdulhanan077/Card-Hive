@@ -244,6 +244,12 @@ function RegisterForm() {
                                 />
                             </div>
 
+                            <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "1rem", marginBottom: "1rem", opacity: 0.8 }}>
+                                By continuing, you agree to Card-Hive{" "}
+                                <Link href="/terms-of-service" style={{ color: "var(--primary)", fontWeight: "600" }}>Terms of Use</Link>{" "}
+                                and confirm that you have read{" "}
+                                <Link href="/privacy-policy" style={{ color: "var(--primary)", fontWeight: "600" }}>Privacy Policy</Link>
+                            </p>
                             <button
                                 type="submit"
                                 className={`btn btn-primary w-full ${styles.submitBtn}`}

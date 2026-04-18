@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mycardhive_mobile/services/chat_service.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
+import 'package:mycardhive_mobile/utils/permission_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -184,6 +185,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _pickAndSendImage() async {
+    final hasPermission = await PermissionHelper.requestPhotos(context);
+    if (!hasPermission) return;
+
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image == null) return;
 

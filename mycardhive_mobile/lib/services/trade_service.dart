@@ -98,8 +98,14 @@ class TradeService {
         return {'success': false, 'error': errMsg};
       }
     } catch (e) {
+      String message = 'Failed to submit trade due to a connection error.';
+      if (e.toString().contains('TimeoutException')) {
+        message = 'Trade submission timed out. Please check your history before trying again.';
+      } else if (e.toString().contains('SocketException')) {
+        message = 'Connectivity issue detected. Please check your internet.';
+      }
       debugPrint("Submit Trade Error: $e");
-      return {'success': false, 'error': 'Connection failed ($e)'};
+      return {'success': false, 'error': message};
     }
   }
 

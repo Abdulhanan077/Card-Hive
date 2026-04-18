@@ -96,6 +96,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const GeneralSupportChatScreen()));
               }),
+              _buildDrawerItem(context, 'Website Support', () {
+                Navigator.pop(context);
+                launchUrl(Uri.parse("https://mycardhive.com/contact"));
+              }),
               _buildDrawerItem(context, 'Login', () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));

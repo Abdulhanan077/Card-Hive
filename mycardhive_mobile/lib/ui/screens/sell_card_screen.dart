@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:mycardhive_mobile/providers/connectivity_provider.dart';
 import 'package:mycardhive_mobile/services/cache_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:mycardhive_mobile/utils/permission_helper.dart';
 import 'package:mycardhive_mobile/ui/screens/trade_success_screen.dart';
 
 class CardEntry {
@@ -137,29 +138,41 @@ class _SellCardScreenState extends State<SellCardScreen> {
 
   double get _totalPayout => _cards.fold(0.0, (sum, c) => sum + (c.estimatedPayout ?? 0.0));
 
-  Future<void> _pickImages() async {
-    final status = await Permission.photos.request();
-    if (status.isDenied || status.isPermanentlyDenied) {
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text("Permission Required"),
-          content: const Text("We need gallery access to upload your gift card images. Please enable it in settings."),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                openAppSettings();
-              },
-              child: const Text("Open Settings"),
+  void _showImageSourcePicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Text("Select Image Source", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
+            ListTile(
+              leading: const CircleAvatar(backgroundColor: Color(0xFFEFF6FF), child: Icon(Icons.photo_library, color: Color(0xFF2563EB))),
+              title: const Text("Upload from Gallery", style: TextStyle(fontWeight: FontWeight.w500)),
+              onTap: () { Navigator.pop(ctx); _pickImages(); },
+            ),
+            ListTile(
+              leading: const CircleAvatar(backgroundColor: Color(0xFFF0FDF4), child: Icon(Icons.camera_alt, color: Color(0xFF10B981))),
+              title: const Text("Take Live Photo", style: TextStyle(fontWeight: FontWeight.w500)),
+              onTap: () { Navigator.pop(ctx); _takePhoto(); },
+            ),
+            const SizedBox(height: 12),
           ],
         ),
-      );
-      return;
-    }
+      ),
+    );
+  }
+
+  Future<void> _pickImages() async {
+    final hasPermission = await PermissionHelper.requestPhotos(context);
+    if (!hasPermission) return;
 
     try {
       final List<XFile> images = await _picker.pickMultiImage();
@@ -171,6 +184,24 @@ class _SellCardScreenState extends State<SellCardScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error picking images: $e")));
+      }
+    }
+  }
+
+  Future<void> _takePhoto() async {
+    final hasPermission = await PermissionHelper.requestCamera(context);
+    if (!hasPermission) return;
+
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera, imageQuality: 70);
+      if (image != null) {
+        setState(() {
+          _imagePaths.add(image.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error taking photo: $e")));
       }
     }
   }
@@ -535,7 +566,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
                   Text("Upload images (front/back) and receipts for the card listed above.", style: TextStyle(color: isDark ? Colors.white54 : const Color(0xFF64748B), fontSize: 14)),
                   const SizedBox(height: 12),
                   GestureDetector(
-                    onTap: _pickImages,
+                    onTap: _showImageSourcePicker,
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(

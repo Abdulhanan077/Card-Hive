@@ -14,21 +14,10 @@ export default function Header() {
     return (
         <header className="header" style={{ zIndex: 1000 }}>
             <div className="container header-container">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                    <Link href="/" className="logo-container" onClick={closeMenu}>
-                        <img src="/logo.png" alt="Card Hive Logo" className="header-logo-img" />
-                        <span className="logo-slogan">Instant Cash for All Your Gift Cards</span>
-                    </Link>
-
-                    {/* Mobile Hamburger Button */}
-                    <button
-                        className="mobile-nav-toggle"
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        aria-label="Toggle navigation"
-                    >
-                        {isMenuOpen ? "✕" : "☰"}
-                    </button>
-                </div>
+                <Link href="/" className="logo-container" onClick={closeMenu}>
+                    <img src="/logo.png" alt="Card Hive Logo" className="header-logo-img" />
+                    <span className="logo-slogan">Instant Cash for All Your Gift Cards</span>
+                </Link>
 
                 <nav className={`nav-links ${isMenuOpen ? 'nav-open' : ''}`}>
                     <Link href="/rates" className="nav-link" onClick={closeMenu}>
@@ -70,6 +59,15 @@ export default function Header() {
                         </>
                     )}
                 </nav>
+
+                {/* Mobile Hamburger Button */}
+                <button
+                    className="mobile-nav-toggle"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    aria-label="Toggle navigation"
+                >
+                    {isMenuOpen ? "✕" : "☰"}
+                </button>
             </div>
         </header>
     );

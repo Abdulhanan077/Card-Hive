@@ -48,12 +48,9 @@ export default function Footer() {
                                 </a>
                             </li>
                         )}
-                        <li>
-                            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                                Contact Us
-                            </a>
-                        </li>
-                        <li>Terms of Service</li>
+                        <li>Contact Us</li>
+                        <li><Link href="/terms-of-service">Terms of Service</Link></li>
+                        <li><Link href="/privacy-policy">Privacy Policy</Link></li>
                         <li style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
                             <a href="https://wa.me/233551131139" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}>
                                 👨‍💻 Contact Developer

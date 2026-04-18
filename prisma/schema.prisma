@@ -49,6 +49,7 @@ model User {
 
   theme             String   @default("light")
   fcmToken          String?  // Firebase Cloud Messaging Token
+  deletedAt         DateTime? // Timestamp for soft deletion
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
