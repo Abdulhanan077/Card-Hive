@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.997.0",
+    "@aws-sdk/s3-request-presigner": "^3.1032.0",
     "@neondatabase/serverless": "0.10.1",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/adapter-neon": "5.22.0",
