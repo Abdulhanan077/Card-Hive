@@ -11,6 +11,7 @@ import 'package:mycardhive_mobile/ui/screens/chat_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:mycardhive_mobile/utils/image_utils.dart';
 
 class AdminTradeDetailScreen extends StatefulWidget {
@@ -69,6 +70,28 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
     if (_tradeData == null) return;
     setState(() => _isUpdating = true);
     
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => WillPopScope(
+          onWillPop: () async => false,
+          child: const AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 20),
+                Text("Updating Trade...", style: TextStyle(fontWeight: FontWeight.bold)),
+                SizedBox(height: 10),
+                Text("Please wait while we process the update and upload the receipt image.", textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
     String? receiptUrl;
     if (_receiptFile != null) {
       setState(() => _isUploadingFile = true);
@@ -87,6 +110,8 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
       _notesController.text,
       paymentReceiptUrl: receiptUrl,
     );
+    
+    if (mounted) Navigator.pop(context); // Close loading dialog
     
     if (result['success']) {
       setState(() {
@@ -517,6 +542,29 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
                 ],
                 TextButton.icon(
                   onPressed: () async {
+                    final status = await Permission.photos.request();
+                    if (status.isDenied || status.isPermanentlyDenied) {
+                      if (!mounted) return;
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text("Permission Required"),
+                          content: const Text("We need gallery access to upload payment receipts. Please enable it in settings."),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                openAppSettings();
+                              },
+                              child: const Text("Open Settings"),
+                            ),
+                          ],
+                        ),
+                      );
+                      return;
+                    }
+
                     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
                     if (image != null) setState(() => _receiptFile = File(image.path));
                   },

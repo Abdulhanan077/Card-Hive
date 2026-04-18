@@ -72,8 +72,8 @@ class TradeService {
         ));
       }
 
-      // Send Request
-      var streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      // Send Request (120s timeout because we are not compressing images)
+      var streamedResponse = await request.send().timeout(const Duration(seconds: 120));
       var response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 201) {

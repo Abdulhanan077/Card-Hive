@@ -7,10 +7,18 @@ neonConfig.webSocketConstructor = ws
 
 const prismaClientSingleton = () => {
   const dbUrl = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL;
-  const pool = new Pool({ connectionString: dbUrl })
+  // Increase pool size slightly for peak traffic but keep it within Neon limits
+  const pool = new Pool({ 
+    connectionString: dbUrl,
+    max: 10,       // Maximum number of clients in the pool
+    idleTimeoutMillis: 30000,
+  })
   const adapter = new PrismaNeon(pool)
 
-  return new PrismaClient({ adapter })
+  return new PrismaClient({ 
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  })
 }
 
 const globalForPrisma = globalThis as unknown as {

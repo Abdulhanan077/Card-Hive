@@ -8,6 +8,7 @@ import 'package:mycardhive_mobile/services/category_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:mycardhive_mobile/providers/connectivity_provider.dart';
 import 'package:mycardhive_mobile/services/cache_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:mycardhive_mobile/ui/screens/trade_success_screen.dart';
 
 class CardEntry {
@@ -137,11 +138,40 @@ class _SellCardScreenState extends State<SellCardScreen> {
   double get _totalPayout => _cards.fold(0.0, (sum, c) => sum + (c.estimatedPayout ?? 0.0));
 
   Future<void> _pickImages() async {
-    final List<XFile> images = await _picker.pickMultiImage();
-    if (images.isNotEmpty) {
-      setState(() {
-        _imagePaths.addAll(images.map((e) => e.path));
-      });
+    final status = await Permission.photos.request();
+    if (status.isDenied || status.isPermanentlyDenied) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Permission Required"),
+          content: const Text("We need gallery access to upload your gift card images. Please enable it in settings."),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                openAppSettings();
+              },
+              child: const Text("Open Settings"),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    try {
+      final List<XFile> images = await _picker.pickMultiImage();
+      if (images.isNotEmpty) {
+        setState(() {
+          _imagePaths.addAll(images.map((e) => e.path));
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error picking images: $e")));
+      }
     }
   }
 
@@ -197,6 +227,28 @@ class _SellCardScreenState extends State<SellCardScreen> {
 
     setState(() => _isSubmitting = true);
 
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => WillPopScope(
+          onWillPop: () async => false,
+          child: AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 20),
+                const Text("Submitting Trade...", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                const SizedBox(height: 10),
+                const Text("Please stay on this screen while we upload your images. This may take a moment depending on your internet speed.", textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: Colors.grey)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final connectivity = Provider.of<ConnectivityProvider>(context, listen: false);
     
     if (connectivity.isOffline) {
@@ -209,6 +261,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
       
       await CacheService.queueTrade(tradeData, _imagePaths);
       
+      if (mounted) Navigator.pop(context); // Close loading dialog
       setState(() => _isSubmitting = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -228,6 +281,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
       imagePaths: _imagePaths,
     );
 
+    if (mounted) Navigator.pop(context); // Close loading dialog
     setState(() => _isSubmitting = false);
 
     if (!mounted) return;
