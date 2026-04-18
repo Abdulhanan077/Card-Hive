@@ -57,20 +57,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Image.asset('assets/logo.png', height: 48),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Instant Cash for All Your Gift Cards",
-                          style: TextStyle(
-                            color: isDark ? const Color(0xFFC084FC) : const Color(0xFF2E1065),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Image.asset('assets/logo.png', height: 48),
+                          const SizedBox(height: 12),
+                          Text(
+                            "Instant Cash for All Your Gift Cards",
+                            style: TextStyle(
+                              color: isDark ? const Color(0xFFC084FC) : const Color(0xFF2E1065),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     IconButton(
                       padding: EdgeInsets.zero,

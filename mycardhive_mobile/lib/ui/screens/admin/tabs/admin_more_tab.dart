@@ -24,6 +24,7 @@ class AdminMoreTab extends StatelessWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text("Admin Utilities", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        centerTitle: false,
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
