@@ -14,63 +14,86 @@ export default function Footer() {
             .catch(err => console.error("Failed to fetch footer settings", err));
     }, []);
 
-    const whatsappLink = settings?.whatsappNumber
-        ? `https://wa.me/${settings.whatsappNumber.replace(/\D/g, '')}`
-        : "#";
-
     return (
         <footer className="footer">
-            <div className="container footer-container">
-                <div className="footer-brand">
-                    <img src="/logo.png" alt="Card Hive Logo" style={{ height: '80px', width: 'auto', display: 'block', marginBottom: '1rem' }} />
-                </div>
-                <div style={{ flex: '1', minWidth: '200px' }}>
-                    <h4 style={{ marginBottom: '1rem' }}>Quick Links</h4>
-                    <ul style={{ listStyle: 'none', padding: 0, opacity: 0.8, lineHeight: 1.8 }}>
-                        <li><Link href="/">Home</Link></li>
-                        <li><Link href="/login">Sign In</Link></li>
-                        <li><Link href="/register">Create Account</Link></li>
-                        <li style={{ marginTop: '0.5rem' }}>
-                            <a href="/card-hive.apk" download style={{ color: 'var(--primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                🤖 Download App
+            <div className="container">
+                <div className="footer-container">
+                    {/* Brand Section */}
+                    <div className="footer-brand">
+                        <Link href="/">
+                            <img src="/logo.png" alt="Card Hive" className="footer-logo" />
+                        </Link>
+                        <p className="footer-about">
+                            The most trusted platform for secure gift card trading and USDT exchange. Premium rates, instant verification, and 24/7 specialized support.
+                        </p>
+                        <div className="footer-socials">
+                            <a href="#" className="social-icon" aria-label="Follow us on X">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.045 4.126H5.078z"/></svg>
                             </a>
-                        </li>
-                    </ul>
-                </div>
-                <div style={{ flex: '1', minWidth: '200px' }}>
-                    <h4 style={{ marginBottom: '1rem' }}>Support</h4>
-                    <ul style={{ listStyle: 'none', padding: 0, opacity: 0.8, lineHeight: 1.8 }}>
-                        <li>FAQ</li>
-                        {settings?.contactEmail && (
-                            <li>
-                                <a href={`mailto:${settings.contactEmail}`} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'inherit', textDecoration: 'none' }}>
-                                    ✉️ Support Email
+                            <a href="#" className="social-icon" aria-label="Follow us on Instagram">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Platform Column */}
+                    <div className="footer-column">
+                        <h4>Platform</h4>
+                        <ul className="footer-links">
+                            <li><Link href="/" className="footer-link-item">Home</Link></li>
+                            <li><Link href="/login" className="footer-link-item">Sign In</Link></li>
+                            <li><Link href="/register" className="footer-link-item">Create Account</Link></li>
+                            <li style={{ marginTop: '0.5rem' }}>
+                                <a href="/card-hive.apk" download className="footer-link-item" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                                    <span className="footer-icon-box">📲</span> Download App
                                 </a>
                             </li>
-                        )}
-                        <li><Link href="/contact">Contact Us</Link></li>
-                        <li><Link href="/terms-of-service">Terms of Service</Link></li>
-                        <li><Link href="/privacy-policy">Privacy Policy</Link></li>
-                        <li style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-                            <a href="https://wa.me/233551131139" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}>
-                                👨‍💻 Contact Developer
-                            </a>
-                            <div style={{ fontSize: '1.2rem', opacity: 0.7, marginTop: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <a href="mailto:abdulhananu077@gmail.com" title="Email Developer" style={{ textDecoration: 'none', color: 'inherit', transition: 'var(--transition)' }}>
-                                    ✉️
+                        </ul>
+                    </div>
+
+                    {/* Support Column */}
+                    <div className="footer-column">
+                        <h4>Support</h4>
+                        <ul className="footer-links">
+                            <li><Link href="/contact" className="footer-link-item">Contact Us</Link></li>
+                            <li><a href="#" className="footer-link-item">Frequently Asked Questions</a></li>
+                            {settings?.contactEmail && (
+                                <li>
+                                    <a href={`mailto:${settings.contactEmail}`} className="footer-link-item">
+                                        <span className="footer-icon-box">✉️</span> Support Email
+                                    </a>
+                                </li>
+                            )}
+                            <li>
+                                <a href="https://wa.me/233551131139" target="_blank" rel="noopener noreferrer" className="footer-link-item">
+                                    <span className="footer-icon-box">💬</span> WhatsApp Support
                                 </a>
-                            </div>
-                        </li>
-                    </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Legal Column */}
+                    <div className="footer-column">
+                        <h4>Legal</h4>
+                        <ul className="footer-links">
+                            <li><Link href="/terms-of-service" className="footer-link-item">Terms of Service</Link></li>
+                            <li><Link href="/privacy-policy" className="footer-link-item">Privacy Policy</Link></li>
+                            <li><a href="#" className="footer-link-item">AML Policy</a></li>
+                            <li><a href="#" className="footer-link-item">Trading Safety</a></li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-            <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center', opacity: 0.6, marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-                <p>
-                    <Link href="/admin-login" style={{ textDecoration: 'none', color: 'inherit', cursor: 'default', padding: '2px' }}>
-                        &copy;
-                    </Link>{" "}
-                    {new Date().getFullYear()} Card Hive Trading Center. All rights reserved.
-                </p>
+
+                {/* Bottom Bar */}
+                <div className="footer-bottom">
+                    <div className="footer-copyright">
+                        <Link href="/admin-login" style={{ opacity: 1, color: 'inherit' }}>&copy;</Link> {new Date().getFullYear()} Card Hive Trading Center. All rights reserved.
+                    </div>
+                    
+                    <a href="https://wa.me/233551131139" target="_blank" rel="noopener noreferrer" className="footer-dev">
+                        Built with <span className="footer-dev-heart">❤</span> for the Trading Community
+                    </a>
+                </div>
             </div>
         </footer>
     );
