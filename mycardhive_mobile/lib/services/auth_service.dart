@@ -29,6 +29,16 @@ class AuthService {
 
   // --- Storage Helper with Fallback ---
   Future<void> _writeSecure(String key, String value) async {
+    // Aggressive Fallback for iOS Simulators (Appetize.io)
+    if (Platform.isIOS) {
+       final iosInfo = await _deviceInfo.iosInfo;
+       if (!iosInfo.isPhysicalDevice) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(key, value);
+          return;
+       }
+    }
+
     try {
       await _storage.write(key: key, value: value);
     } catch (e) {
@@ -39,6 +49,15 @@ class AuthService {
   }
 
   Future<String?> _readSecure(String key) async {
+    // Aggressive Fallback for iOS Simulators (Appetize.io)
+    if (Platform.isIOS) {
+       final iosInfo = await _deviceInfo.iosInfo;
+       if (!iosInfo.isPhysicalDevice) {
+          final prefs = await SharedPreferences.getInstance();
+          return prefs.getString(key);
+       }
+    }
+
     try {
       final val = await _storage.read(key: key);
       if (val != null) return val;
