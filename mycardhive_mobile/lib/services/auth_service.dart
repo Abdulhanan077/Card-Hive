@@ -276,10 +276,10 @@ class AuthService {
       );
       final data = json.decode(response.body);
       if (response.statusCode == 201) {
-        await _storage.write(key: 'jwt_token', value: data['token']);
-        await _storage.write(key: 'user_id', value: data['user']['id'].toString());
-        await _storage.write(key: 'username', value: data['user']['username']);
-        await _storage.write(key: 'role', value: data['user']['role']);
+        await _writeSecure('jwt_token', data['token']);
+        await _writeSecure('user_id', data['user']['id'].toString());
+        await _writeSecure('username', data['user']['username']);
+        await _writeSecure('role', data['user']['role']);
         return {'success': true, 'user': data['user']};
       } else {
         return {'success': false, 'error': data['error'] ?? 'Registration failed'};
