@@ -56,7 +56,7 @@ export default function Footer() {
                         <h4>Support</h4>
                         <ul className="footer-links">
                             <li><Link href="/contact" className="footer-link-item">Contact Us</Link></li>
-                            <li><a href="#" className="footer-link-item">Frequently Asked Questions</a></li>
+                            <li><Link href="/faq" className="footer-link-item">Frequently Asked Questions</Link></li>
                             {settings?.contactEmail && (
                                 <li>
                                     <a href={`mailto:${settings.contactEmail}`} className="footer-link-item">
@@ -78,8 +78,8 @@ export default function Footer() {
                         <ul className="footer-links">
                             <li><Link href="/terms-of-service" className="footer-link-item">Terms of Service</Link></li>
                             <li><Link href="/privacy-policy" className="footer-link-item">Privacy Policy</Link></li>
-                            <li><a href="#" className="footer-link-item">AML Policy</a></li>
-                            <li><a href="#" className="footer-link-item">Trading Safety</a></li>
+                            <li><Link href="/aml-policy" className="footer-link-item">AML Policy</Link></li>
+                            <li><Link href="/trading-safety" className="footer-link-item">Trading Safety</Link></li>
                         </ul>
                     </div>
                 </div>
