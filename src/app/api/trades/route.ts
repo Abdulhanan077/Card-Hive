@@ -97,6 +97,17 @@ export async function POST(req: Request) {
             } catch (uploadError: any) {
                 console.error("[API/Trades] Image upload failed:", uploadError);
             }
+        // Merge pre-uploaded URLs if they exist
+        const preUploadedUrlsText = formData.get("preUploadedUrls") as string;
+        if (preUploadedUrlsText) {
+            try {
+                const preUrls = JSON.parse(preUploadedUrlsText);
+                if (Array.isArray(preUrls)) {
+                    imageUrls = [...imageUrls, ...preUrls];
+                }
+            } catch (e) {
+                console.error("Failed to parse preUploadedUrls:", e);
+            }
         }
 
         const batchId = `BATCH-${Date.now()}-${session.user.id}`;

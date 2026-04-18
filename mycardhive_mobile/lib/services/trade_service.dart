@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
+import 'package:flutter/foundation.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/services/cache_service.dart';
 
@@ -9,7 +12,7 @@ class TradeService {
   Future<Map<String, dynamic>> submitTrade({
     required List<Map<String, dynamic>> cards,
     required String payoutMethod,
-    required Map<String, String> payoutDetails, // Either Mobile Money or Crypto params
+    required Map<String, String> payoutDetails,
     required List<String> imagePaths,
     String? notes,
   }) async {
@@ -19,15 +22,23 @@ class TradeService {
         return {'success': false, 'error': 'Unauthorized. Please login again.'};
       }
 
-      var uri = Uri.parse('${AuthService.baseUrl}/trades');
-      var request = http.MultipartRequest('POST', uri);
-
-      // NextAuth determines session via Cookie headers usually
-      // Because we use encode() from next-auth/jwt to create our JWT, the web /api/trades route
-      // expects it in the "next-auth.session-token" cookie.
       final cookieName = AuthService.baseUrl.startsWith('https') 
           ? '__Secure-next-auth.session-token' 
           : 'next-auth.session-token';
+
+      // --- New Direct Upload Strategy ---
+      List<String> uploadedUrls = [];
+      for (var imgPath in imagePaths) {
+         try {
+           final url = await _uploadImageDirectly(imgPath, token, cookieName);
+           if (url != null) uploadedUrls.add(url);
+         } catch (e) {
+           debugPrint("Failed to upload image $imgPath directly: $e");
+         }
+      }
+
+      var uri = Uri.parse('${AuthService.baseUrl}/trades');
+      var request = http.MultipartRequest('POST', uri);
 
       request.headers.addAll({
         'Cookie': '$cookieName=$token',
@@ -43,10 +54,7 @@ class TradeService {
         request.fields['notes'] = notes;
       }
 
-      // Encode cards exactly like web does:
-      // const extractedCurrency = c.cardCategory.split(' ')[0] || "USD";
-      // and map properties matching exactly
-      
+      // Restore cardsList mapping logic
       final cardsList = cards.map((c) {
         final category = c['cardCategory'] as String;
         final curr = category.contains(' ') ? category.split(' ')[0] : 'USD';
@@ -63,18 +71,12 @@ class TradeService {
       }).toList();
 
       request.fields['cards'] = json.encode(cardsList);
+      
+      // Pass the pre-uploaded URLs to the server
+      request.fields['preUploadedUrls'] = json.encode(uploadedUrls);
 
-      // Attach Files (Images)
-      for (var imgPath in imagePaths) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'images',
-          imgPath,
-        ));
-      }
-
-      // Send Request (120s timeout because we are not compressing images)
-      var streamedResponse = await request.send().timeout(const Duration(seconds: 120));
-      var response = await http.Response.fromStream(streamedResponse);
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 120));
+      final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
@@ -89,7 +91,6 @@ class TradeService {
              errMsg = 'Server Error (Empty Response): ${response.statusCode}';
           }
         } catch (_) {
-          // If body is not JSON, show the first 100 chars of the body for debugging
           errMsg = response.body.length > 100 
             ? response.body.substring(0, 100) + "..." 
             : response.body.isNotEmpty ? response.body : 'Server Error ${response.statusCode}';
@@ -97,8 +98,51 @@ class TradeService {
         return {'success': false, 'error': errMsg};
       }
     } catch (e) {
-      return {'success': false, 'error': 'Connection failed: $e'};
+      debugPrint("Submit Trade Error: $e");
+      return {'success': false, 'error': 'Connection failed ($e)'};
     }
+  }
+
+  // Helper to upload image directly to R2 using a presigned URL
+  Future<String?> _uploadImageDirectly(String localPath, String token, String cookieName) async {
+    try {
+       final file = File(localPath);
+       final fileName = path.basename(localPath);
+       final fileType = 'image/${path.extension(localPath).replaceAll('.', '') == 'jpg' ? 'jpeg' : path.extension(localPath).replaceAll('.', '')}';
+
+       // 1. Get presigned URL
+       final presignedRes = await http.post(
+         Uri.parse('${AuthService.baseUrl}/uploads/presigned'),
+         headers: {
+           'Content-Type': 'application/json',
+           'Cookie': '$cookieName=$token',
+         },
+         body: json.encode({
+           'fileName': fileName,
+           'fileType': fileType,
+         }),
+       );
+
+       if (presignedRes.statusCode != 200) return null;
+       final presignedData = json.decode(presignedRes.body);
+       final String uploadUrl = presignedData['uploadUrl'];
+       final String publicUrl = presignedData['publicUrl'];
+
+       // 2. Upload binary to R2
+       final binaryData = await file.readAsBytes();
+       final uploadRes = await http.put(
+         Uri.parse(uploadUrl),
+         headers: { 'Content-Type': fileType },
+         body: binaryData,
+       );
+
+       if (uploadRes.statusCode == 200 || uploadRes.statusCode == 201) {
+         return publicUrl;
+       }
+    } catch (e) {
+      debugPrint("Direct Upload Error: $e");
+    }
+    return null;
   }
 
   Future<List<Map<String, dynamic>>> getTrades() async {
