@@ -30,6 +30,11 @@ export default function Footer() {
                         <li><Link href="/">Home</Link></li>
                         <li><Link href="/login">Sign In</Link></li>
                         <li><Link href="/register">Create Account</Link></li>
+                        <li style={{ marginTop: '0.5rem' }}>
+                            <a href="/card-hive.apk" download style={{ color: 'var(--primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                🤖 Download App
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 <div style={{ flex: '1', minWidth: '200px' }}>

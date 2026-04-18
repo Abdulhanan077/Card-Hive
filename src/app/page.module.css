@@ -274,3 +274,78 @@
     margin: 0 auto 1.5rem;
   }
 }
+
+/* Mobile App Section Styles */
+.appSection {
+  padding: 8rem 0;
+  background-color: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.appContainer {
+  display: flex;
+  align-items: center;
+  gap: 6rem;
+}
+
+.appContent {
+  flex: 1.2;
+}
+
+.appContent h2 {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.appContent p {
+  font-size: 1.25rem;
+  opacity: 0.8;
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+}
+
+.appVisual {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.phoneMockup {
+  width: 280px;
+  height: 580px;
+  background: #1e293b;
+  border-radius: 40px;
+  border: 12px solid #0f172a;
+  box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.25);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phoneScreen {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #2563eb, #1e293b);
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 968px) {
+  .appContainer {
+    flex-direction: column;
+    text-align: center;
+    gap: 4rem;
+  }
+  
+  .appContent h2 {
+    font-size: 2.25rem;
+  }
+  
+  .appVisual {
+    order: -1;
+  }
+}

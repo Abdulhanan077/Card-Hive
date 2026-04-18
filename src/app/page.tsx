@@ -83,6 +83,41 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* Mobile App Section */}
+        <section className={styles.appSection}>
+          <div className={`container ${styles.appContainer}`}>
+            <div className={styles.appContent}>
+              <div className="badge badge-primary" style={{ marginBottom: "1rem" }}>
+                Card Hive Mobile
+              </div>
+              <h2>Take Card Hive Everywhere.</h2>
+              <p>
+                Download our official Android app for a faster trading experience, 
+                instant push notifications, and biometric security.
+              </p>
+              <div className={styles.appActions}>
+                <a href="/card-hive.apk" download className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                  <span style={{ fontSize: '1.4rem' }}>🤖</span>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.7rem', opacity: 0.8, lineHeight: 1 }}>Download for</div>
+                    <div style={{ fontWeight: 'bold' }}>Android APK</div>
+                  </div>
+                </a>
+                <div style={{ marginTop: '1rem', fontSize: '0.85rem', opacity: 0.7 }}>
+                  * Version 1.0.0 (Latest Release)
+                </div>
+              </div>
+            </div>
+            <div className={styles.appVisual}>
+               <div className={styles.phoneMockup}>
+                  <div className={styles.phoneScreen}>
+                     <img src="/logo.png" alt="App Preview" style={{ width: '100px', opacity: 0.2 }} />
+                  </div>
+               </div>
+            </div>
+          </div>
+        </section>
+
         {/* Trust Section */}
         <section className={`${styles.section} ${styles.bgLight}`}>
           <div className="container text-center" style={{ textAlign: "center" }}>
