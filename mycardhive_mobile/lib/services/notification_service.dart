@@ -29,7 +29,7 @@ class NotificationService {
       iOS: initializationSettingsIOS,
     );
 
-    await _notificationsPlugin.initialize(initializationSettings);
+    await _notificationsPlugin.initialize(settings: initializationSettings);
     
     // Initialize timezone data
     tz.initializeTimeZones();
@@ -236,7 +236,7 @@ class NotificationService {
       // Schedule it to repeat daily
       await _notificationsPlugin.zonedSchedule(
         id: 888,
-        title: 'Time to Trade! 🚀',
+        title: 'Time to Trade!',
         body: 'Don\'t let your gift cards go to waste. Check today\'s best rates and trade them for instant cash!',
         scheduledDate: _nextInstanceOfTime(hour, minute),
         notificationDetails: platformDetails,

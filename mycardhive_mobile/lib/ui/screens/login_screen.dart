@@ -211,8 +211,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Center(
-                        child: Text("🔒", style: TextStyle(fontSize: 24)),
+                      child: Center(
+                        child: Icon(
+                          Icons.lock_outline_rounded, 
+                          size: 28, 
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
                     ),
                   ),
@@ -416,7 +420,11 @@ class _LoginScreenState extends State<LoginScreen> {
                padding: const EdgeInsets.all(8),
                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
              ),
-             child: Text(_obscurePassword ? "👁️" : "👁️‍🗨️", style: const TextStyle(fontSize: 18)),
+             child: Icon(
+               _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+               size: 20,
+               color: isDark ? Colors.white70 : const Color(0xFF64748B),
+             ),
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

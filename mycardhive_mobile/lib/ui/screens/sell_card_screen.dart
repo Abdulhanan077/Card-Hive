@@ -576,7 +576,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
                       ),
                       child: Column(
                         children: [
-                          const Text("📸", style: TextStyle(fontSize: 32)),
+                          Icon(Icons.camera_enhance_rounded, size: 48, color: theme.colorScheme.primary.withOpacity(0.5)),
                           const SizedBox(height: 8),
                           const Text("Tap to upload proof for the card", style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.w500)),
                           if (_imagePaths.isNotEmpty) ...[

@@ -194,7 +194,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               title: "My Wallet (Reward Pts)",
               value: "${_user['rewardBalance'] ?? 0} pts",
               buttonText: "View Rewards",
-              icon: "💼",
+              icon: Icons.account_balance_wallet_outlined,
               gradient: const [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RewardsScreen(user: _user))),
             ),
@@ -203,7 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               title: "Referral Rewards",
               value: "New!",
               buttonText: "Open Referrals Hub",
-              icon: "🎁",
+              icon: Icons.card_giftcard_outlined,
               description: "Your personal dashboard is ready. Track your referrals, bonuses, and earnings in one place!",
               gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralsScreen())),
@@ -306,7 +306,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                    Text("Support", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                    const SizedBox(height: 16),
                    _buildSupportButton(
-                     icon: "💬",
+                     icon: Icons.chat_outlined,
                      title: "WhatsApp Support",
                      subtitle: "+233 201548030", // Placeholder matching screenshot
                      color: const Color(0xFF10B981),
@@ -314,7 +314,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                    ),
                    const SizedBox(height: 12),
                    _buildSupportButton(
-                     icon: "✉️",
+                     icon: Icons.mail_outline_rounded,
                      title: "Email Support",
                      subtitle: "support@mycardhive.com",
                      color: const Color(0xFF2563EB),
@@ -322,7 +322,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                    ),
                    const SizedBox(height: 12),
                    _buildSupportButton(
-                     icon: "🌐",
+                     icon: Icons.public_rounded,
                      title: "Website Support",
                      subtitle: "Visit our contact page",
                      color: const Color(0xFF6366F1),
@@ -519,7 +519,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String title, 
     required String value, 
     required String buttonText, 
-    required String icon, 
+    required IconData icon, 
     required List<Color> gradient, 
     required VoidCallback onTap,
     String? description,
@@ -542,7 +542,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Row(
                 children: [
-                  Text(icon, style: const TextStyle(fontSize: 18)),
+                  Icon(icon, color: Colors.white, size: 22),
                   const SizedBox(width: 8),
                   Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                 ],
@@ -689,7 +689,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSupportButton({required String icon, required String title, required String subtitle, required Color color, required VoidCallback onTap}) {
+  Widget _buildSupportButton({required IconData icon, required String title, required String subtitle, required Color color, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -703,7 +703,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               width: 40, height: 40,
               decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
-              child: Center(child: Text(icon, style: const TextStyle(fontSize: 18))),
+              child: Center(child: Icon(icon, color: color, size: 20)),
             ),
             const SizedBox(width: 12),
             Column(
