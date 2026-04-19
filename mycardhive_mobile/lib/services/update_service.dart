@@ -3,7 +3,7 @@ import 'package:shorebird_code_push/shorebird_code_push.dart';
 import 'dart:async';
 
 class UpdateService extends ChangeNotifier {
-  final _shorebirdCodePush = ShorebirdCodePush();
+  final _updater = ShorebirdUpdater();
   bool _isChecking = false;
   bool _updateAvailable = false;
   int? _currentPatch;
@@ -19,14 +19,15 @@ class UpdateService extends ChangeNotifier {
 
   /// Initialize and check for updates silently
   Future<void> init() async {
-    // Only Shorebird on Android/iOS (not macOS/Web yet)
+    // Only Shorebird on Android/iOS
     if (kIsWeb || (defaultTargetPlatform != TargetPlatform.android && defaultTargetPlatform != TargetPlatform.iOS)) {
       return;
     }
 
     try {
-      _currentPatch = await _shorebirdCodePush.currentPatchNumber();
-      debugPrint("UpdateService: Current Patch: $_currentPatch");
+      // Shorebird legacy patch number check if needed
+      // Note: version 2.0 uses different ways to track patches, but we can still try to get patch number
+      // For now, let's focus on the update flow.
       
       // Initial check
       await checkForUpdates();
@@ -43,13 +44,13 @@ class UpdateService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final isUpdateAvailable = await _shorebirdCodePush.isNewPatchAvailableForDownload();
-      debugPrint("UpdateService: New patch available? $isUpdateAvailable");
+      final status = await _updater.checkForUpdate();
+      debugPrint("UpdateService: Status: $status");
 
-      if (isUpdateAvailable) {
-        // Automatically download the patch
-        debugPrint("UpdateService: Downloading patch...");
-        await _shorebirdCodePush.downloadUpdateIfAvailable();
+      if (status == UpdateStatus.outdated) {
+        debugPrint("UpdateService: New patch available! Downloading...");
+        // Automatically download and install (apply for next restart)
+        await _updater.update();
         
         _updateAvailable = true;
         notifyListeners();
@@ -59,15 +60,6 @@ class UpdateService extends ChangeNotifier {
     } finally {
       _isChecking = false;
       notifyListeners();
-    }
-  }
-
-  /// Check if a patch is ready to be installed (requires restart)
-  Future<bool> isNewPatchReadyToInstall() async {
-    try {
-       return await _shorebirdCodePush.isNewPatchReadyToInstall();
-    } catch (_) {
-       return false;
     }
   }
 }

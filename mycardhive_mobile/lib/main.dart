@@ -16,6 +16,7 @@ import 'package:mycardhive_mobile/services/cache_service.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/services/notification_service.dart';
 import 'package:mycardhive_mobile/services/biometric_service.dart';
+import 'package:mycardhive_mobile/services/sync_service.dart';
 import 'package:mycardhive_mobile/services/public_service.dart';
 import 'package:mycardhive_mobile/services/update_service.dart';
 import 'package:url_launcher/url_launcher.dart';
