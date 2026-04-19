@@ -1,0 +1,8 @@
+$ErrorActionPreference = "Stop"
+Write-Host "Downloading Shorebird Installer..."
+Invoke-WebRequest -Uri "https://install.shorebird.dev" -OutFile "shorebird_installer.ps1"
+Write-Host "Running Installer..."
+powershell -ExecutionPolicy ByPass -File "shorebird_installer.ps1"
+Write-Host "Cleaning up..."
+Remove-Item "shorebird_installer.ps1"
+Write-Host "Shorebird Installation Attempt Finished."

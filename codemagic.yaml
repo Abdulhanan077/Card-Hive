@@ -13,6 +13,7 @@ workflows:
       - name: Get Flutter packages
         script: |
           cd mycardhive_mobile
+          flutter clean
           flutter pub get
           
       - name: Install CocoaPods
@@ -24,7 +25,7 @@ workflows:
       - name: Build iOS Debug Application for Simulator
         script: |
           cd mycardhive_mobile
-          flutter build ios --simulator --debug
+          flutter build ios --simulator --debug --verbose
           
     artifacts:
       - mycardhive_mobile/build/ios/iphonesimulator/Runner.app
