@@ -29,7 +29,7 @@ class NotificationService {
       iOS: initializationSettingsIOS,
     );
 
-    await _notificationsPlugin.initialize(initializationSettings: initializationSettings);
+    await _notificationsPlugin.initialize(initializationSettings);
     
     // Initialize timezone data
     tz.initializeTimeZones();
@@ -202,12 +202,7 @@ class NotificationService {
 
     const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
     
-    await _notificationsPlugin.show(
-      id: id,
-      title: title,
-      body: body,
-      notificationDetails: platformDetails,
-    );
+    await _notificationsPlugin.show(id, title, body, platformDetails);
   }
 
   static Future<void> scheduleDailyReminder() async {
@@ -235,11 +230,11 @@ class NotificationService {
 
       // Schedule it to repeat daily
       await _notificationsPlugin.zonedSchedule(
-        id: 888, // Unique ID for daily reminder
-        title: 'Time to Trade! 🚀',
-        body: 'Don\'t let your gift cards go to waste. Check today\'s best rates and trade them for instant cash!',
-        scheduledDate: _nextInstanceOfTime(hour, minute),
-        notificationDetails: platformDetails,
+        888, // Unique ID for daily reminder
+        'Time to Trade! 🚀',
+        'Don\'t let your gift cards go to waste. Check today\'s best rates and trade them for instant cash!',
+        _nextInstanceOfTime(hour, minute),
+        platformDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );

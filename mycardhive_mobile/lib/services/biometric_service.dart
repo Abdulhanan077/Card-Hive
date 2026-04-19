@@ -16,7 +16,8 @@ class BiometricService {
     try {
       return await _auth.authenticate(
         localizedReason: 'Please authenticate to access your Card Hive account',
-        stickyAuth: true,
+        authMessages: const [], 
+        persistAcrossBackgrounding: true,
         biometricOnly: true,
       );
     } on PlatformException catch (_) {
