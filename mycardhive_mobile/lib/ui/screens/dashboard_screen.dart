@@ -19,7 +19,10 @@ import 'package:mycardhive_mobile/services/notification_service.dart';
 import 'package:mycardhive_mobile/ui/screens/notifications_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mycardhive_mobile/services/public_service.dart';
+import 'package:mycardhive_mobile/services/update_service.dart';
+import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:restart_app/restart_app.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -53,6 +56,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadDashboardData();
     StatusPollingService.startPolling();
     _startNotificationPolling();
+    _setupUpdateListener();
+  }
+
+  void _setupUpdateListener() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final updateService = Provider.of<UpdateService>(context, listen: false);
+      updateService.addListener(() async {
+        if (updateService.updateAvailable && mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text("🚀 New version ready! Restart app to apply changes."),
+              duration: const Duration(seconds: 10),
+              backgroundColor: const Color(0xFF2563EB),
+              action: SnackBarAction(
+                label: "RESTART",
+                textColor: Colors.white,
+                onPressed: () => Restart.restartApp(),
+              ),
+            ),
+          );
+        }
+      });
+    });
   }
 
   void _startNotificationPolling() {

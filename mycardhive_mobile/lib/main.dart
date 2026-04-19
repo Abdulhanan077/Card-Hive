@@ -16,7 +16,8 @@ import 'package:mycardhive_mobile/services/cache_service.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/services/notification_service.dart';
 import 'package:mycardhive_mobile/services/biometric_service.dart';
-import 'package:mycardhive_mobile/services/sync_service.dart';
+import 'package:mycardhive_mobile/services/public_service.dart';
+import 'package:mycardhive_mobile/services/update_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -69,6 +70,12 @@ void main() async {
     debugPrint("Notification Init Error: $e");
   }
 
+  try {
+    await UpdateService().init();
+  } catch (e) {
+    debugPrint("UpdateService Init Error: $e");
+  }
+
   // 3. Initialize Background Workmanager
   try {
     await Workmanager().initialize(
@@ -95,6 +102,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
+        ChangeNotifierProvider(create: (_) => UpdateService()),
       ],
       child: const MyCardHiveApp(),
     ),
