@@ -38,9 +38,10 @@ class TradeSuccessScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Text(
-                    "🎉",
-                    style: TextStyle(fontSize: 50),
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF10B981),
+                    size: 60,
                   ),
                 ),
               ),
