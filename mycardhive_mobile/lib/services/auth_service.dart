@@ -49,23 +49,34 @@ class AuthService {
   }
 
   Future<String?> _readSecure(String key) async {
-    // Aggressive Fallback for iOS Simulators (Appetize.io)
+    // Simulator Check
+    bool isSimulator = false;
     if (Platform.isIOS) {
        final iosInfo = await _deviceInfo.iosInfo;
-       if (!iosInfo.isPhysicalDevice) {
-          final prefs = await SharedPreferences.getInstance();
-          return prefs.getString(key);
+       isSimulator = !iosInfo.isPhysicalDevice;
+    }
+
+    if (isSimulator) {
+       final prefs = await SharedPreferences.getInstance();
+       final val = prefs.getString(key);
+       if (val != null) {
+         debugPrint("AuthService: Retreived $key from Prefs (Simulator)");
+         return val;
        }
     }
 
     try {
       final val = await _storage.read(key: key);
       if (val != null) return val;
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("AuthService: SecureStorage Read Error for $key: $e");
+    }
     
-    // Fallback
+    // Final Fallback
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(key);
+    final val = prefs.getString(key);
+    if (val != null) debugPrint("AuthService: Retreived $key from Prefs (Final Fallback)");
+    return val;
   }
 
   Future<void> _deleteSecure(String key) async {
@@ -356,7 +367,11 @@ class AuthService {
   }
 
   Future<String?> getToken() async {
-    return await _readSecure('jwt_token');
+    final token = await _readSecure('jwt_token');
+    if (token == null) {
+      debugPrint("CRITICAL: getToken() returned NULL");
+    }
+    return token;
   }
 
   Future<Map<String, dynamic>?> getCurrentUser() async {
