@@ -4,7 +4,7 @@ import LegalLayout from "@/components/LegalLayout";
 
 export const metadata = {
   title: "FAQ | Card-Hive Help Center",
-  description: "Frequently asked questions about gift card trading, USDT exchange, and account management on Card-Hive.",
+  description: "Frequently asked questions about gift card trading and payout methods (MTN, Telecel, AT, USDT) on Card-Hive.",
 };
 
 export default function FAQPage() {
@@ -15,7 +15,7 @@ export default function FAQPage() {
       questions: [
         {
           q: "What is Card-Hive?",
-          a: "Card-Hive is a premium digital asset exchange platform specializing in gift card trading and USDT transactions. We provide instant verification and fast payouts for a wide variety of global gift cards."
+          a: "Card-Hive is a premium platform specializing in gift card trading. We provide instant verification and fast payouts for your global gift cards directly to your preferred payment method."
         },
         {
           q: "How do I start trading?",
@@ -33,7 +33,7 @@ export default function FAQPage() {
         },
         {
           q: "Which payout methods are supported?",
-          a: "We currently support MTN Mobile Money, Telecel Cash, and AT Money. We are constantly expanding our payout networks."
+          a: "We support various payout methods including MTN Mobile Money, Telecel Cash, AT Money, and professional USDT transfers."
         }
       ]
     },

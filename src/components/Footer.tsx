@@ -24,7 +24,7 @@ export default function Footer() {
                             <img src="/logo.png" alt="Card Hive" className="footer-logo" />
                         </Link>
                         <p className="footer-about">
-                            The most trusted platform for secure gift card trading and USDT exchange. Premium rates, instant verification, and 24/7 specialized support.
+                            The most trusted platform for secure gift card trading. Get premium rates and instant payouts via MTN, Telecel, AT, or USDT.
                         </p>
                         <div className="footer-socials">
                             <a href="#" className="social-icon" aria-label="Follow us on X">
