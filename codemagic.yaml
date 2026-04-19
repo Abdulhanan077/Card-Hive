@@ -13,6 +13,7 @@ workflows:
       - name: Get Flutter packages
         script: |
           cd mycardhive_mobile
+          flutter precache --ios
           flutter clean
           flutter pub get
           
