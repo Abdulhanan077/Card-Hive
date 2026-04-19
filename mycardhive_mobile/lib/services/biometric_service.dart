@@ -16,10 +16,8 @@ class BiometricService {
     try {
       return await _auth.authenticate(
         localizedReason: 'Please authenticate to access your Card Hive account',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
+        stickyAuth: true,
+        biometricOnly: true,
       );
     } on PlatformException catch (_) {
       return false;
