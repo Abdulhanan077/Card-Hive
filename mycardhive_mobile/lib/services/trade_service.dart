@@ -22,7 +22,9 @@ class TradeService {
         return {'success': false, 'error': 'Unauthorized. Please login again.'};
       }
 
-      final cookieHeader = 'next-auth.session-token=$token';
+      final isHttps = AuthService.baseUrl.startsWith('https');
+      final cookieName = isHttps ? '__Secure-next-auth.session-token' : 'next-auth.session-token';
+      final cookieHeader = '$cookieName=$token';
 
       // --- New Direct Upload Strategy ---
       List<String> uploadedUrls = [];
@@ -162,7 +164,7 @@ class TradeService {
         Uri.parse('${AuthService.baseUrl}/trades'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
           'Authorization': 'Bearer $token',
         },
       ).timeout(const Duration(seconds: 15));
@@ -213,7 +215,7 @@ class TradeService {
         Uri.parse('${AuthService.baseUrl}/mobile/trades/confirm'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
         body: json.encode({'tradeId': tradeId}),
       ).timeout(const Duration(seconds: 15));

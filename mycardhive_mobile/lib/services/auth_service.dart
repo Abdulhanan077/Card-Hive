@@ -153,7 +153,7 @@ class AuthService {
           Uri.parse('$baseUrl/mobile/user/validate'),
           headers: {
             'Content-Type': 'application/json',
-            'Cookie': 'next-auth.session-token=$token',
+            'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
             'User-Agent': 'CardHiveMobile/1.0.0 ($deviceString)',
           },
         ).timeout(const Duration(seconds: 5));
@@ -251,7 +251,7 @@ class AuthService {
         Uri.parse('$baseUrl/mobile/user/delete'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
           'User-Agent': 'CardHiveMobile/1.0.0 ($deviceString)',
         },
       ).timeout(const Duration(seconds: 15));
@@ -397,7 +397,7 @@ class AuthService {
         Uri.parse('$baseUrl/mobile/user/fcm-token'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': 'next-auth.session-token=$token',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
         },
         body: json.encode({'fcmToken': fcmToken}),
       ).timeout(const Duration(seconds: 10));
