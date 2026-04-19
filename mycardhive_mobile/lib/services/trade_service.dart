@@ -22,15 +22,13 @@ class TradeService {
         return {'success': false, 'error': 'Unauthorized. Please login again.'};
       }
 
-      final cookieName = AuthService.baseUrl.startsWith('https') 
-          ? '__Secure-next-auth.session-token' 
-          : 'next-auth.session-token';
+      final cookieHeader = 'next-auth.session-token=$token';
 
       // --- New Direct Upload Strategy ---
       List<String> uploadedUrls = [];
       for (var imgPath in imagePaths) {
          try {
-           final url = await _uploadImageDirectly(imgPath, token, cookieName);
+            final url = await _uploadImageDirectly(imgPath, token, cookieHeader);
            if (url != null) uploadedUrls.add(url);
          } catch (e) {
            debugPrint("Failed to upload image $imgPath directly: $e");
@@ -41,7 +39,8 @@ class TradeService {
       var request = http.MultipartRequest('POST', uri);
 
       request.headers.addAll({
-        'Cookie': '$cookieName=$token',
+        'Cookie': cookieHeader,
+        'Authorization': 'Bearer $token', // Fallback for API routes
       });
 
       // Payload strings
@@ -110,7 +109,7 @@ class TradeService {
   }
 
   // Helper to upload image directly to R2 using a presigned URL
-  Future<String?> _uploadImageDirectly(String localPath, String token, String cookieName) async {
+  Future<String?> _uploadImageDirectly(String localPath, String token, String cookieHeader) async {
     try {
        final file = File(localPath);
        final fileName = path.basename(localPath);
@@ -119,10 +118,11 @@ class TradeService {
        // 1. Get presigned URL
        final presignedRes = await http.post(
          Uri.parse('${AuthService.baseUrl}/uploads/presigned'),
-         headers: {
-           'Content-Type': 'application/json',
-           'Cookie': '$cookieName=$token',
-         },
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': cookieHeader,
+            'Authorization': 'Bearer $token',
+          },
          body: json.encode({
            'fileName': fileName,
            'fileType': fileType,
@@ -162,7 +162,8 @@ class TradeService {
         Uri.parse('${AuthService.baseUrl}/trades'),
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+          'Cookie': 'next-auth.session-token=$token',
+          'Authorization': 'Bearer $token',
         },
       ).timeout(const Duration(seconds: 15));
 
