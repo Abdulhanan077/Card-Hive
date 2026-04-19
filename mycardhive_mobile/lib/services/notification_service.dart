@@ -29,7 +29,7 @@ class NotificationService {
       iOS: initializationSettingsIOS,
     );
 
-    await _notificationsPlugin.initialize(initializationSettings: initializationSettings);
+    await _notificationsPlugin.initialize(initializationSettings);
     
     // Initialize timezone data
     tz.initializeTimeZones();
