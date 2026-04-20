@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/reward_service.dart';
 import 'package:intl/intl.dart';
+import 'package:mycardhive_mobile/ui/widgets/modern_dropdown.dart';
 
 class RewardsScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -168,14 +169,12 @@ class _RewardsScreenState extends State<RewardsScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
+                    ModernDropdown(
+                      label: "Payout Method",
+                      hint: "Select method...",
                       value: _selectedMethod,
-                      decoration: _inputDecoration("Payout Method", ""),
-                      items: const [
-                        DropdownMenuItem(value: "Mobile Money", child: Text("Mobile Money (Direct transfer)")),
-                        DropdownMenuItem(value: "Crypto", child: Text("Crypto (USDT)")),
-                        DropdownMenuItem(value: "Add to Next Trade", child: Text("Add to Next Giftcard Trade")),
-                      ],
+                      items: const ["Mobile Money", "Crypto", "Add to Next Trade"],
+                      isDark: isDark,
                       onChanged: (val) => setState(() => _selectedMethod = val!),
                     ),
                     const SizedBox(height: 16),

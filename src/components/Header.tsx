@@ -32,7 +32,7 @@ export default function Header() {
                     <Link href="/check-balance" className="nav-link" onClick={closeMenu}>
                         Check Balance
                     </Link>
-                    <a href="/card-hive.apk" download className="nav-link" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                    <a href="https://pub-8f7cbf9bd50641448937a36053e003af.r2.dev/card-hive.apk" download className="nav-link" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
                         App 🤖
                     </a>
                     {session ? (

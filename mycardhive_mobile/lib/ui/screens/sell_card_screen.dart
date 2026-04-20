@@ -11,6 +11,7 @@ import 'package:mycardhive_mobile/services/cache_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mycardhive_mobile/utils/permission_helper.dart';
 import 'package:mycardhive_mobile/ui/screens/trade_success_screen.dart';
+import 'package:mycardhive_mobile/ui/widgets/modern_dropdown.dart';
 
 class CardEntry {
   final String id;
@@ -377,19 +378,25 @@ class _SellCardScreenState extends State<SellCardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildLabel("Select Payout Method", theme, isDark),
-                  Row(
-                    children: [
-                      Expanded(child: _buildRadioTile("MOBILE_MONEY", "Mobile Money", theme, isDark)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildRadioTile("CRYPTO", "Crypto (USDT)", theme, isDark)),
-                    ],
+                  ModernDropdown(
+                    label: "Select Payout Method",
+                    hint: "Method",
+                    value: _payoutMethod,
+                    items: const ["MOBILE_MONEY", "CRYPTO"],
+                    isDark: isDark,
+                    onChanged: (val) => setState(() => _payoutMethod = val!),
                   ),
                   const SizedBox(height: 16),
                   
-                  if (_payoutMethod == "MOBILE_MONEY") ...[
-                    _buildLabel("Payout Network", theme, isDark),
-                    _buildDropdown(theme: theme, isDark: isDark, value: _payoutNetwork.isEmpty ? null : _payoutNetwork, items: ["MTN", "Telecel"], hint: "Select Network", onChanged: (val) => setState(() => _payoutNetwork = val!)),
+                   if (_payoutMethod == "MOBILE_MONEY") ...[
+                    ModernDropdown(
+                      label: "Payout Network",
+                      hint: "Select Network",
+                      value: _payoutNetwork.isEmpty ? null : _payoutNetwork,
+                      items: const ["MTN", "Telecel"],
+                      isDark: isDark,
+                      onChanged: (val) => setState(() => _payoutNetwork = val!),
+                    ),
                     const SizedBox(height: 12),
                     _buildLabel("Mobile Money Number", theme, isDark),
                     _buildTextField(theme: theme, isDark: isDark, controller: _payoutPhoneController, hint: "055 123 4567"),
@@ -406,19 +413,37 @@ class _SellCardScreenState extends State<SellCardScreen> {
                           Row(
                             children: [
                               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                _buildLabel("Network", theme, isDark),
-                                _buildDropdown(theme: theme, isDark: isDark, value: _cryptoNetwork.isEmpty ? null : _cryptoNetwork, items: ["TRC20", "BEP20"], hint: "Select", onChanged: (val) => setState(() => _cryptoNetwork = val!)),
+                                ModernDropdown(
+                                  label: "Network",
+                                  hint: "Select",
+                                  value: _cryptoNetwork.isEmpty ? null : _cryptoNetwork,
+                                  items: const ["TRC20", "BEP20"],
+                                  isDark: isDark,
+                                  onChanged: (val) => setState(() => _cryptoNetwork = val!),
+                                ),
                               ])),
                               const SizedBox(width: 12),
                               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                _buildLabel("Exchange", theme, isDark),
-                                _buildDropdown(theme: theme, isDark: isDark, value: _cryptoExchange.isEmpty ? null : _cryptoExchange, items: ["NOONES", "BINANCE", "OKX", "BYBIT", "KUCOIN", "OTHER"], hint: "Select", onChanged: (val) => setState(() => _cryptoExchange = val!)),
+                                ModernDropdown(
+                                  label: "Exchange",
+                                  hint: "Select",
+                                  value: _cryptoExchange.isEmpty ? null : _cryptoExchange,
+                                  items: const ["NOONES", "BINANCE", "OKX", "BYBIT", "KUCOIN", "OTHER"],
+                                  isDark: isDark,
+                                  onChanged: (val) => setState(() => _cryptoExchange = val!),
+                                ),
                               ])),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _buildLabel("Receiving Method", theme, isDark),
-                          _buildDropdown(theme: theme, isDark: isDark, value: _cryptoReceiverIdType, items: ["EXCHANGE_ID", "WALLET_ADDRESS"], hint: "Select", onChanged: (val) => setState(() => _cryptoReceiverIdType = val!)),
+                          ModernDropdown(
+                            label: "Receiving Method",
+                            hint: "Select",
+                            value: _cryptoReceiverIdType,
+                            items: const ["EXCHANGE_ID", "WALLET_ADDRESS"],
+                            isDark: isDark,
+                            onChanged: (val) => setState(() => _cryptoReceiverIdType = val!),
+                          ),
                           const SizedBox(height: 12),
                           _buildLabel("Account Identifier", theme, isDark),
                           _buildTextField(theme: theme, isDark: isDark, controller: _cryptoReceiverIdController, hint: "Wallet Address or ID"),
@@ -467,32 +492,32 @@ class _SellCardScreenState extends State<SellCardScreen> {
                         ),
                         const SizedBox(height: 16),
                         
-                        _buildLabel("Card Brand", theme, isDark),
-                        _buildDropdown(
-                          theme: theme, isDark: isDark,
+                        ModernDropdown(
+                          label: "Card Brand",
+                          hint: "Select Card Brand",
                           value: card.cardBrand.isEmpty ? null : card.cardBrand,
                           items: availableBrands,
-                          hint: "Select Card Brand",
+                          isDark: isDark,
                           onChanged: (val) => setState(() { card.cardBrand = val!; card.cardCategory = ""; _updateCardCalculation(card); }),
                         ),
                         const SizedBox(height: 16),
 
-                        _buildLabel("Type", theme, isDark),
-                        _buildDropdown(
-                          theme: theme, isDark: isDark,
-                          value: card.cardType,
-                          items: ["Physical", "E-code"],
+                        ModernDropdown(
+                          label: "Type",
                           hint: "Select Type",
+                          value: card.cardType,
+                          items: const ["Physical", "E-code"],
+                          isDark: isDark,
                           onChanged: (val) => setState(() { card.cardType = val!; card.cardCategory = ""; _updateCardCalculation(card); }),
                         ),
                         const SizedBox(height: 16),
 
-                        _buildLabel("Currency & Category", theme, isDark),
-                        _buildDropdown(
-                          theme: theme, isDark: isDark,
+                        ModernDropdown(
+                          label: "Currency & Category",
+                          hint: card.cardBrand.isEmpty ? "Select Brand First" : "Select Category...",
                           value: card.cardCategory.isEmpty ? null : card.cardCategory,
                           items: availableCategories,
-                          hint: card.cardBrand.isEmpty ? "Select Brand First" : "Select Category...",
+                          isDark: isDark,
                           onChanged: (val) {
                             setState(() {
                               card.cardCategory = val!;
@@ -644,81 +669,6 @@ class _SellCardScreenState extends State<SellCardScreen> {
 
   Widget _buildLabel(String text, ThemeData theme, bool isDark) {
     return Padding(padding: const EdgeInsets.only(bottom: 6.0), child: Text(text, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.white70 : const Color(0xFF0F172A))));
-  }
-
-  Widget _buildDropdown({required String? value, required List<String> items, required String hint, required ValueChanged<String?> onChanged, required ThemeData theme, required bool isDark}) {
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus(); // dismiss keyboard if open
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: theme.cardColor,
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-          builder: (context) {
-            return SafeArea(
-              child: Container(
-                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 12),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(color: theme.dividerColor, borderRadius: BorderRadius.circular(2)),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0, left: 16.0, right: 16.0),
-                      child: Text(hint, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
-                    ),
-                    Divider(color: theme.dividerColor),
-                    Flexible(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final item = items[index];
-                          final isSelected = value == item;
-                          return ListTile(
-                            title: Text(item, style: TextStyle(
-                              color: isSelected ? const Color(0xFF2563EB) : theme.colorScheme.onSurface,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
-                            )),
-                            trailing: isSelected ? const Icon(Icons.check_circle, color: Color(0xFF2563EB)) : null,
-                            onTap: () {
-                              Navigator.pop(context);
-                              onChanged(item);
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(color: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC), border: Border.all(color: theme.dividerColor), borderRadius: BorderRadius.circular(8)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                value ?? hint, 
-                style: TextStyle(color: value == null ? (isDark ? Colors.white24 : const Color(0xFF94A3B8)) : theme.colorScheme.onSurface, fontSize: 14),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Icon(Icons.keyboard_arrow_down, color: isDark ? Colors.white30 : const Color(0xFF64748B)),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildTextField({required TextEditingController controller, required String hint, TextInputType? keyboardType, bool enabled = true, void Function(String)? onChanged, required ThemeData theme, required bool isDark}) {

@@ -96,7 +96,7 @@ export default async function Home() {
                 instant push notifications, and biometric security.
               </p>
               <div className={styles.appActions}>
-                <a href="/card-hive.apk" download className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                <a href="https://pub-8f7cbf9bd50641448937a36053e003af.r2.dev/card-hive.apk" download className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                   <span style={{ fontSize: '1.4rem' }}>🤖</span>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '0.7rem', opacity: 0.8, lineHeight: 1 }}>Download for</div>
