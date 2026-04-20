@@ -43,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<Map<String, dynamic>> _recentTrades = [];
   List<Map<String, dynamic>> _statusUpdates = [];
   Map<String, dynamic> _user = {};
+  Map<String, dynamic> _siteSettings = {};
   final PageController _statusController = PageController();
   bool _isRefreshing = false;
   int _unreadCount = 0;
@@ -53,6 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _user = widget.user;
+    _siteSettings = CacheService.getCachedSiteSettings() ?? {};
     _loadDashboardData();
     StatusPollingService.startPolling();
     _startNotificationPolling();
@@ -101,7 +103,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // 1. Refresh user stats from server
       final autoLoginRes = await _authService.tryAutoLogin();
       if (autoLoginRes['success']) {
-        setState(() => _user = autoLoginRes['user']);
+        setState(() {
+           _user = autoLoginRes['user'];
+           if (autoLoginRes['siteSettings'] != null) {
+             _siteSettings = autoLoginRes['siteSettings'];
+           }
+        });
         await CacheService.cacheDashboard(_user);
       }
 
@@ -222,7 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               buttonText: "View Rewards",
               icon: Icons.account_balance_wallet_outlined,
               gradient: const [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RewardsScreen(user: _user))),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RewardsScreen(user: _user, siteSettings: _siteSettings))),
             ),
             const SizedBox(height: 12),
             _buildColoredInfoCard(
@@ -334,17 +341,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                    _buildSupportButton(
                      icon: Icons.chat_outlined,
                      title: "WhatsApp Support",
-                     subtitle: "+233 201548030", // Placeholder matching screenshot
+                     subtitle: _siteSettings['whatsappNumber'] ?? "+233 201548030",
                      color: const Color(0xFF10B981),
-                     onTap: () => launchUrl(Uri.parse("https://wa.me/233201548030")),
+                     onTap: () => launchUrl(Uri.parse("https://wa.me/${(_siteSettings['whatsappNumber'] ?? '233201548030').replaceAll('+', '').replaceAll(' ', '')}")),
                    ),
                    const SizedBox(height: 12),
                    _buildSupportButton(
                      icon: Icons.mail_outline_rounded,
                      title: "Email Support",
-                     subtitle: "support@mycardhive.com",
+                     subtitle: _siteSettings['contactEmail'] ?? "support@mycardhive.com",
                      color: const Color(0xFF2563EB),
-                     onTap: () => launchUrl(Uri.parse("mailto:support@mycardhive.com")),
+                     onTap: () => launchUrl(Uri.parse("mailto:${_siteSettings['contactEmail'] ?? 'support@mycardhive.com'}")),
                    ),
                    const SizedBox(height: 12),
                    _buildSupportButton(
@@ -352,7 +359,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                      title: "Website Support",
                      subtitle: "Visit our contact page",
                      color: const Color(0xFF6366F1),
-                     onTap: () => launchUrl(Uri.parse("https://mycardhive.com/contact")),
+                     onTap: () => launchUrl(Uri.parse("${AppConfig.baseUrl.replaceFirst('/api', '')}/contact")),
                    ),
                 ],
               ),

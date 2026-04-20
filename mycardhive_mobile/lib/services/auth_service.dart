@@ -122,7 +122,12 @@ class AuthService {
           await _writeSecure('remember_me', 'false');
         }
 
-        return {'success': true, 'user': data['user']};
+        // Cache site settings if provided
+        if (data['siteSettings'] != null) {
+          await CacheService.cacheSiteSettings(data['siteSettings']);
+        }
+
+        return {'success': true, 'user': data['user'], 'siteSettings': data['siteSettings']};
       } else {
         return {'success': false, 'error': data['error'] ?? data['message'] ?? 'Invalid username or password'};
       }
@@ -161,12 +166,16 @@ class AuthService {
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
           if (data['success'] == true) {
-            // Update cached stats while we are at it
+            // Update cached stats and site settings
             await CacheService.cacheDashboard(data['user']);
+            if (data['siteSettings'] != null) {
+              await CacheService.cacheSiteSettings(data['siteSettings']);
+            }
             
             return {
               'success': true,
               'user': data['user'],
+              'siteSettings': data['siteSettings'],
             };
           }
         }
@@ -178,6 +187,7 @@ class AuthService {
 
       } catch (e) {
         final cachedDashboard = CacheService.getCachedDashboard() ?? {};
+        final cachedSettings = CacheService.getCachedSiteSettings();
         final userId = await _readSecure('user_id');
         final username = await _readSecure('username');
         final role = await _readSecure('role');
@@ -190,7 +200,8 @@ class AuthService {
               'username': username,
               'role': role ?? 'USER',
               ...cachedDashboard,
-            }
+            },
+            'siteSettings': cachedSettings,
           };
         }
       }

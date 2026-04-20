@@ -108,7 +108,7 @@ class _ReferralsScreenState extends State<ReferralsScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text("Share your code and earn rewards when friends join!", style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
+                        Text("Share your code and earn 2 reward points for every trade your friends complete!", style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
                         const SizedBox(height: 24),
                         // Code Box
                         Container(
@@ -390,9 +390,11 @@ class _ReferralsScreenState extends State<ReferralsScreen> {
     final double total = double.tryParse(_stats['totalEarnings']?.toString() ?? '0') ?? 0.0;
     final bool hasReferrals = (_stats['registrations'] ?? 0) > 0;
     
-    final double signupVal = hasReferrals ? total * 0.2 : 0.0;
-    final double milestoneVal = hasReferrals ? total * 0.3 : 0.0;
-    final double commissionVal = hasReferrals ? total * 0.5 : 0.0;
+    // We don't have a granular backend breakdown yet, 
+    // so we'll show the total in the "Commissions" bar for now since it's "2 pts per trade"
+    final double signupVal = 0.0; // Bonus on signup not active
+    final double milestoneVal = 0.0; // Milestones are separate
+    final double commissionVal = total; 
 
     // Chart heights relative to 120 max height
     final double maxVal = dataMax([signupVal, milestoneVal, commissionVal]);

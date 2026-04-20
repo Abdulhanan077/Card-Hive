@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
         }
 
         const rewardPointsToGhs = settings?.rewardPointsToGhs || 100.0;
+        const referralBonusPercentage = settings?.referralBonusPercentage || 1.5;
         const totalEarningsGhs = ((userData.rewardBalance || 0) / 100) * rewardPointsToGhs;
 
         return NextResponse.json({
@@ -68,12 +69,13 @@ export async function GET(req: NextRequest) {
                 referralCode: userData.referralCode,
             },
             stats: {
-                invitesSent: 0, // Placeholder
-                registrations: (userData as any)._count.referrals,
+                invitesSent: userData._count.referrals, // Setting to registrations for now as proxy
+                registrations: userData._count.referrals,
                 activeReferrals: activeReferralsCount,
                 totalEarnings: parseFloat(totalEarningsGhs.toFixed(2)),
+                referralBonusPercentage: referralBonusPercentage,
             },
-            referralsList: ((userData as any).referrals as any[]).map(r => ({
+            referralsList: userData.referrals.map(r => ({
                 username: r.username,
                 joinedAt: r.createdAt,
                 isActive: r.completedTradesCount > 0,

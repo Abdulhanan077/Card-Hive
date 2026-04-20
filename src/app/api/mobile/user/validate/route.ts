@@ -60,6 +60,17 @@ export async function GET() {
             totalVolumeUSD: trades.filter(t => ['PAID', 'COMPLETED'].includes(t.status)).reduce((sum, t) => sum + (t.faceValue || 0), 0),
         };
 
+        const settings = await prisma.settings.findFirst({
+            select: {
+                siteName: true,
+                contactEmail: true,
+                whatsappNumber: true,
+                referralBonusPercentage: true,
+                rewardPointsToGhs: true,
+                usdtExchangeRate: true,
+            }
+        });
+
         return NextResponse.json({
             success: true,
             user: {
@@ -71,6 +82,14 @@ export async function GET() {
                 completedTradesCount: user.completedTradesCount,
                 theme: user.theme,
                 stats,
+            },
+            siteSettings: settings || {
+                siteName: "Card-Hive",
+                contactEmail: "support@card-hive.com",
+                whatsappNumber: "",
+                referralBonusPercentage: 1.5,
+                rewardPointsToGhs: 100.0,
+                usdtExchangeRate: 15.0,
             }
         });
 

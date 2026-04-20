@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 class CacheService {
   static const String ratesBoxName = 'rates_cache';
   static const String dashboardBoxName = 'dashboard_cache';
+  static const String settingsBoxName = 'site_settings_cache';
   static const String tradesBoxName = 'trades_cache';
   static const String tradeQueueBoxName = 'trade_queue';
 
@@ -14,6 +15,7 @@ class CacheService {
     await Hive.initFlutter();
     await Hive.openBox(ratesBoxName);
     await Hive.openBox(dashboardBoxName);
+    await Hive.openBox(settingsBoxName);
     await Hive.openBox(tradesBoxName);
     await Hive.openBox(tradeQueueBoxName);
   }
@@ -43,6 +45,20 @@ class CacheService {
     if (!Hive.isBoxOpen(dashboardBoxName)) return null;
     final box = Hive.box(dashboardBoxName);
     final data = box.get('last_dashboard');
+    if (data == null) return null;
+    return json.decode(data);
+  }
+
+  // --- Site Settings ---
+  static Future<void> cacheSiteSettings(Map<String, dynamic> data) async {
+    final box = Hive.box(settingsBoxName);
+    await box.put('last_settings', json.encode(data));
+  }
+
+  static Map<String, dynamic>? getCachedSiteSettings() {
+    if (!Hive.isBoxOpen(settingsBoxName)) return null;
+    final box = Hive.box(settingsBoxName);
+    final data = box.get('last_settings');
     if (data == null) return null;
     return json.decode(data);
   }

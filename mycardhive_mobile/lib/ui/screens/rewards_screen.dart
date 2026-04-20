@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 
 class RewardsScreen extends StatefulWidget {
   final Map<String, dynamic> user;
-  const RewardsScreen({super.key, required this.user});
+  final Map<String, dynamic> siteSettings;
+  const RewardsScreen({super.key, required this.user, required this.siteSettings});
 
   @override
   State<RewardsScreen> createState() => _RewardsScreenState();
@@ -70,8 +71,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final balance = widget.user['rewardBalance'] ?? 0;
     final tradesCount = widget.user['completedTradesCount'] ?? 0;
-    // Assuming 1 pt = 0.5 GHS (based on 1112 pts = 556 GHS in screenshot)
-    final cediEquivalent = (balance * 0.5).toStringAsFixed(2);
+    
+    final double ratePer100 = (widget.siteSettings['rewardPointsToGhs'] ?? 100.0).toDouble();
+    final cediEquivalent = ((balance / 100) * ratePer100).toStringAsFixed(2);
 
     return Scaffold(
       appBar: AppBar(
