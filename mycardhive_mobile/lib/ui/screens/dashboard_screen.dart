@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycardhive_mobile/config.dart';
 import 'package:mycardhive_mobile/ui/screens/general_support_chat_screen.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/main.dart';
