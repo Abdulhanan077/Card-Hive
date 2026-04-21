@@ -80,6 +80,7 @@ export default function Footer() {
                             <li><Link href="/privacy-policy" className="footer-link-item">Privacy Policy</Link></li>
                             <li><Link href="/trading-safety" className="footer-link-item">Trading Safety</Link></li>
                             <li><Link href="/aml-policy" className="footer-link-item">AML Policy</Link></li>
+                            <li><Link href="/account-deletion" className="footer-link-item">Account Deletion</Link></li>
                         </ul>
                     </div>
                 </div>
