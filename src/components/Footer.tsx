@@ -64,11 +64,13 @@ export default function Footer() {
                                     </a>
                                 </li>
                             )}
-                            <li>
-                                <a href="https://wa.me/233551131139" target="_blank" rel="noopener noreferrer" className="footer-link-item">
-                                    <span className="footer-icon-box">💬</span> WhatsApp Support
-                                </a>
-                            </li>
+                            {settings?.whatsappNumber && (
+                                <li>
+                                    <a href={`https://wa.me/${settings.whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="footer-link-item">
+                                        <span className="footer-icon-box">💬</span> WhatsApp Support
+                                    </a>
+                                </li>
+                            )}
                         </ul>
                     </div>
 
@@ -91,7 +93,7 @@ export default function Footer() {
                         <Link href="/admin-login" style={{ opacity: 1, color: 'inherit' }}>&copy;</Link> {new Date().getFullYear()} MyCardHive Trading Center. All rights reserved.
                     </div>
                     
-                    <a href="https://wa.me/233551131139" target="_blank" rel="noopener noreferrer" className="footer-dev">
+                    <a href={settings?.whatsappNumber ? `https://wa.me/${settings.whatsappNumber}` : "https://wa.me/233551131139"} target="_blank" rel="noopener noreferrer" className="footer-dev">
                         Built with <span className="footer-dev-heart">❤</span> for the Trading Community
                     </a>
                 </div>

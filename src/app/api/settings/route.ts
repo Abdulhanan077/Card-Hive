@@ -11,13 +11,13 @@ export async function GET() {
         });
 
         return NextResponse.json(settings || {
-            contactEmail: "support@cardhive.com",
+            contactEmail: "support@mycardhive.com",
             whatsappNumber: "233551131139" // Default fallback
         }, { status: 200 });
     } catch (error) {
         console.error("Settings API Error (using fallback):", error);
         return NextResponse.json({
-            contactEmail: "support@cardhive.com",
+            contactEmail: "support@mycardhive.com",
             whatsappNumber: "233551131139" // Default fallback
         }, { status: 200 });
     }
