@@ -57,7 +57,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text("Card Hive Champions", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        title: Text("MyCardHive Champions", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
         backgroundColor: theme.cardColor,
         elevation: 1,
         centerTitle: true,
@@ -240,3 +240,4 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 }
+

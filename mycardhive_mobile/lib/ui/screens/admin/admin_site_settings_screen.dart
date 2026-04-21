@@ -79,7 +79,7 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
       if (result['success']) {
         final s = result['settings'];
         setState(() {
-          _nameController.text = s?['siteName'] ?? "Card Hive";
+          _nameController.text = s?['siteName'] ?? "MyCardHive";
           _emailController.text = s?['contactEmail'] ?? "";
           _whatsappController.text = s?['whatsappNumber'] ?? "";
           _referralController.text = (s?['referralBonusPercentage'] ?? 1.5).toString();
@@ -377,7 +377,7 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
                     if (await Permission.ignoreBatteryOptimizations.request().isGranted) {
                        if (mounted) {
                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                           content: Text("Battery optimization disabled for Card Hive."),
+                           content: Text("Battery optimization disabled for MyCardHive."),
                            backgroundColor: Colors.green,
                          ));
                        }
@@ -472,3 +472,4 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
     );
   }
 }
+

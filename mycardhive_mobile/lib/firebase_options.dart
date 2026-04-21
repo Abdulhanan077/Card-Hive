@@ -54,19 +54,19 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC2kZnHVnlwQZzZ9-HMK2hNFDoVwE1qPxw',
-    appId: '1:874588730991:android:8145898dc3f2f673a7bf9a',
+    apiKey: 'AIzaSyDO8e70S0vy6mA3rsXa4GaUkBVBrYOKm4g',
+    appId: '1:874588730991:android:68e94e5d115e53aca7bf9a',
     messagingSenderId: '874588730991',
     projectId: 'card-hive-60d38',
     storageBucket: 'card-hive-60d38.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAOII1u1LzfRegsaU8qwHismKN8JR454xY',
-    appId: '1:874588730991:ios:3b2e3a38b86bfeaba7bf9a',
+    apiKey: 'AIzaSyDO8e70S0vy6mA3rsXa4GaUkBVBrYOKm4g',
+    appId: '1:874588730991:ios:c4c924b024f9f97fa7bf9a',
     messagingSenderId: '874588730991',
     projectId: 'card-hive-60d38',
     storageBucket: 'card-hive-60d38.firebasestorage.app',
-    iosBundleId: 'com.mycardhive.app',
+    iosBundleId: 'com.mycardhive.trading',
   );
 }

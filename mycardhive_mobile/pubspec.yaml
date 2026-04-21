@@ -1,5 +1,5 @@
 name: mycardhive_mobile
-description: A new Flutter project for Card Hive.
+description: A new Flutter project for MyCardHive.
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
@@ -12,7 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # --- Necessary Plugins for Card Hive ---
+  # --- Necessary Plugins for MyCardHive ---
   cupertino_icons: ^1.0.8
   google_fonts: ^8.0.2
   http: ^1.2.1

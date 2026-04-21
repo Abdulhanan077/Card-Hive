@@ -88,9 +88,9 @@ export default async function Home() {
           <div className={`container ${styles.appContainer}`}>
             <div className={styles.appContent}>
               <div className="badge badge-primary" style={{ marginBottom: "1rem" }}>
-                Card Hive Mobile
+                MyCardHive Mobile
               </div>
-              <h2>Take Card Hive Everywhere.</h2>
+              <h2>Take MyCardHive Everywhere.</h2>
               <p>
                 Download our official Android app for a faster trading experience, 
                 instant push notifications, and biometric security.
@@ -121,7 +121,7 @@ export default async function Home() {
         {/* Trust Section */}
         <section className={`${styles.section} ${styles.bgLight}`}>
           <div className="container text-center" style={{ textAlign: "center" }}>
-            <h2>Why trade with Card Hive?</h2>
+            <h2>Why trade with MyCardHive?</h2>
             <div className={styles.featuresGrid} style={{ marginTop: "3rem" }}>
               <div className={styles.feature}>
                 <div className={styles.featureIcon}>⚡</div>
@@ -146,3 +146,4 @@ export default async function Home() {
     </>
   );
 }
+

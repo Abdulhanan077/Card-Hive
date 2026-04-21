@@ -143,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Image.asset('assets/logo.png', height: 32),
             const SizedBox(width: 8),
             Text(
-              'CARD HIVE',
+              'MyCardHive',
               style: TextStyle(fontWeight: FontWeight.w900, color: theme.colorScheme.onSurface, fontSize: 20, letterSpacing: -0.5),
             ),
           ],
@@ -310,3 +310,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+

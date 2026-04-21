@@ -132,7 +132,7 @@ export default function UserNotificationBell() {
                                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                     >
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                                            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Card Hive Support</span>
+                                            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>MyCardHive Support</span>
                                             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                                                 {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
@@ -161,3 +161,4 @@ export default function UserNotificationBell() {
         </div>
     );
 }
+

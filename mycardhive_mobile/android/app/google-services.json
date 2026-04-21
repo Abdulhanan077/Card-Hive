@@ -7,15 +7,15 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:874588730991:android:8145898dc3f2f673a7bf9a",
+        "mobilesdk_app_id": "1:874588730991:android:68e94e5d115e53aca7bf9a",
         "android_client_info": {
-          "package_name": "com.mycardhive.app"
+          "package_name": "com.mycardhive.trading"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC2kZnHVnlwQZzZ9-HMK2hNFDoVwE1qPxw"
+          "current_key": "AIzaSyDO8e70S0vy6mA3rsXa4GaUkBVBrYOKm4g"
         }
       ],
       "services": {

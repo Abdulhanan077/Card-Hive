@@ -15,7 +15,7 @@ class BiometricService {
   static Future<bool> authenticate() async {
     try {
       return await _auth.authenticate(
-        localizedReason: 'Please authenticate to access your Card Hive account',
+        localizedReason: 'Please authenticate to access your MyCardHive account',
         authMessages: const [], 
         persistAcrossBackgrounding: true,
         biometricOnly: true,
@@ -25,3 +25,4 @@ class BiometricService {
     }
   }
 }
+

@@ -142,7 +142,7 @@ const SupportChat = () => {
                         {/* Header */}
                         <div style={{ padding: "20px", background: "linear-gradient(135deg, #2563EB 0%, #1E40AF 100%)", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div>
-                                <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>Card Hive Support</h4>
+                                <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>MyCardHive Support</h4>
                                 <p style={{ margin: 0, fontSize: "11px", opacity: 0.8 }}>We usually reply instantly</p>
                             </div>
                             <button onClick={() => setIsOpen(false)} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "24px" }}>
@@ -274,3 +274,4 @@ const SupportChat = () => {
 };
 
 export default SupportChat;
+

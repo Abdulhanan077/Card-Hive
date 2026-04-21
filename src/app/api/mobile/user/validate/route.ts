@@ -84,8 +84,8 @@ export async function GET() {
                 stats,
             },
             siteSettings: settings || {
-                siteName: "Card-Hive",
-                contactEmail: "support@card-hive.com",
+                siteName: "MyCardHive",
+                contactEmail: "support@mycardhive.com",
                 whatsappNumber: "",
                 referralBonusPercentage: 1.5,
                 rewardPointsToGhs: 100.0,

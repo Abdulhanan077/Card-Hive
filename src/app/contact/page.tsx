@@ -3,8 +3,8 @@ import Footer from "@/components/Footer";
 import LegalLayout from "@/components/LegalLayout";
 
 export const metadata = {
-  title: "Contact Us | Card-Hive Support",
-  description: "Get in touch with the Card-Hive support team for assistance with your gift card trades.",
+  title: "Contact Us | MyCardHive Support",
+  description: "Get in touch with the MyCardHive support team for assistance with your gift card trades.",
 };
 
 export default function ContactPage() {
@@ -22,7 +22,7 @@ export default function ContactPage() {
         <section id="support">
           <h2>Direct Support Channels</h2>
           <p>
-            At <strong>Card-Hive</strong>, we pride ourselves on providing rapid, personalized support for our trading community. If you have any questions about an ongoing trade, a rejected card, or a payout, please reach out via one of the channels below.
+            At <strong>MyCardHive</strong>, we pride ourselves on providing rapid, personalized support for our trading community. If you have any questions about an ongoing trade, a rejected card, or a payout, please reach out via one of the channels below.
           </p>
         </section>
 
@@ -55,7 +55,7 @@ export default function ContactPage() {
         <section id="location">
           <h2>Our Location</h2>
           <p>
-            Card-Hive is headquartered in the Northern Region of Ghana:
+            MyCardHive is headquartered in the Northern Region of Ghana:
           </p>
           <p>
             <strong>Address</strong>: Tamale, Ghana<br />

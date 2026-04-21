@@ -1,4 +1,4 @@
-package com.mycardhive.app
+package com.mycardhive.trading
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

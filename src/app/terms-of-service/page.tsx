@@ -3,8 +3,8 @@ import Footer from "@/components/Footer";
 import LegalLayout from "@/components/LegalLayout";
 
 export const metadata = {
-  title: "Terms of Service | Card-Hive",
-  description: "Read our terms of service to understand the rules and guidelines for trading gift cards and USDT on Card-Hive.",
+  title: "Terms of Service | MyCardHive",
+  description: "Read our terms of service to understand the rules and guidelines for trading gift cards and USDT on MyCardHive.",
 };
 
 export default function TermsOfService() {
@@ -22,7 +22,7 @@ export default function TermsOfService() {
       <Header />
       <LegalLayout title="Terms of Service" lastUpdated="April 18, 2026" toc={toc}>
         <p>
-          Welcome to <strong>Card-Hive</strong>. These Terms of Service ("<strong>the Rules</strong>") establish a binding agreement between you and our trading platform. By accessing our dashboard or mobile app, you acknowledge that you have read and accepted these terms in their entirety.
+          Welcome to <strong>MyCardHive</strong>. These Terms of Service ("<strong>the Rules</strong>") establish a binding agreement between you and our trading platform. By accessing our dashboard or mobile app, you acknowledge that you have read and accepted these terms in their entirety.
         </p>
 
         <section id="summary" className="summary-box">
@@ -55,7 +55,7 @@ export default function TermsOfService() {
         <section id="usage">
           <h2>1. Usage & Eligibility</h2>
           <p>
-            To use Card-Hive, you must be 18+ and provide accurate identification details. We reserve the right to suspend any account that provides false or misleading information. You are solely responsible for the actions performed through your account.
+            To use MyCardHive, you must be 18+ and provide accurate identification details. We reserve the right to suspend any account that provides false or misleading information. You are solely responsible for the actions performed through your account.
           </p>
         </section>
 
@@ -78,7 +78,7 @@ export default function TermsOfService() {
           <ul>
             <li><strong>Legal Ownership</strong>: You warrant that any asset you submit was obtained through legal means.</li>
             <li><strong>Code Integrity</strong>: You will not submit cards that have already been redeemed or reported as lost/stolen.</li>
-            <li><strong>Verification Rights</strong>: Card-Hive team has the final say in card verification outcomes.</li>
+            <li><strong>Verification Rights</strong>: MyCardHive team has the final say in card verification outcomes.</li>
           </ul>
         </section>
 
@@ -95,14 +95,14 @@ export default function TermsOfService() {
         <section id="guidelines">
           <h2>4. Community Guidelines</h2>
           <p>
-            Card-Hive is a professional trading community. Users are prohibited from using offensive language in support chats or attempting to bypass our security systems through scripted attacks or exploitation.
+            MyCardHive is a professional trading community. Users are prohibited from using offensive language in support chats or attempting to bypass our security systems through scripted attacks or exploitation.
           </p>
         </section>
 
         <section id="liability">
           <h2>5. Liability & Risk</h2>
           <p>
-            Card-Hive is an intermediary platform. We are not responsible for fluctuations in market rates or technical failures on the side of network providers (MTN, Telecel, etc.). Our liability is limited to the value of the trade in question.
+            MyCardHive is an intermediary platform. We are not responsible for fluctuations in market rates or technical failures on the side of network providers (MTN, Telecel, etc.). Our liability is limited to the value of the trade in question.
           </p>
         </section>
 

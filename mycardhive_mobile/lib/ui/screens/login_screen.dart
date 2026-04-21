@@ -228,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Sign in to Card Hive to track your trades",
+                    "Sign in to MyCardHive to track your trades",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 15, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
                   ),
@@ -336,7 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 1.5,
                         ),
                         children: [
-                          const TextSpan(text: "By continuing, you agree to Card-Hive "),
+                          const TextSpan(text: "By continuing, you agree to MyCardHive "),
                           TextSpan(
                             text: "Terms of Use",
                             style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold),
@@ -435,3 +435,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

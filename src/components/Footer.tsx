@@ -21,7 +21,7 @@ export default function Footer() {
                     {/* Brand Section */}
                     <div className="footer-brand">
                         <Link href="/">
-                            <img src="/logo.png" alt="Card Hive" className="footer-logo" />
+                            <img src="/logo.png" alt="MyCardHive Logo" className="header-logo-img" />
                         </Link>
                         <p className="footer-about">
                             The most trusted platform for secure gift card trading. Get premium rates and instant payouts via MTN, Telecel, AT, or USDT.
@@ -78,8 +78,8 @@ export default function Footer() {
                         <ul className="footer-links">
                             <li><Link href="/terms-of-service" className="footer-link-item">Terms of Service</Link></li>
                             <li><Link href="/privacy-policy" className="footer-link-item">Privacy Policy</Link></li>
-                            <li><Link href="/aml-policy" className="footer-link-item">AML Policy</Link></li>
                             <li><Link href="/trading-safety" className="footer-link-item">Trading Safety</Link></li>
+                            <li><Link href="/aml-policy" className="footer-link-item">AML Policy</Link></li>
                         </ul>
                     </div>
                 </div>
@@ -87,7 +87,7 @@ export default function Footer() {
                 {/* Bottom Bar */}
                 <div className="footer-bottom">
                     <div className="footer-copyright">
-                        <Link href="/admin-login" style={{ opacity: 1, color: 'inherit' }}>&copy;</Link> {new Date().getFullYear()} Card Hive Trading Center. All rights reserved.
+                        <Link href="/admin-login" style={{ opacity: 1, color: 'inherit' }}>&copy;</Link> {new Date().getFullYear()} MyCardHive Trading Center. All rights reserved.
                     </div>
                     
                     <a href="https://wa.me/233551131139" target="_blank" rel="noopener noreferrer" className="footer-dev">
@@ -98,3 +98,4 @@ export default function Footer() {
         </footer>
     );
 }
+

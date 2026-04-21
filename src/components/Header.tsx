@@ -15,7 +15,7 @@ export default function Header() {
         <header className="header" style={{ zIndex: 1000 }}>
             <div className="container header-container">
                 <Link href="/" className="logo-container" onClick={closeMenu}>
-                    <img src="/logo.png" alt="Card Hive Logo" className="header-logo-img" />
+                    <img src="/logo.png" alt="MyCardHive Logo" className="header-logo-img" />
                     <span className="logo-slogan">Instant Cash for All Your Gift Cards</span>
                 </Link>
 
@@ -72,3 +72,4 @@ export default function Header() {
         </header>
     );
 }
+

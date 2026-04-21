@@ -171,7 +171,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Join Card Hive to start trading securely",
+                    "Join MyCardHive to start trading securely",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 15, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
                   ),
@@ -264,7 +264,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           height: 1.5,
                         ),
                         children: [
-                          const TextSpan(text: "By continuing, you agree to Card-Hive "),
+                          const TextSpan(text: "By continuing, you agree to MyCardHive "),
                           TextSpan(
                             text: "Terms of Use",
                             style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold),
@@ -364,3 +364,4 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 }
+

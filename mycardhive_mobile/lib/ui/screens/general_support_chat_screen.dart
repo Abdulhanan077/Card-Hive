@@ -94,7 +94,7 @@ class _GeneralSupportChatScreenState extends State<GeneralSupportChatScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Card Hive Support", style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("MyCardHive Support", style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
             Text("We usually reply instantly", style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey)),
           ],
         ),
@@ -210,3 +210,4 @@ class _GeneralSupportChatScreenState extends State<GeneralSupportChatScreen> {
     );
   }
 }
+

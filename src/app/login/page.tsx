@@ -52,7 +52,7 @@ export default function LoginPage() {
                     <div className={styles.authHeader}>
                         <div className={styles.iconWrapper}>🔒</div>
                         <h2>Welcome Back</h2>
-                        <p>Sign in to Card Hive to track your trades</p>
+                        <p>Sign in to MyCardHive to track your trades</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className={styles.form}>
@@ -112,7 +112,7 @@ export default function LoginPage() {
                         </div>
 
                         <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "1.5rem", marginBottom: "0.5rem", opacity: 0.8 }}>
-                            By continuing, you agree to Card-Hive{" "}
+                            By continuing, you agree to MyCardHive{" "}
                             <Link href="/terms-of-service" style={{ color: "var(--primary)", fontWeight: "600" }}>Terms of Use</Link>{" "}
                             and confirm that you have read{" "}
                             <Link href="/privacy-policy" style={{ color: "var(--primary)", fontWeight: "600" }}>Privacy Policy</Link>
@@ -140,3 +140,4 @@ export default function LoginPage() {
         </>
     );
 }
+

@@ -106,7 +106,7 @@ function RegisterForm() {
                     <div className={styles.authHeader}>
                         <div className={styles.iconWrapper}>✨</div>
                         <h2>Create an Account</h2>
-                        <p>Join Card Hive to start trading securely</p>
+                        <p>Join MyCardHive to start trading securely</p>
                     </div>
 
                     {step === 1 ? (
@@ -245,7 +245,7 @@ function RegisterForm() {
                             </div>
 
                             <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "1rem", marginBottom: "1rem", opacity: 0.8 }}>
-                                By continuing, you agree to Card-Hive{" "}
+                                By continuing, you agree to MyCardHive{" "}
                                 <Link href="/terms-of-service" style={{ color: "var(--primary)", fontWeight: "600" }}>Terms of Use</Link>{" "}
                                 and confirm that you have read{" "}
                                 <Link href="/privacy-policy" style={{ color: "var(--primary)", fontWeight: "600" }}>Privacy Policy</Link>
@@ -328,3 +328,4 @@ export default function RegisterPage() {
         </Suspense>
     );
 }
+

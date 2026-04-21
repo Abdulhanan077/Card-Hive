@@ -4,7 +4,7 @@ import LegalLayout from "@/components/LegalLayout";
 
 export const metadata = {
   title: "AML Policy | Anti-Money Laundering",
-  description: "Card-Hive's commitment to preventing money laundering and financial crime through strict KYC and transaction monitoring.",
+  description: "MyCardHive's commitment to preventing money laundering and financial crime through strict KYC and transaction monitoring.",
 };
 
 export default function AMLPolicyPage() {
@@ -26,7 +26,7 @@ export default function AMLPolicyPage() {
         <section id="overview">
           <h2>Policy Overview</h2>
           <p>
-            <strong>Card-Hive</strong> is committed to the highest standards of financial integrity and anti-money laundering (AML) compliance. We strictly prohibit the use of our platform for money laundering, terrorist financing, or any other illegal financial activity.
+            <strong>MyCardHive</strong> is committed to the highest standards of financial integrity and anti-money laundering (AML) compliance. We strictly prohibit the use of our platform for money laundering, terrorist financing, or any other illegal financial activity.
           </p>
           <p>
             Our AML framework is designed to detect, prevent, and report suspicious activities in accordance with international standards and local regulations in the regions we operate, specifically Ghana.
@@ -48,7 +48,7 @@ export default function AMLPolicyPage() {
         <section id="monitoring">
           <h2>Transaction Monitoring</h2>
           <p>
-            Every trade performed on Card-Hive is monitored for suspicious patterns. This includes, but is not limited to:
+            Every trade performed on MyCardHive is monitored for suspicious patterns. This includes, but is not limited to:
           </p>
           <ul>
             <li>Unusually large gift card submissions without clear provenance.</li>
@@ -63,7 +63,7 @@ export default function AMLPolicyPage() {
         <section id="reporting">
           <h2>Reporting of Suspicious Activity</h2>
           <p>
-            Card-Hive cooperates fully with law enforcement and financial regulatory authorities. In the event that we identify clear evidence of criminal activity, we will report said activity to the relevant authorities, including the Financial Intelligence Centre (FIC) of Ghana when applicable.
+            MyCardHive cooperates fully with law enforcement and financial regulatory authorities. In the event that we identify clear evidence of criminal activity, we will report said activity to the relevant authorities, including the Financial Intelligence Centre (FIC) of Ghana when applicable.
           </p>
           <p>
             We maintain detailed logs of all transactions, including IP addresses, card details, and payout destinations, for a minimum of five years.

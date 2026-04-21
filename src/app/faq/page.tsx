@@ -3,8 +3,8 @@ import Footer from "@/components/Footer";
 import LegalLayout from "@/components/LegalLayout";
 
 export const metadata = {
-  title: "FAQ | Card-Hive Help Center",
-  description: "Frequently asked questions about gift card trading and payout methods (MTN, Telecel, AT, USDT) on Card-Hive.",
+  title: "FAQ | MyCardHive Help Center",
+  description: "Frequently asked questions about gift card trading and payout methods (MTN, Telecel, AT, USDT) on MyCardHive.",
 };
 
 export default function FAQPage() {
@@ -14,8 +14,8 @@ export default function FAQPage() {
       label: "The Basics",
       questions: [
         {
-          q: "What is Card-Hive?",
-          a: "Card-Hive is a premium platform specializing in gift card trading. We provide instant verification and fast payouts for your global gift cards directly to your preferred payment method."
+          q: "What is MyCardHive?",
+          a: "MyCardHive is a premium platform specializing in gift card trading. We provide instant verification and fast payouts for your global gift cards directly to your preferred payment method."
         },
         {
           q: "How do I start trading?",

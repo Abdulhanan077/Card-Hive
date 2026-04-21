@@ -29,7 +29,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
 
   try {
     const info = await transporter.sendMail({
-      from: `"Card Hive" <${process.env.EMAIL_FROM}>`,
+      from: `"MyCardHive" <${process.env.EMAIL_FROM}>`,
       to,
       subject,
       html,
@@ -52,7 +52,7 @@ const wrapTemplate = (content: string, preheader?: string) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Hive Notification</title>
+    <title>MyCardHive Notification</title>
     <style>
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #f3f4f6; }
         .wrapper { width: 100%; table-layout: fixed; background-color: #f3f4f6; padding-bottom: 40px; }
@@ -78,7 +78,7 @@ const wrapTemplate = (content: string, preheader?: string) => {
               <tr>
                 <td style="padding: 40px 0; text-align: center; background-color: #0ea5e9;">
                   <span style="color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: -0.025em; font-family: 'Outfit', 'Inter', sans-serif; display: inline-block;">
-                    CARD HIVE
+                    MyCardHive
                   </span>
                 </td>
               </tr>
@@ -86,12 +86,12 @@ const wrapTemplate = (content: string, preheader?: string) => {
                 <td class="content">
                     ${content}
                     <div class="divider"></div>
-                    <p>Best regards,<br><strong>The Card Hive Team</strong></p>
+                    <p>Best regards,<br><strong>The MyCardHive Team</strong></p>
                 </td>
             </tr>
             <tr>
                 <td class="footer">
-                    <p>&copy; ${new Date().getFullYear()} Card Hive. All rights reserved.</p>
+                    <p>&copy; ${new Date().getFullYear()} MyCardHive. All rights reserved.</p>
                     <p>This is an automated notification. Please do not reply to this email.</p>
                 </td>
             </tr>
@@ -106,52 +106,52 @@ const wrapTemplate = (content: string, preheader?: string) => {
 
 export async function sendWelcomeEmail(user: { email: string; username: string }) {
   const content = `
-    <h1 style="margin-top: 0; color: #111827;">Welcome to Card Hive, ${user.username}! 🎉</h1>
-    <p>We're thrilled to have you join our community. Card Hive is designed to give you the most secure and instant cash for your gift cards.</p>
+    <h1 style="margin-top: 0; color: #111827;">Welcome to MyCardHive, ${user.username}! 🎉</h1>
+    <p>We're thrilled to have you join our community. MyCardHive is designed to give you the most secure and instant cash for your gift cards.</p>
     <p>You can now start trading your cards at the best rates in the market. Check out your dashboard to see our latest rates and start your first trade.</p>
     <a href="${getAppUrl()}/user" class="button">Go to Dashboard</a>
     <p>If you have any questions, our support team is just a message away.</p>
   `;
   const html = wrapTemplate(content, "Welcome to the Hive!");
-  return sendEmail({ to: user.email, subject: "Welcome to Card Hive", html });
+  return sendEmail({ to: user.email, subject: "Welcome to MyCardHive", html });
 }
 
 export async function sendOTPEmail(email: string, otp: string) {
   const content = `
     <h1 style="margin-top: 0; color: #111827;">Verify Your Email</h1>
-    <p>Thank you for choosing Card Hive. Use the verification code below to complete your registration:</p>
+    <p>Thank you for choosing MyCardHive. Use the verification code below to complete your registration:</p>
     <div class="card" style="text-align: center; letter-spacing: 4px;">
         <span style="font-size: 32px; font-weight: 700; color: #0ea5e9;">${otp}</span>
     </div>
     <p>This code will expire in 10 minutes. If you didn't request this code, please ignore this email.</p>
   `;
   const html = wrapTemplate(content, "Your verification code");
-  return sendEmail({ to: email, subject: "Your Verification Code - Card Hive", html });
+  return sendEmail({ to: email, subject: "Your Verification Code - MyCardHive", html });
 }
 
 export async function sendPasswordResetOTPEmail(email: string, otp: string) {
   const content = `
     <h1 style="margin-top: 0; color: #111827;">Reset Your Password</h1>
-    <p>We received a request to reset your Card Hive password. Use the code below to proceed:</p>
+    <p>We received a request to reset your MyCardHive password. Use the code below to proceed:</p>
     <div class="card" style="text-align: center; letter-spacing: 4px;">
         <span style="font-size: 32px; font-weight: 700; color: #0ea5e9;">${otp}</span>
     </div>
     <p>This code will expire in 10 minutes. If you didn't request a password reset, your account is safe.</p>
   `;
   const html = wrapTemplate(content, "Password reset code");
-  return sendEmail({ to: email, subject: "Reset your Password - Card Hive", html });
+  return sendEmail({ to: email, subject: "Reset your Password - MyCardHive", html });
 }
 
 export async function sendPasswordResetEmail(user: { email: string }, token: string) {
   const resetUrl = `${getAppUrl()}/reset-password?token=${token}`;
   const content = `
     <h1 style="margin-top: 0; color: #111827;">Reset Your Password</h1>
-    <p>Click the button below to reset your Card Hive password. This link is valid for 1 hour.</p>
+    <p>Click the button below to reset your MyCardHive password. This link is valid for 1 hour.</p>
     <a href="${resetUrl}" class="button">Reset Password</a>
     <p>If you didn't request this, you can safely ignore this email.</p>
   `;
   const html = wrapTemplate(content, "Reset your password link");
-  return sendEmail({ to: user.email, subject: "Reset your Card Hive password", html });
+  return sendEmail({ to: user.email, subject: "Reset your MyCardHive password", html });
 }
 
 export async function sendTradeSubmittedEmail(user: { email: string; username: string }, trades: any | any[]) {
@@ -253,7 +253,7 @@ export async function sendDuplicateCardAttemptEmail(user: { email: string; usern
     <a href="${getAppUrl()}/user/support" class="button" style="background-color: #ef4444;">Contact Support</a>
   `;
   const html = wrapTemplate(content, "Duplicate card submission alert");
-  return sendEmail({ to: user.email, subject: "Action Required: Trade Status Verification - Card Hive", html });
+  return sendEmail({ to: user.email, subject: "Action Required: Trade Status Verification - MyCardHive", html });
 }
 
 export async function sendItemRejectionEmail(user: { email: string; username: string }, rejectedTrade: any, batchTrades: any[]) {
@@ -311,7 +311,7 @@ export async function sendAdminNewUserEmail(user: { username: string; email: str
 
   const content = `
     <h1 style="margin-top: 0; color: #111827;">New Registration 🎉</h1>
-    <p>A new user has just joined Card Hive.</p>
+    <p>A new user has just joined MyCardHive.</p>
     <div class="card">
         <p><strong>Username:</strong> ${user.username}</p>
         <p><strong>Email:</strong> ${user.email}</p>
@@ -348,7 +348,7 @@ export async function sendAdminNewTradeEmail(trades: any | any[], user: { userna
     <a href="${getAppUrl()}/admin/trades/${trade.tradeId}" class="button">Review Trade</a>
   `;
   const html = wrapTemplate(content, `Action required: Trade ${tradeRef}`);
-  return sendEmail({ to: adminEmail, subject: `New Card Hive trade: ${tradeRef}`, html });
+  return sendEmail({ to: adminEmail, subject: `New MyCardHive trade: ${tradeRef}`, html });
 }
 
 export async function sendAdminDuplicateAlert(trade: any, relatedTrades: any[], user: { username: string; email: string }) {
@@ -387,7 +387,7 @@ export async function sendAdminErrorAlert(details: string, context?: any) {
     </div>
   `;
   const html = wrapTemplate(content, "System error notification");
-  return sendEmail({ to: adminEmail, subject: "Card Hive Email/System Error", html });
+  return sendEmail({ to: adminEmail, subject: "MyCardHive Email/System Error", html });
 }
 
 export async function sendAdminNewMessageEmail(message: any, tradeId: string, sender: { username: string }) {
@@ -405,3 +405,4 @@ export async function sendAdminNewMessageEmail(message: any, tradeId: string, se
   const html = wrapTemplate(content, `Message from @${sender.username}`);
   return sendEmail({ to: adminEmail, subject: `New Message from @${sender.username} - Trade ${tradeId}`, html });
 }
+

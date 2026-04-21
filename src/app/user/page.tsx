@@ -102,7 +102,7 @@ export default async function UserDashboardHome() {
                 <div style={{ backgroundColor: 'var(--primary-light)', border: '1px solid var(--primary)', borderRadius: '8px', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem', color: 'var(--primary)' }}>
                     <div style={{ backgroundColor: 'var(--primary)', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>i</div>
                     <div style={{ fontSize: '0.9rem', color: 'var(--foreground)' }}>
-                        <strong style={{ color: 'var(--primary)' }}>Welcome to Card Hive!</strong> Keep submitting gift cards to climb the VIP Tiers and multiply your Reward Points.
+                        <strong style={{ color: 'var(--primary)' }}>Welcome to MyCardHive!</strong> Keep submitting gift cards to climb the VIP Tiers and multiply your Reward Points.
                     </div>
                 </div>
             )}
@@ -415,3 +415,4 @@ export default async function UserDashboardHome() {
         </div>
     );
 }
+

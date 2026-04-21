@@ -171,7 +171,7 @@ class _MyCardHiveAppState extends State<MyCardHiveApp> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     
     return MaterialApp(
-      title: 'Card Hive',
+      title: 'MyCardHive',
       debugShowCheckedModeBanner: false,
       themeMode: themeProvider.themeMode,
       theme: ThemeData(
@@ -239,3 +239,4 @@ class OfflineBanner extends StatelessWidget {
     );
   }
 }
+

@@ -107,7 +107,7 @@ export default function CheckBalancePage() {
                             </button>
                             
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, marginTop: '0.5rem' }}>
-                                Note: Card Hive is not affiliated with these brands. Always ensure you are on the official website before entering card credentials.
+                                Note: MyCardHive is not affiliated with these brands. Always ensure you are on the official website before entering card credentials.
                             </p>
                         </div>
                     )}
@@ -117,3 +117,4 @@ export default function CheckBalancePage() {
         </>
     );
 }
+

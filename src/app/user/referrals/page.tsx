@@ -52,8 +52,8 @@ export default function ReferralsPage() {
         ? `${typeof window !== 'undefined' ? window.location.origin : ''}/register?ref=${userData.referralCode}` 
         : "";
 
-    const shareText = "Trade gift cards and crypto on Card Hive! Use my referral code to get started:";
-    const shareSubject = "Join Card Hive and Start Trading!";
+    const shareText = "Trade gift cards and crypto on MyCardHive! Use my referral code to get started:";
+    const shareSubject = "Join MyCardHive and Start Trading!";
     
     const handleShare = (platform: string) => {
         if (!referralLink) return;
@@ -494,3 +494,4 @@ function BreakdownItem({ label, value, color }: any) {
         </div>
     );
 }
+

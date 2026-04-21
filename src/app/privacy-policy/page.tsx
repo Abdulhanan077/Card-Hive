@@ -3,7 +3,7 @@ import Footer from "@/components/Footer";
 import LegalLayout from "@/components/LegalLayout";
 
 export const metadata = {
-  title: "Privacy Policy | Card-Hive",
+  title: "Privacy Policy | MyCardHive",
   description: "Read our privacy policy to understand how we handle your data and ensure secure gift card trading.",
 };
 
@@ -27,16 +27,16 @@ export default function PrivacyPolicy() {
       <Header />
       <LegalLayout title="Privacy Policy" lastUpdated="April 18, 2026" toc={toc}>
         <p>
-          At <strong>Card-Hive</strong>, we prioritize your digital safety. This Privacy Policy outlines how our ecosystem ("<strong>the Service</strong>") handles your personal information when you interact with us across our web and mobile platforms.
+          At <strong>MyCardHive</strong>, we prioritize your digital safety. This Privacy Policy outlines how our ecosystem ("<strong>the Service</strong>") handles your personal information when you interact with us across our web and mobile platforms.
         </p>
         <p>
-          By utilizing Card-Hive for your gift card trading and USDT transactions, you trust us with your data. We are committed to transparency in our processing activities, ensuring you maintain full control over your privacy rights.
+          By utilizing MyCardHive for your gift card trading and USDT transactions, you trust us with your data. We are committed to transparency in our processing activities, ensuring you maintain full control over your privacy rights.
         </p>
 
         <section id="summary" className="summary-box">
           <h2 style={{ color: "var(--primary)" }}>Privacy Snapshot</h2>
           <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1.5rem" }}>
-            A high-level overview of our data practices at Card-Hive.
+            A high-level overview of our data practices at MyCardHive.
           </p>
 
           <div className="summary-grid">
@@ -116,7 +116,7 @@ export default function PrivacyPolicy() {
         <section id="protection">
           <h2>6. Data Security & Storage</h2>
           <p>
-            Card-Hive employs industry-standard encryption (AES-256) and secure SHA hashing for sensitive data. While we strive for absolute security, please remember that no digital transmission is entirely risk-free.
+            MyCardHive employs industry-standard encryption (AES-256) and secure SHA hashing for sensitive data. While we strive for absolute security, please remember that no digital transmission is entirely risk-free.
           </p>
         </section>
 

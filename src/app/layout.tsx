@@ -7,7 +7,7 @@ import SupportChat from "@/components/SupportChat";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Card Hive Trading Center",
+  title: "MyCardHive Trading Center",
   description: "Secure and instant gift card trading platform.",
 };
 
@@ -41,3 +41,4 @@ export default function RootLayout({
     </html>
   );
 }
+

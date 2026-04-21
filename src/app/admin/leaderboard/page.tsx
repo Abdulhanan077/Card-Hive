@@ -234,7 +234,7 @@ export default function AdminLeaderboardPage() {
             `}</style>
             <div className="leaderboard-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Card Hive Champions</h1>
+                    <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>MyCardHive Champions</h1>
                     <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>Point-based competition</p>
                 </div>
                 <div className="tab-group" style={{ display: 'flex', gap: '0.5rem' }}>
@@ -329,3 +329,4 @@ export default function AdminLeaderboardPage() {
         </div>
     );
 }
+

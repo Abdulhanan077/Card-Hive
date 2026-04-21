@@ -60,7 +60,7 @@ export default function LeaderboardPage() {
         const boardName = activeTab === 'volume' ? 'Whale Board' : 'Speed Kings';
         const unit = activeTab === 'volume' ? `₵${entry.monthlyValue.toLocaleString()}` : `${entry.monthlyValue} trades`;
         
-        const text = `🚀 I'm ranked #${entry.rank} on Card Hive's ${boardName} with ${unit}! 🔥 Join me and start trading at: ${referralLink}`;
+        const text = `🚀 I'm ranked #${entry.rank} on MyCardHive's ${boardName} with ${unit}! 🔥 Join me and start trading at: ${referralLink}`;
         
         const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
         
@@ -112,7 +112,7 @@ export default function LeaderboardPage() {
     return (
         <div className="leaderboard-container">
             <div className="dashboard-header" style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                <h1 className="dashboard-title" style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Card Hive Champions</h1>
+                <h1 className="dashboard-title" style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>MyCardHive Champions</h1>
                 <p className="dashboard-subtitle" style={{ fontSize: '1.1rem', opacity: 0.8 }}>Earn points based on monthly performance. Lifetime glory remains!</p>
             </div>
 
@@ -489,3 +489,4 @@ export default function LeaderboardPage() {
         </div>
     );
 }
+

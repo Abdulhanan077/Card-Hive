@@ -46,7 +46,7 @@ export default function ClientSettingsForm({ settings }: { settings: any }) {
                     type="text"
                     name="siteName"
                     className="form-input"
-                    defaultValue={settings?.siteName || "Card Hive Trading Center"}
+                    defaultValue={settings?.siteName || "MyCardHive Trading Center"}
                     required
                 />
             </div>
@@ -124,3 +124,4 @@ export default function ClientSettingsForm({ settings }: { settings: any }) {
         </form>
     );
 }
+

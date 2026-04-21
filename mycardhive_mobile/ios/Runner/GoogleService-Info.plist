@@ -3,28 +3,28 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyAOII1u1LzfRegsaU8qwHismKN8JR454xY</string>
+	<string>AIzaSyDO8e70S0vy6mA3rsXa4GaUkBVBrYOKm4g</string>
 	<key>GCM_SENDER_ID</key>
 	<string>874588730991</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.mycardhive.app</string>
+	<string>com.mycardhive.trading</string>
 	<key>PROJECT_ID</key>
 	<string>card-hive-60d38</string>
 	<key>STORAGE_BUCKET</key>
 	<string>card-hive-60d38.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
-	<false></false>
+	<false/>
 	<key>IS_ANALYTICS_ENABLED</key>
-	<false></false>
+	<false/>
 	<key>IS_APPINVITE_ENABLED</key>
-	<true></true>
+	<true/>
 	<key>IS_GCM_ENABLED</key>
-	<true></true>
+	<true/>
 	<key>IS_SIGNIN_ENABLED</key>
-	<true></true>
+	<true/>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:874588730991:ios:3b2e3a38b86bfeaba7bf9a</string>
+	<string>1:874588730991:ios:c4c924b024f9f97fa7bf9a</string>
 </dict>
 </plist>

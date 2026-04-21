@@ -287,13 +287,13 @@ class _ReferralsScreenState extends State<ReferralsScreen> {
                   _launchShare('https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(link)}');
                 }),
                 _buildSocialBtn("Twitter", Icons.flutter_dash, const Color(0xFF1DA1F2), () {
-                  _launchShare('https://twitter.com/intent/tweet?text=${Uri.encodeComponent("Trade gift cards and crypto on Card Hive! Use my referral code to get started:")}&url=${Uri.encodeComponent(link)}');
+                  _launchShare('https://twitter.com/intent/tweet?text=${Uri.encodeComponent("Trade gift cards and crypto on MyCardHive! Use my referral code to get started:")}&url=${Uri.encodeComponent(link)}');
                 }),
                 _buildSocialBtn("WhatsApp", Icons.chat_bubble, const Color(0xFF25D366), () {
-                  _launchShare('https://wa.me/?text=${Uri.encodeComponent("Trade gift cards and crypto on Card Hive! Use my referral code to get started: $link")}');
+                  _launchShare('https://wa.me/?text=${Uri.encodeComponent("Trade gift cards and crypto on MyCardHive! Use my referral code to get started: $link")}');
                 }),
                 _buildSocialBtn("Telegram", Icons.send, const Color(0xFF0088CC), () {
-                  _launchShare('https://t.me/share/url?url=${Uri.encodeComponent(link)}&text=${Uri.encodeComponent("Trade gift cards and crypto on Card Hive! Use my referral code to get started:")}');
+                  _launchShare('https://t.me/share/url?url=${Uri.encodeComponent(link)}&text=${Uri.encodeComponent("Trade gift cards and crypto on MyCardHive! Use my referral code to get started:")}');
                 }),
               ],
             ),
@@ -304,11 +304,11 @@ class _ReferralsScreenState extends State<ReferralsScreen> {
           Row(
             children: [
               Expanded(child: _buildMsgBtn("SMS", Icons.sms, () {
-                _launchShare('sms:?body=${Uri.encodeComponent("Trade gift cards and crypto on Card Hive! Use my referral code to get started: $link")}');
+                _launchShare('sms:?body=${Uri.encodeComponent("Trade gift cards and crypto on MyCardHive! Use my referral code to get started: $link")}');
               })),
               const SizedBox(width: 8),
               Expanded(child: _buildMsgBtn("Email", Icons.email, () {
-                _launchShare('mailto:?subject=${Uri.encodeComponent("Join Card Hive and Start Trading!")}&body=${Uri.encodeComponent("Trade gift cards and crypto on Card Hive! Use my referral code to get started: $link")}');
+                _launchShare('mailto:?subject=${Uri.encodeComponent("Join MyCardHive and Start Trading!")}&body=${Uri.encodeComponent("Trade gift cards and crypto on MyCardHive! Use my referral code to get started: $link")}');
               })),
             ],
           ),
@@ -484,3 +484,4 @@ class _ReferralsScreenState extends State<ReferralsScreen> {
     );
   }
 }
+

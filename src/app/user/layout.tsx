@@ -104,8 +104,8 @@ export default async function UserLayout({ children }: { children: React.ReactNo
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <label htmlFor="sidebar-toggle" className="mobile-menu-btn" aria-label="Open menu">☰</label>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <img src="/logo.png" alt="Card Hive Logo" style={{ height: '24px', width: 'auto' }} />
-                            <span style={{ fontWeight: 600 }}>Card Hive</span>
+                            <img src="/logo.png" alt="MyCardHive Logo" style={{ height: '24px', width: 'auto' }} />
+                            <span style={{ fontWeight: 600 }}>MyCardHive</span>
                         </div>
                     </div>
                     <UserNotificationBell />
@@ -118,3 +118,4 @@ export default async function UserLayout({ children }: { children: React.ReactNo
         </div>
     );
 }
+
