@@ -311,7 +311,7 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
                                     ) : (
                                         <div className="crypto-id-row">
                                             <code className="crypto-code">{trade.cryptoReceiverId}</code>
-                                            <CopyButton textToCopy={trade.cryptoReceiverId} label="Copy" />
+                                            <CopyButton textToCopy={trade.cryptoReceiverId || ""} label="Copy" />
                                         </div>
                                     )}
                                 </div>
