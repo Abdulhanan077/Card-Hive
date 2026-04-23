@@ -10,6 +10,9 @@ class CacheService {
   static const String settingsBoxName = 'site_settings_cache';
   static const String tradesBoxName = 'trades_cache';
   static const String tradeQueueBoxName = 'trade_queue';
+  static const String referralBoxName = 'referral_cache';
+  static const String leaderboardBoxName = 'leaderboard_cache';
+  static const String rewardsBoxName = 'rewards_cache';
 
   static Future<void> init() async {
     await Hive.initFlutter();
@@ -18,6 +21,9 @@ class CacheService {
     await Hive.openBox(settingsBoxName);
     await Hive.openBox(tradesBoxName);
     await Hive.openBox(tradeQueueBoxName);
+    await Hive.openBox(referralBoxName);
+    await Hive.openBox(leaderboardBoxName);
+    await Hive.openBox(rewardsBoxName);
   }
 
   // --- Rates ---
@@ -117,5 +123,48 @@ class CacheService {
   static Future<void> clearTradeQueue() async {
     final box = Hive.box(tradeQueueBoxName);
     await box.delete('queue');
+  }
+
+  // --- Referrals ---
+  static Future<void> cacheReferralData(Map<String, dynamic> data) async {
+    final box = Hive.box(referralBoxName);
+    await box.put('last_referrals', json.encode(data));
+  }
+
+  static Map<String, dynamic>? getCachedReferralData() {
+    if (!Hive.isBoxOpen(referralBoxName)) return null;
+    final box = Hive.box(referralBoxName);
+    final data = box.get('last_referrals');
+    if (data == null) return null;
+    return json.decode(data);
+  }
+
+  // --- Leaderboard ---
+  static Future<void> cacheLeaderboardData(Map<String, dynamic> data) async {
+    final box = Hive.box(leaderboardBoxName);
+    await box.put('last_leaderboard', json.encode(data));
+  }
+
+  static Map<String, dynamic>? getCachedLeaderboardData() {
+    if (!Hive.isBoxOpen(leaderboardBoxName)) return null;
+    final box = Hive.box(leaderboardBoxName);
+    final data = box.get('last_leaderboard');
+    if (data == null) return null;
+    return json.decode(data);
+  }
+
+  // --- Rewards ---
+  static Future<void> cacheRewardsHistory(List<Map<String, dynamic>> data) async {
+    final box = Hive.box(rewardsBoxName);
+    await box.put('last_rewards', json.encode(data));
+  }
+
+  static List<Map<String, dynamic>>? getCachedRewardsHistory() {
+    if (!Hive.isBoxOpen(rewardsBoxName)) return null;
+    final box = Hive.box(rewardsBoxName);
+    final data = box.get('last_rewards');
+    if (data == null) return null;
+    final List<dynamic> decoded = json.decode(data);
+    return decoded.cast<Map<String, dynamic>>();
   }
 }

@@ -126,18 +126,13 @@ export async function triggerTypingIndicator(tradeId: number, username: string) 
     await pusherServer.trigger(`trade-${tradeId}`, "typing", { username });
 }
 
-export async function uploadChatFileAction(formData: FormData) {
+// uploadChatFileAction removed in favor of direct-to-R2 client-side upload strategy
+export async function getPresignedUrlAction(fileName: string, contentType: string) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) throw new Error("Unauthorized");
 
-    const file = formData.get("file") as File;
-    if (!file) throw new Error("No file provided");
-
-    const { uploadToR2 } = await import("@/lib/upload");
-    const buffer = await file.arrayBuffer();
-    const url = await uploadToR2(buffer, file.name, file.type);
-
-    return { url, type: file.type.startsWith('image/') ? 'IMAGE' : 'FILE' };
+    const { getR2PresignedUrl } = await import("@/lib/upload");
+    return await getR2PresignedUrl(fileName, contentType);
 }
 export async function deleteMessageAction(messageId: number, tradeId: number) {
     const session = await getServerSession(authOptions);

@@ -28,7 +28,7 @@ class RewardService {
 
       return json.decode(response.body);
     } catch (e) {
-      return {'success': false, 'error': 'Connection failed'};
+      rethrow;
     }
   }
 
@@ -50,7 +50,7 @@ class RewardService {
       }
       return [];
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 }

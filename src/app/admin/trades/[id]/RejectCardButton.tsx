@@ -2,8 +2,9 @@
 
 import { useNotification } from "@/context/NotificationContext";
 import { toggleCardStatusAction } from "@/app/actions/admin-trade-actions";
-import { uploadChatFileAction, postMessage } from "@/app/actions/chat";
-import { useState, useRef } from "react";
+import { getPresignedUrlAction, postMessage } from "@/app/actions/chat";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { IoCloudUploadOutline, IoCloseOutline } from "react-icons/io5";
 
 interface Props {
@@ -20,7 +21,24 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
     const [showModal, setShowModal] = useState(false);
     const [reason, setReason] = useState("");
     const [files, setFiles] = useState<File[]>([]);
+    const [mounted, setMounted] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Lock body scroll when modal is open
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showModal]);
 
     const isRejected = currentStatus === 'REJECTED';
 
@@ -52,14 +70,22 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
 
         setLoading(true);
         try {
-            // 1. Upload all proofs
-            const uploadResults = [];
-            for (const file of files) {
-                const formData = new FormData();
-                formData.append("file", file);
-                const res = await uploadChatFileAction(formData);
-                uploadResults.push(res);
-            }
+            // 1. Upload all proofs in parallel
+            const uploadResults = await Promise.all(files.map(async (file) => {
+                // 1a. Get presigned URL
+                const { uploadUrl, publicUrl } = await getPresignedUrlAction(file.name, file.type);
+                
+                // 1b. Upload directly to R2
+                const uploadRes = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: { 'Content-Type': file.type }
+                });
+
+                if (!uploadRes.ok) throw new Error(`Failed to upload ${file.name}`);
+                
+                return { url: publicUrl, type: file.type.startsWith('image/') ? 'IMAGE' : 'FILE' };
+            }));
 
             // 2. Call rejection action with the first proof
             const result = await toggleCardStatusAction(
@@ -116,19 +142,20 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
                 {loading ? '...' : (isRejected ? 'Re-Accept' : 'Reject Item')}
             </button>
 
-            {showModal && (
+            {showModal && mounted && createPortal(
                 <div style={{
                     position: 'fixed',
                     top: 0,
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    backgroundColor: 'rgba(0,0,0,0.7)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    zIndex: 1000,
-                    padding: '1rem'
+                    zIndex: 99999,
+                    padding: '1rem',
+                    backdropFilter: 'blur(4px)'
                 }}>
                     <div style={{
                         backgroundColor: 'var(--surface)',
@@ -140,14 +167,14 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
                         border: '1px solid var(--border)'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Confirm Rejection</h3>
-                            <button onClick={() => !loading && setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5 }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--foreground)' }}>Confirm Rejection</h3>
+                            <button onClick={() => !loading && setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, color: 'var(--foreground)' }}>
                                 <IoCloseOutline size={24} />
                             </button>
                         </div>
 
                         <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 500 }}>
+                            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 500, color: 'var(--text-muted)' }}>
                                 Proof of Invalidity (Screenshot/Image)
                             </label>
                             <div
@@ -175,7 +202,7 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
                                         📄 {files.length} files selected
                                     </div>
                                 ) : (
-                                    <div style={{ opacity: 0.6 }}>
+                                    <div style={{ opacity: 0.6, color: 'var(--text-muted)' }}>
                                         <IoCloudUploadOutline size={32} style={{ margin: '0 auto 0.5rem' }} />
                                         <p style={{ fontSize: '0.8rem', margin: 0 }}>Click to upload screenshot(s)</p>
                                     </div>
@@ -184,7 +211,7 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
                         </div>
 
                         <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 500 }}>
+                            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 500, color: 'var(--text-muted)' }}>
                                 Reason (Optional)
                             </label>
                             <textarea
@@ -246,7 +273,8 @@ export default function RejectCardButton({ tradeId, workspaceId, currentStatus, 
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );

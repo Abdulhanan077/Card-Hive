@@ -12,6 +12,20 @@ import SessionTracker from "@/app/components/SessionTracker";
 import TradesCounter from "./TradesCounter";
 import RewardsCounter from "./RewardsCounter";
 
+import { 
+    HiOutlineHome, 
+    HiOutlineClipboardList, 
+    HiOutlineUsers, 
+    HiOutlineGift, 
+    HiOutlineTrendingUp, 
+    HiOutlineRefresh, 
+    HiOutlineSupport, 
+    HiOutlineCog, 
+    HiOutlineShieldCheck,
+    HiOutlineCurrencyDollar 
+} from "react-icons/hi";
+import { FaTrophy } from "react-icons/fa";
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
     const session = await getServerSession(authOptions);
 
@@ -27,42 +41,76 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <label htmlFor="sidebar-toggle" className="sidebar-overlay"></label>
 
             <aside className="sidebar">
-                <div className="sidebar-header" style={{ borderColor: 'var(--primary)' }}>
+                <div className="sidebar-header" style={{ borderBottom: '1px solid var(--border)', padding: '2rem 1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3 style={{ color: 'var(--primary)' }}>Admin Portal</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900 }}>A</div>
+                            <h3 style={{ margin: 0, fontSize: '1.25rem', letterSpacing: '-0.02em' }}>Admin</h3>
+                        </div>
                         <label htmlFor="sidebar-toggle" className="mobile-menu-btn" style={{ marginRight: 0, padding: 0 }} aria-label="Close menu">✕</label>
                     </div>
-                    <p className="sidebar-user">@{session.user.username}</p>
                 </div>
-                <nav className="sidebar-nav" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Link href="/admin" className="sidebar-link">Dashboard Home</Link>
-                    <Link href="/admin/trades" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Manage Trades
+                <nav className="sidebar-nav" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem' }}>
+                    <Link href="/admin" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineHome size={20} />
+                        Dashboard Home
+                    </Link>
+                    <Link href="/admin/trades" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineClipboardList size={20} />
+                        <span style={{ flex: 1 }}>Manage Trades</span>
                         <TradesCounter />
                     </Link>
-                    <Link href="/admin/users" className="sidebar-link">Registered Users</Link>
-                    <Link href="/admin/rewards" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Reward Redemptions
+                    <Link href="/admin/users" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineUsers size={20} />
+                        Registered Users
+                    </Link>
+                    <Link href="/admin/rewards" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineGift size={20} />
+                        <span style={{ flex: 1 }}>Reward Redemptions</span>
                         <RewardsCounter />
                     </Link>
-                    <Link href="/admin/rates" className="sidebar-link">Manage Rates</Link>
-                    <Link href="/admin/status-updates" className="sidebar-link">Status Updates</Link>
-                    <Link href="/admin/leaderboard" className="sidebar-link">Leaderboard</Link>
-                    <Link href="/admin/support" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        Live Support
+                    
+                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '1.5rem 0 0.5rem 1rem' }}>
+                        Settings & Tools
+                    </div>
+                    
+                    <Link href="/admin/rates" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineTrendingUp size={20} />
+                        Manage Rates
+                    </Link>
+                    <Link href="/admin/status-updates" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineRefresh size={20} />
+                        Status Updates
+                    </Link>
+                    <Link href="/admin/leaderboard" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <FaTrophy size={18} />
+                        Leaderboard
+                    </Link>
+                    <Link href="/admin/support" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineSupport size={20} />
+                        <span style={{ flex: 1 }}>Live Support</span>
                         <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#ef4444' }}></div>
                     </Link>
-                    <Link href="/admin/settings" className="sidebar-link">Site Settings</Link>
-                    <Link href="/admin/logins" className="sidebar-link">Security Logs</Link>
-                    <Link href="/admin/balance-checkers" className="sidebar-link">Balance Checkers</Link>
+                    <Link href="/admin/settings" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineCog size={20} />
+                        Site Settings
+                    </Link>
+                    <Link href="/admin/logins" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineShieldCheck size={20} />
+                        Security Logs
+                    </Link>
+                    <Link href="/admin/balance-checkers" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineCurrencyDollar size={20} />
+                        Balance Checkers
+                    </Link>
 
                     <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)', marginBottom: '1rem' }}>
                         <LogoutButton />
                     </div>
 
                     <div style={{ marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--warning)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            Pending Actions
+                        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--warning)', margin: '0 0 0.75rem 1rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                            Recent Alerts
                         </div>
                         <SidebarNotifications />
                     </div>
@@ -94,7 +142,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                         <div className="desktop-only" style={{ height: '24px', width: '1px', backgroundColor: 'var(--border)' }}></div>
                         <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                                {session.user.username?.charAt(0).toUpperCase()}
+                                {session.user.username?.charAt(0).toUpperCase() || 'A'}
                             </div>
                             <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>@{session.user.username}</span>
                         </div>

@@ -7,8 +7,20 @@ import React from "react";
 function SubmitButton() {
     const { pending } = useFormStatus();
     return (
-        <button type="submit" className="btn btn-primary" disabled={pending} style={{ padding: "0.5rem" }}>
-            {pending ? "Updating..." : "Update Trade"}
+        <button 
+            type="submit" 
+            className="btn btn-primary" 
+            disabled={pending} 
+            style={{ 
+                height: '48px', 
+                borderRadius: '12px', 
+                fontWeight: 700, 
+                fontSize: '1rem',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                marginTop: '0.5rem'
+            }}
+        >
+            {pending ? "Processing..." : "Update Trade Status"}
         </button>
     );
 }

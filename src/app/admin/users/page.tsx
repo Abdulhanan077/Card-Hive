@@ -7,6 +7,12 @@ import ResendAuthEmailButtons from "./ResendAuthEmailButtons";
 import UserActionPanelControls from "./UserActionPanelControls";
 import UserSortModern from "./UserSortModern";
 
+function formatDate(date: Date) {
+    const d = new Date(date);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
 export default async function AdminUsersList(props: {
     searchParams: Promise<{ query?: string, sort?: string, target?: string }>
 }) {
@@ -92,11 +98,6 @@ export default async function AdminUsersList(props: {
         });
     }
 
-    function formatDate(date: Date) {
-        const d = new Date(date);
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
-    }
 
     const getManageUrl = (username: string) => {
         const params = new URLSearchParams();
@@ -106,6 +107,59 @@ export default async function AdminUsersList(props: {
         return `/admin/users?${params.toString()}`;
     };
 
+
+    const tableRows = users.length === 0 ? (
+        <tr>
+            <td colSpan={10} style={{ padding: '4rem', textAlign: 'center', opacity: 0.6 }}>
+                No users match the current search.
+            </td>
+        </tr>
+    ) : (
+        users.map((user: any) => (
+            <tr key={user.id}>
+                <td>
+                    <div style={{
+                        width: '10px', height: '10px', borderRadius: '50%',
+                        backgroundColor: user.status === 'ACTIVE' ? 'var(--success)' : 'var(--danger)',
+                        display: 'inline-block', marginRight: '0.5rem'
+                    }} title={user.status} />
+                </td>
+                <td style={{ fontWeight: 600 }}>@{user.username}</td>
+                <td>{user.email}</td>
+                <td>{user.phoneNumber}</td>
+                <td>
+                    <div style={{ fontWeight: 500, color: 'var(--primary)' }}>
+                        {user._count.trades} trades
+                    </div>
+                </td>
+                <td>
+                    <span className="badge" style={{ backgroundColor: calculateVipTier(user.completedTradesCount || 0).color, color: 'white', fontSize: '0.7rem', padding: '0.25rem 0.5rem', fontWeight: 700, textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+                        {calculateVipTier(user.completedTradesCount || 0).name}
+                    </span>
+                </td>
+                <td>
+                    {user._count.referrals > 0 ? (
+                        <span style={{ fontWeight: 600, color: 'var(--success)' }}>{user._count.referrals}</span>
+                    ) : (
+                        <span style={{ opacity: 0.5 }}>0</span>
+                    )}
+                </td>
+                <td>
+                    <span style={{ fontWeight: 600, color: 'var(--warning)' }}>{user.rewardBalance} pts</span>
+                </td>
+                <td>
+                    <span style={{ opacity: 0.8, fontSize: '0.9em' }}>
+                        {formatDate(user.createdAt)}
+                    </span>
+                </td>
+                <td>
+                    <Link href={getManageUrl(user.username)} className="btn btn-primary" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem', textDecoration: 'none' }}>
+                        Manage
+                    </Link>
+                </td>
+            </tr>
+        ))
+    );
 
     return (
         <>
@@ -227,74 +281,25 @@ export default async function AdminUsersList(props: {
                 </div>
 
                 <div className="table-container" style={{ minWidth: 0, width: '100%', overflowX: 'auto' }}>
-                    {users.length === 0 ? (
-                        <div style={{ padding: '4rem', textAlign: 'center', opacity: 0.6 }}>
-                            No users match the current search.
-                        </div>
-                    ) : (
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Phone Number</th>
-                                    <th>Trades Submitted</th>
-                                    <th>VIP Rank</th>
-                                    <th>Referrals</th>
-                                    <th>Reward Pts</th>
-                                    <th>Joined Date</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.map((user: any) => (
-                                    <tr key={user.id}>
-                                        <td>
-                                            <div style={{
-                                                width: '10px', height: '10px', borderRadius: '50%',
-                                                backgroundColor: user.status === 'ACTIVE' ? 'var(--success)' : 'var(--danger)',
-                                                display: 'inline-block', marginRight: '0.5rem'
-                                            }} title={user.status} />
-                                        </td>
-                                        <td style={{ fontWeight: 600 }}>@{user.username}</td>
-                                        <td>{user.email}</td>
-                                        <td>{user.phoneNumber}</td>
-                                        <td>
-                                            <div style={{ fontWeight: 500, color: 'var(--primary)' }}>
-                                                {user._count.trades} trades
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span className="badge" style={{ backgroundColor: calculateVipTier(user.completedTradesCount || 0).color, color: 'white', fontSize: '0.7rem', padding: '0.25rem 0.5rem', fontWeight: 700, textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
-                                                {calculateVipTier(user.completedTradesCount || 0).name}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {user._count.referrals > 0 ? (
-                                                <span style={{ fontWeight: 600, color: 'var(--success)' }}>{user._count.referrals}</span>
-                                            ) : (
-                                                <span style={{ opacity: 0.5 }}>0</span>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <span style={{ fontWeight: 600, color: 'var(--warning)' }}>{user.rewardBalance} pts</span>
-                                        </td>
-                                        <td>
-                                            <span style={{ opacity: 0.8, fontSize: '0.9em' }}>
-                                                {formatDate(user.createdAt)}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <Link href={getManageUrl(user.username)} className="btn btn-primary" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem', textDecoration: 'none' }}>
-                                                Manage
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Phone Number</th>
+                                <th>Trades Submitted</th>
+                                <th>VIP Rank</th>
+                                <th>Referrals</th>
+                                <th>Reward Pts</th>
+                                <th>Joined Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {tableRows}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </>

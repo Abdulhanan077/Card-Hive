@@ -79,10 +79,8 @@ export default function ClientSettingsForm({ user }: { user: SettingsUser }) {
 
             const data = await res.json();
             if (data.success) {
-                showNotification('SUCCESS', "Account successfully deactivated. Finalizing logout...");
-                setTimeout(() => {
-                    signOut({ callbackUrl: "/login?deleted=true" });
-                }, 2000);
+                showNotification('SUCCESS', "Account successfully deactivated. Logging out...");
+                signOut({ callbackUrl: "/login?deleted=true" });
             } else {
                 showNotification('ERROR', data.message || "Failed to delete account");
                 setLoadingDelete(false);

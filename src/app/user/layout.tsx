@@ -8,6 +8,21 @@ import SidebarAutoClose from "@/components/SidebarAutoClose";
 import SessionTracker from "@/app/components/SessionTracker";
 import UserNotificationBell from "./UserNotificationBell";
 import LiveTicker from "@/components/LiveTicker";
+import { 
+    HiOutlineHome, 
+    HiOutlineTicket, 
+    HiOutlineTrophy, 
+    HiOutlineUserGroup, 
+    HiOutlineCog6Tooth, 
+    HiOutlineShieldCheck,
+    HiOutlinePlusCircle,
+    HiOutlineChartBar,
+    HiOutlineClock,
+    HiOutlineCheckCircle,
+    HiOutlineXCircle,
+    HiOutlineBanknotes,
+    HiOutlinePresentationChartLine
+} from "react-icons/hi2";
 import "./user.css";
 
 export default async function UserLayout({ children }: { children: React.ReactNode }) {
@@ -51,44 +66,81 @@ export default async function UserLayout({ children }: { children: React.ReactNo
                     <p className="sidebar-user">@{session.user.username}</p>
                 </div>
                 <nav className="sidebar-nav" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Link href="/user" className="sidebar-link">Dashboard Home</Link>
-                    <Link href="/user/sell" className="sidebar-link btn-primary" style={{ color: 'white', marginTop: '1rem' }}>
-                        + Sell Gift Card
+                    <Link href="/user" className="sidebar-link">
+                        <HiOutlineHome className="sidebar-icon" />
+                        Dashboard Home
                     </Link>
-                    <Link href="/user/trades" className="sidebar-link">My Trades</Link>
-                    <Link href="/user/leaderboard" className="sidebar-link">Leaderboard</Link>
-                    <Link href="/user/referrals" className="sidebar-link">Referrals</Link>
-                    <Link href="/user/settings" className="sidebar-link">Settings</Link>
-                    <Link href="/user/security" className="sidebar-link">Security & Sessions</Link>
+                    <Link href="/user/sell" className="sidebar-link btn-primary" style={{ color: 'white', marginTop: '1rem', justifyContent: 'center' }}>
+                        <HiOutlinePlusCircle style={{ fontSize: '1.2rem' }} />
+                        Sell Gift Card
+                    </Link>
+                    <Link href="/user/trades" className="sidebar-link">
+                        <HiOutlineTicket className="sidebar-icon" />
+                        My Trades
+                    </Link>
+                    <Link href="/user/leaderboard" className="sidebar-link">
+                        <HiOutlineTrophy className="sidebar-icon" />
+                        Leaderboard
+                    </Link>
+                    <Link href="/user/referrals" className="sidebar-link">
+                        <HiOutlineUserGroup className="sidebar-icon" />
+                        Referrals
+                    </Link>
+                    <Link href="/user/settings" className="sidebar-link">
+                        <HiOutlineCog6Tooth className="sidebar-icon" />
+                        Settings
+                    </Link>
+                    <Link href="/user/security" className="sidebar-link">
+                        <HiOutlineShieldCheck className="sidebar-icon" />
+                        Security & Sessions
+                    </Link>
 
                     {/* Lifetime Statistics Section */}
                     <div className="sidebar-stats-section">
-                        <h4 className="stats-header">Lifetime Statistics</h4>
+                        <h4 className="stats-header">
+                            <HiOutlineChartBar style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
+                            Lifetime Statistics
+                        </h4>
                         <div className="stats-grid">
                             <div className="stat-item">
                                 <span className="stat-label">Total Trades</span>
                                 <span className="stat-value">{totalTrades}</span>
                             </div>
                             <div className="stat-item">
-                                <span className="stat-label">Pending</span>
+                                <span className="stat-label">
+                                    <HiOutlineClock style={{ marginRight: '0.25rem' }} />
+                                    Pending
+                                </span>
                                 <span className="stat-value text-warning">{pendingTrades}</span>
                             </div>
                             <div className="stat-item">
-                                <span className="stat-label">Successful</span>
+                                <span className="stat-label">
+                                    <HiOutlineCheckCircle style={{ marginRight: '0.25rem' }} />
+                                    Successful
+                                </span>
                                 <span className="stat-value text-success">{successfulTrades}</span>
                             </div>
                             <div className="stat-item">
-                                <span className="stat-label">Rejected</span>
+                                <span className="stat-label">
+                                    <HiOutlineXCircle style={{ marginRight: '0.25rem' }} />
+                                    Rejected
+                                </span>
                                 <span className="stat-value text-danger">{rejectedTrades}</span>
                             </div>
                         </div>
                         <div className="stats-money">
                             <div className="money-item">
-                                <span className="money-label">Total Received (₵)</span>
+                                <span className="money-label">
+                                    <HiOutlineBanknotes style={{ marginRight: '0.4rem', fontSize: '0.8rem' }} />
+                                    Total Received (₵)
+                                </span>
                                 <span className="money-value">₵ {totalCedis.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="money-item">
-                                <span className="money-label">Total Volume ($)</span>
+                                <span className="money-label">
+                                    <HiOutlinePresentationChartLine style={{ marginRight: '0.4rem', fontSize: '0.8rem' }} />
+                                    Total Volume ($)
+                                </span>
                                 <span className="money-value">$ {totalDollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         </div>

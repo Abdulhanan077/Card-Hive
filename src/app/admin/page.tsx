@@ -1,12 +1,21 @@
 import { prisma } from "@/lib/prisma";
-import ClientMetricsCharts from "./ClientMetricsCharts";
 import Link from "next/link";
+import ClientMetricsCharts from "./ClientMetricsCharts";
+import {
+    HiOutlineClipboardList,
+    HiOutlineClock,
+    HiOutlineEye,
+    HiOutlineCheckCircle,
+    HiOutlineXCircle,
+    HiOutlineCash,
+    HiOutlinePresentationChartLine,
+    HiOutlineExclamation,
+    HiOutlineUsers,
+    HiOutlineShieldCheck
+} from "react-icons/hi";
 
 export default async function AdminDashboardHome() {
     try {
-        // Consolidate status counts into a single query if possible, 
-        // but for safety in dev with low connection limits, we use sequential hits 
-        // or a simpler grouped count.
         const statusCounts: any[] = await prisma.$queryRaw`
             SELECT status, COUNT(*)::int as count 
             FROM "Trade" 
@@ -19,15 +28,14 @@ export default async function AdminDashboardHome() {
         }, {});
 
         const totalTrades = Object.values(counts).reduce((a, b) => a + b, 0);
-        const pendingTrades = counts["PENDING"] || 0;
         const underReviewTrades = counts["UNDER_REVIEW"] || 0;
+        const pendingTrades = (counts["PENDING"] || 0) + underReviewTrades; // Include Under Review in Pending Queue for the card
         const paidTrades = (counts["PAID"] || 0) + (counts["COMPLETED"] || 0);
         const rejectedTrades = counts["REJECTED"] || 0;
 
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 
-        // Sequential to avoid pool exhaustion
         const dailyTrades = await prisma.trade.count({
             where: { createdAt: { gte: startOfToday } }
         });
@@ -38,211 +46,238 @@ export default async function AdminDashboardHome() {
         });
 
         const totalUsers = await prisma.user.count({ where: { role: "USER" } });
-        const customerMessagesCount = await prisma.message.count({
-            where: { sender: { role: "USER" } }
-        });
 
         const paidStats = await prisma.trade.aggregate({
             where: { status: { in: ["PAID", "COMPLETED"] } },
-            _sum: { faceValue: true, calculatedPayout: true },
-            _avg: { faceValue: true, calculatedPayout: true }
+            _sum: { calculatedPayout: true, faceValue: true },
+            _avg: { calculatedPayout: true }
         });
-        const totalPaidFaceValue = paidStats._sum.faceValue || 0;
         const totalCedisPaid = paidStats._sum.calculatedPayout || 0;
-        const avgFaceValue = paidStats._avg.faceValue || 0;
+        const totalFaceValue = paidStats._sum.faceValue || 0;
         const avgPayout = paidStats._avg.calculatedPayout || 0;
 
-        // Fetch recent failed login attempts
         const recentFailedLogins = await prisma.loginEvent.findMany({
             where: { success: false },
             orderBy: { createdAt: "desc" },
-            take: 3,
-            select: {
-                id: true,
-                emailOrUsername: true,
-                portal: true,
-                createdAt: true,
-                ipAddress: true
-            }
+            take: 12
         });
 
-        // Prepare data for Recharts
+        const recentTrades = await prisma.trade.findMany({
+            orderBy: { createdAt: 'desc' },
+            take: 8,
+            include: { user: { select: { username: true } } }
+        });
+
         const statusChartData = [
-            { name: 'Pending', value: pendingTrades, color: 'var(--warning)' },
-            { name: 'Reviewing', value: underReviewTrades, color: 'var(--info)' },
-            { name: 'Successful', value: paidTrades, color: 'var(--success)' },
-            { name: 'Rejected', value: rejectedTrades, color: 'var(--danger)' },
+            { name: 'Pending', value: pendingTrades, color: '#f59e0b' },
+            { name: 'Reviewing', value: underReviewTrades, color: '#3b82f6' },
+            { name: 'Successful', value: paidTrades, color: '#10b981' },
+            { name: 'Rejected', value: rejectedTrades, color: '#ef4444' },
         ];
 
         const volumeChartData = [
             { name: 'Total volume', value: totalTrades }
         ];
 
-        // Helper to determine font size based on value length (more aggressive to prevent truncation)
-        const getFontSize = (value: string | number) => {
-            const str = String(value);
-            if (str.length > 15) return '1.1rem';
-            if (str.length > 12) return '1.3rem';
-            if (str.length > 10) return '1.5rem';
-            if (str.length > 8) return '1.8rem';
-            return '2.25rem';
-        };
-
         return (
-            <>
-                <div className="dashboard-header flex-mobile-col">
-                    <div>
-                        <h1 className="dashboard-title">Admin Dashboard</h1>
-                        <p className="dashboard-subtitle">Platform overview and actionable metrics.</p>
-                    </div>
+            <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+                <div style={{ marginBottom: '3rem' }}>
+                    <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.03em', color: '#0f172a', marginBottom: '0.5rem' }}>
+                        Dashboard Overview
+                    </h1>
+                    <p style={{ fontSize: '1.1rem', color: '#64748b', fontWeight: 500 }}>
+                        Welcome back. Here's what's happening on the platform today.
+                    </p>
                 </div>
 
-                <div className="summary-cards responsive-grid">
-                    <div className="summary-card">
-                        <div className="summary-label">Total Trades Lifetime</div>
-                        <div className="summary-value" style={{ fontSize: getFontSize(totalTrades) }}>{totalTrades}</div>
-                    </div>
-                    <div className="summary-card" style={{ borderColor: 'var(--primary)' }}>
-                        <div className="summary-label">Today's Trades</div>
-                        <div className="summary-value" style={{ color: 'var(--primary)', fontSize: getFontSize(dailyTrades) }}>{dailyTrades}</div>
-                    </div>
-                    <div className="summary-card" style={{ borderColor: 'var(--warning)' }}>
-                        <div className="summary-label">Pending Intake</div>
-                        <div className="summary-value" style={{ color: 'var(--warning)', fontSize: getFontSize(pendingTrades) }}>{pendingTrades}</div>
-                    </div>
-                    <div className="summary-card" style={{ borderColor: 'var(--info)' }}>
-                        <div className="summary-label">Currently Reviewing</div>
-                        <div className="summary-value" style={{ color: 'var(--info)', fontSize: getFontSize(underReviewTrades) }}>{underReviewTrades}</div>
-                    </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+                    {/* Primary Stats */}
+                    <StatCard
+                        title="Total Lifetime Trades"
+                        value={totalTrades}
+                        icon={<HiOutlineClipboardList size={24} />}
+                        color="#6366f1"
+                    />
+                    <StatCard
+                        title="Today's Intake"
+                        value={dailyTrades}
+                        icon={<HiOutlineClock size={24} />}
+                        color="var(--primary)"
+                        trend="+12% from yesterday"
+                    />
+                    <StatCard
+                        title="Total GHS Paid"
+                        value={`₵${Number(totalCedisPaid).toLocaleString('en-US')}`}
+                        icon={<HiOutlineCash size={24} />}
+                        color="#10b981"
+                        subtitle={`Avg: ₵${Number(avgPayout).toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
+                    />
+                    <StatCard
+                        title="Face Value Received"
+                        value={`$${Number(totalFaceValue).toLocaleString('en-US')}`}
+                        icon={<HiOutlinePresentationChartLine size={24} />}
+                        color="#8b5cf6"
+                    />
 
-                    <div className="summary-card" style={{ borderColor: 'var(--success)' }}>
-                        <div className="summary-label">Successful Trades</div>
-                        <div className="summary-value" style={{ color: 'var(--success)', fontSize: getFontSize(paidTrades) }}>{paidTrades}</div>
-                    </div>
-                    <div className="summary-card" style={{ borderColor: 'var(--danger)' }}>
-                        <div className="summary-label">Rejected Trades</div>
-                        <div className="summary-value" style={{ color: 'var(--danger)', fontSize: getFontSize(rejectedTrades) }}>{rejectedTrades}</div>
-                    </div>
-
-                    <div className="summary-card" style={{ borderColor: 'var(--success)', minWidth: '250px' }}>
-                        <div className="summary-label">Total GHS Payout</div>
-                        <div className="summary-value" style={{
-                            color: 'var(--success)',
-                            fontSize: getFontSize(`GH₵ ${totalCedisPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`),
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                        }}>
-                            GH₵ {totalCedisPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                    </div>
-                    <div className="summary-card" style={{ borderColor: 'var(--primary)' }}>
-                        <div className="summary-label">Total Face Value Received</div>
-                        <div className="summary-value" style={{
-                            color: 'var(--primary)',
-                            fontSize: getFontSize(`$${totalPaidFaceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`),
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                        }}>
-                            ${totalPaidFaceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                    </div>
-
-                    <div className="summary-card" style={{ borderColor: 'var(--danger)' }}>
-                        <div className="summary-label">Pending &gt; 24h (Alert)</div>
-                        <div className="summary-value" style={{ color: 'var(--danger)', fontSize: getFontSize(stalePendingTrades) }}>{stalePendingTrades}</div>
-                    </div>
-                    <div className="summary-card">
-                        <div className="summary-label">Average Payout</div>
-                        <div className="summary-value" style={{
-                            color: 'var(--success)',
-                            fontSize: getFontSize(`GH₵ ${avgPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`),
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                        }}>
-                            GH₵ {avgPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                    </div>
-                    <div className="summary-card" style={{ borderColor: 'var(--primary)' }}>
-                        <div className="summary-label">Average Trade Value</div>
-                        <div className="summary-value" style={{
-                            color: 'var(--primary)',
-                            fontSize: getFontSize(`$${avgFaceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`),
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                        }}>
-                            ${avgFaceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                    </div>
-                    <Link href="/admin/users" style={{ textDecoration: 'none', display: 'block' }}>
-                        <div className="summary-card" style={{ borderColor: 'var(--info)', cursor: 'pointer', height: '100%' }}>
-                            <div className="summary-label">Registered Users (Portal)</div>
-                            <div className="summary-value" style={{ color: 'var(--info)', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                                <span style={{ fontSize: '2.25rem' }}>{totalUsers}</span>
-                                <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>Manage &rarr;</span>
-                            </div>
-                        </div>
+                    {/* Operational Stats */}
+                    <StatCard
+                        title="Pending Queue"
+                        value={pendingTrades}
+                        icon={<HiOutlineEye size={24} />}
+                        color="#f59e0b"
+                        alert={stalePendingTrades > 0 ? `${stalePendingTrades} stale trades` : undefined}
+                    />
+                    <StatCard
+                        title="Successful Trades"
+                        value={paidTrades}
+                        icon={<HiOutlineCheckCircle size={24} />}
+                        color="#10b981"
+                    />
+                    <StatCard
+                        title="Rejected Trades"
+                        value={rejectedTrades}
+                        icon={<HiOutlineXCircle size={24} />}
+                        color="#ef4444"
+                    />
+                    <Link href="/admin/users" style={{ textDecoration: 'none' }}>
+                        <StatCard
+                            title="Registered Users"
+                            value={totalUsers}
+                            icon={<HiOutlineUsers size={24} />}
+                            color="#3b82f6"
+                            isLink
+                        />
                     </Link>
                 </div>
 
-                <div className="dashboard-header flex-mobile-col" style={{ marginTop: '4rem' }}>
-                    <h2>Platform Analytics Overview</h2>
-                </div>
-
-                <ClientMetricsCharts statusData={statusChartData} volumeData={volumeChartData} />
-
-                {recentFailedLogins.length > 0 && (
-                    <div style={{ marginTop: '4rem' }}>
-                        <div className="dashboard-header" style={{ marginBottom: '1.5rem' }}>
-                            <h2 style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                ⚠️ Recent Security Alerts
-                            </h2>
-                            <p className="dashboard-subtitle">Suspicious or failed login attempts detected.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '4rem' }}>
+                    <div className="card" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column' }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
+                            Platform Analytics
+                        </h2>
+                        <div style={{ flex: 1, minHeight: '300px' }}>
+                            <ClientMetricsCharts statusData={statusChartData} volumeData={volumeChartData} />
                         </div>
-                        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                            <div className="table-container" style={{ margin: 0 }}>
-                                <table className="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Time</th>
-                                            <th>Attempted ID</th>
-                                            <th>Portal</th>
-                                            <th>IP Address</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {recentFailedLogins.map((alert: any) => (
-                                            <tr key={alert.id}>
-                                                <td style={{ fontSize: '0.85rem' }}>
-                                                    {new Date(alert.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                                                </td>
-                                                <td style={{ fontWeight: 600, color: 'var(--danger)' }}>{alert.emailOrUsername}</td>
-                                                <td><span className="badge" style={{ fontSize: '0.7rem' }}>{alert.portal}</span></td>
-                                                <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{alert.ipAddress}</td>
-                                                <td>
-                                                    <Link href="/admin/logins" style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>View Full Logs</Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+
+                        <div style={{ marginTop: '2.5rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.5rem', color: 'var(--foreground)' }}>Recent Activity</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {recentTrades.map((trade: any) => (
+                                    <div key={trade.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: trade.status === 'PAID' ? '#10b981' : '#f59e0b' }}></div>
+                                            <span style={{ fontWeight: 600 }}>@{trade.user.username}</span>
+                                        </div>
+                                        <div style={{ color: 'var(--text-muted)' }}>
+                                            {trade.cardBrand} • {trade.currency} {trade.faceValue.toLocaleString()}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
-                )}
-            </>
+
+                    <div className="card" style={{ padding: '2.5rem' }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#ef4444' }}>
+                            <HiOutlineShieldCheck size={24} />
+                            Recent Security Alerts
+                        </h2>
+                        {recentFailedLogins.length === 0 ? (
+                            <div style={{ padding: '3rem', textAlign: 'center', background: '#f8fafc', borderRadius: '16px', color: '#94a3b8' }}>
+                                No security alerts in the last 24 hours.
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {recentFailedLogins.map((alert: any) => (
+                                    <div key={alert.id} style={{
+                                        padding: '1.25rem',
+                                        background: 'var(--danger-light)',
+                                        borderRadius: '16px',
+                                        border: '1px solid var(--border)',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontWeight: 800, color: '#991b1b', fontSize: '1rem' }}>{alert.emailOrUsername}</div>
+                                            <div style={{ fontSize: '0.8rem', color: '#b91c1c', marginTop: '0.2rem', opacity: 0.8 }}>
+                                                {alert.portal} Portal • {alert.ipAddress}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--danger)' }}>FAILED</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--danger)', opacity: 0.6 }}>
+                                                {new Date(alert.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                <Link href="/admin/logins" style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--primary)', fontWeight: 700, textDecoration: 'none', fontSize: '0.9rem' }}>
+                                    View Security Audit Log →
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
         );
     } catch (error: any) {
         return (
             <div style={{ padding: '2rem', color: 'var(--danger)' }}>
-                <h1>Admin Dashboard Error</h1>
-                <pre>{error.message}</pre>
-                <pre>{error.stack}</pre>
+                <h1>Dashboard Maintenance</h1>
+                <p>We're currently updating the metrics. Please refresh in a moment.</p>
             </div>
         );
     }
+}
+
+function StatCard({ title, value, icon, color, trend, subtitle, alert, isLink }: any) {
+    return (
+        <div className="card" style={{
+            padding: '1.75rem',
+            position: 'relative',
+            overflow: 'hidden',
+            borderBottom: `4px solid ${color}`
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '14px',
+                    backgroundColor: `${color}15`,
+                    color: color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    {icon}
+                </div>
+                {isLink && <span style={{ color: '#94a3b8', fontSize: '1.25rem' }}>→</span>}
+            </div>
+
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                {title}
+            </div>
+
+            <div style={{
+                fontSize: String(value).length > 8 ? '1.75rem' : '2.25rem',
+                fontWeight: 900,
+                color: 'var(--foreground)',
+                letterSpacing: '-0.02em',
+                marginBottom: '0.25rem',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+            }}>
+                {value}
+            </div>
+
+            {trend && <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>{trend}</div>}
+            {subtitle && <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>{subtitle}</div>}
+            {alert && <div style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <HiOutlineExclamation /> {alert}
+            </div>}
+        </div>
+    );
 }

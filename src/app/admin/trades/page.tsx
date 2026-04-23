@@ -1,25 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import TradeFilterModern from "./TradeFilterModern";
-
-// Define the type we expect back from prisma with include
-type TradeWithUserAndCount = Prisma.TradeGetPayload<{
-    include: {
-        user: { select: { username: true, email: true } },
-        _count: {
-            select: {
-                messages: {
-                    where: {
-                        isRead: false,
-                        sender: { role: "USER" }
-                    }
-                }
-            }
-        }
-    }
-}>;
+import { 
+    HiOutlineSearch, 
+    HiOutlineFilter, 
+    HiOutlineFolderOpen, 
+    HiOutlineDocumentText, 
+    HiOutlineChatAlt2,
+    HiOutlineCash,
+    HiOutlineLightningBolt
+} from "react-icons/hi";
 
 export default async function AdminTradesList(props: {
     searchParams: Promise<{ status?: string, query?: string }>
@@ -38,7 +29,6 @@ export default async function AdminTradesList(props: {
     if (payoutMethodFilter && ["MOBILE_MONEY", "CRYPTO"].includes(payoutMethodFilter)) {
         whereClause.payoutMethod = payoutMethodFilter;
     }
-
 
     if (query) {
         whereClause.OR = [
@@ -94,130 +84,161 @@ export default async function AdminTradesList(props: {
     });
 
     return (
-        <>
-            <div className="dashboard-header flex-mobile-col" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+            <div className="dashboard-header" style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
-                    <h1 className="dashboard-title">Manage Trades</h1>
-                    <p className="dashboard-subtitle">Search, filter, and review all gift card submissions.</p>
+                    <h1 style={{ fontSize: '2.25rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>
+                        Trade Management
+                    </h1>
+                    <p style={{ color: '#64748b', fontWeight: 500 }}>Review submissions, chat with users, and process payouts.</p>
                 </div>
-                <div style={{ backgroundColor: 'var(--bg-alt)', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.85rem', fontWeight: 600 }}>
-                    Total: {groupedTrades.length} Trade{groupedTrades.length === 1 ? '' : 's'}
+                <div style={{ background: '#f1f5f9', padding: '0.5rem 1rem', borderRadius: '12px', color: '#475569', fontWeight: 700, fontSize: '0.9rem' }}>
+                    {groupedTrades.length} Active Workspaces
                 </div>
             </div>
 
-            <div className="flex-mobile-col" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, position: 'relative', zIndex: 10, width: '100%' }}>
-                    <form className="flex" style={{ gap: '0.5rem', flexWrap: 'wrap', width: '100%', alignItems: 'center' }}>
+            <div className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+                <form style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                        <HiOutlineSearch style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={18} />
                         <input
                             type="search"
                             name="query"
                             defaultValue={query || ""}
-                            placeholder="Search ID, Brand, or Phone..."
+                            placeholder="Search by ID, brand, or account..."
                             className="form-input"
-                            style={{ marginBottom: 0, flex: '1 1 200px', minWidth: '150px' }}
+                            style={{ marginBottom: 0, paddingLeft: '3rem', height: '48px', borderRadius: '12px' }}
                         />
-                        <div style={{ flex: '2 1 300px', minWidth: '300px' }}>
-                            <TradeFilterModern />
-                        </div>
-                        <button type="submit" className="btn btn-secondary" style={{ whiteSpace: 'nowrap' }}>Filter</button>
-                    </form>
-                </div>
+                    </div>
+                    <div style={{ flex: 2, minWidth: '350px' }}>
+                        <TradeFilterModern />
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ padding: '0 2rem', height: '48px', borderRadius: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <HiOutlineFilter /> Apply Filters
+                    </button>
+                </form>
             </div>
 
-            <div className="table-container">
-                {groupedTrades.length === 0 ? (
-                    <div style={{ padding: '4rem', textAlign: 'center', opacity: 0.6 }}>
-                        No trades match the current filters.
-                    </div>
-                ) : (
+            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div className="table-container" style={{ margin: 0 }}>
                     <table className="data-table">
                         <thead>
-                            <tr>
-                                <th>Identification</th>
-                                <th>Submitter</th>
-                                <th>Method</th>
-                                <th>Contact/Payout</th>
-                                <th>Items</th>
+                            <tr style={{ background: 'var(--bg-alt)' }}>
+                                <th style={{ padding: '1.25rem 1.5rem', width: '180px' }}>Identification</th>
+                                <th style={{ width: '300px' }}>Submitter</th>
+                                <th style={{ width: '120px' }}>Method</th>
+                                <th>Details</th>
                                 <th>Value</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th style={{ textAlign: 'right', paddingRight: '1.5rem' }}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {groupedTrades.map((trade) => (
-                                <tr key={trade.id} style={{
-                                    backgroundColor: trade.status === 'REJECTED' ? 'var(--danger-light)' : 'inherit',
-                                    borderLeft: trade.status === 'REJECTED' ? '4px solid var(--danger)' : 'none'
-                                }}>
-                                    <td style={{ fontWeight: 600 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            {trade.isBatch ? (
-                                                <span title="Batch Trade" style={{ backgroundColor: 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', color: 'var(--primary)' }}>BATCH</span>
-                                            ) : (
-                                                <span title="Single Trade" style={{ backgroundColor: 'var(--bg-alt)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem' }}>SINGLE</span>
-                                            )}
-                                            {trade.isBatch ? trade.batchId : trade.tradeId}
-                                        </div>
-                                        {(trade.isBatch ? trade.batchUnreadCount : trade._count.messages) > 0 && (
-                                            <span style={{ marginTop: "4px", display: "inline-block", fontSize: "0.7rem", padding: "1px 5px", backgroundColor: "var(--danger)", color: "white", borderRadius: "10px" }}>
-                                                {trade.isBatch ? trade.batchUnreadCount : trade._count.messages} new msg
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <div style={{ fontWeight: 500 }}>@{trade.user.username}</div>
-                                        <div style={{ fontSize: '0.85em', opacity: 0.7 }}>{trade.user.email}</div>
-                                    </td>
-                                    <td>
-                                        {trade.payoutMethod === 'CRYPTO' ? (
-                                            <span className="badge badge-paid" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>CRYPTO</span>
-                                        ) : trade.payoutMethod === 'MOBILE_MONEY' ? (
-                                            <span className="badge" style={{ fontSize: '0.7rem', padding: '2px 6px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>M-MONEY</span>
-                                        ) : (
-                                            <span className="badge" style={{ fontSize: '0.7rem', padding: '2px 6px', backgroundColor: 'var(--bg-alt)' }}>{trade.payoutMethod}</span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        {trade.payoutMethod === 'CRYPTO' ? (
-                                            <div style={{ fontSize: '0.85rem' }}>{trade.cryptoCoin} ({trade.cryptoNetwork})</div>
-                                        ) : (
-                                            trade.payoutPhoneNumber
-                                        )}
-                                    </td>
-
-                                    <td>
-                                        {trade.isBatch ? (
-                                            <div style={{ fontSize: '0.9rem' }}>
-                                                <strong>{trade.cardCount} Cards</strong>
-                                                <div style={{ opacity: 0.6, fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>
-                                                    {trade.batchBrands}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                {trade.cardBrand} <span style={{ opacity: 0.6, fontSize: '0.85em' }}>({trade.cardType})</span>
-                                            </>
-                                        )}
-                                    </td>
-                                    <td style={{ fontWeight: 500, color: 'var(--primary)' }}>
-                                        {(trade.isBatch ? trade.totalValue : trade.faceValue).toFixed(2)} {trade.currency}
-                                    </td>
-                                    <td>
-                                        <span className={`badge badge-${trade.status.toLowerCase()}`}>
-                                            {trade.status.replace("_", " ")}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <Link href={`/admin/trades/${trade.tradeId}`} className="btn btn-primary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.85em' }}>
-                                            {trade.isBatch ? 'Open Workspace' : 'Review Card'}
-                                        </Link>
+                            {groupedTrades.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} style={{ padding: '5rem', textAlign: 'center', color: '#94a3b8' }}>
+                                        No trades found matching your criteria.
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                groupedTrades.map((trade) => (
+                                    <tr key={trade.id} className="trade-row-hover">
+                                        <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    {trade.isBatch ? (
+                                                        <HiOutlineFolderOpen size={18} style={{ color: 'var(--primary)' }} />
+                                                    ) : (
+                                                        <HiOutlineDocumentText size={18} style={{ color: 'var(--text-muted)' }} />
+                                                    )}
+                                                    <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--foreground)' }}>
+                                                        {trade.isBatch ? trade.batchId : trade.tradeId}
+                                                    </span>
+                                                </div>
+                                                {(trade.isBatch ? trade.batchUnreadCount : trade._count.messages) > 0 && (
+                                                    <div style={{ 
+                                                        display: 'inline-flex', 
+                                                        alignItems: 'center', 
+                                                        gap: '4px',
+                                                        fontSize: '0.75rem', 
+                                                        fontWeight: 700,
+                                                        color: 'var(--danger)',
+                                                        background: 'var(--danger-light)',
+                                                        padding: '0.2rem 0.6rem',
+                                                        borderRadius: '100px',
+                                                        width: 'fit-content'
+                                                    }}>
+                                                        <HiOutlineChatAlt2 /> {trade.isBatch ? trade.batchUnreadCount : trade._count.messages} New
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                                                    {String(trade.user.username || 'U').trim().charAt(0).toUpperCase() || 'U'}
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 700, color: 'var(--foreground)' }}>@{trade.user.username}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{trade.user.email}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.85rem' }}>
+                                                {trade.payoutMethod === 'CRYPTO' ? (
+                                                    <span style={{ color: 'var(--warning)', background: 'var(--warning-light)', padding: '0.3rem 0.6rem', borderRadius: '8px' }}>CRYPTO</span>
+                                                ) : (
+                                                    <span style={{ color: 'var(--info)', background: 'var(--info-light)', padding: '0.3rem 0.6rem', borderRadius: '8px' }}>M-MONEY</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {trade.isBatch ? (
+                                                <div>
+                                                    <div style={{ fontWeight: 700, color: 'var(--foreground)' }}>{trade.cardCount} Cards</div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {trade.batchBrands}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <div style={{ fontWeight: 700, color: 'var(--foreground)' }}>{trade.cardBrand}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{trade.cardType}</div>
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.1rem' }}>
+                                                {Number(trade.isBatch ? trade.totalValue : trade.faceValue).toLocaleString('en-US', { minimumFractionDigits: 2 })} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{trade.currency}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className={`badge badge-${trade.status.toLowerCase()}`} style={{ fontWeight: 800, letterSpacing: '0.02em', fontSize: '0.7rem' }}>
+                                                {trade.status.replace("_", " ")}
+                                            </span>
+                                        </td>
+                                        <td style={{ textAlign: 'right', paddingRight: '1.5rem' }}>
+                                            <Link href={`/admin/trades/${trade.tradeId}`} className="btn btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', fontWeight: 700, borderRadius: '10px' }}>
+                                                {trade.isBatch ? 'Workspace' : 'Review'}
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
-                )}
+                </div>
             </div>
-        </>
+
+            <style dangerouslySetInnerHTML={{ __html: `
+                .trade-row-hover {
+                    transition: background-color 0.2s ease;
+                }
+                .trade-row-hover:hover {
+                    background-color: var(--surface-hover) !important;
+                }
+            `}} />
+        </div>
     );
 }

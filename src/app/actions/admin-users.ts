@@ -42,3 +42,38 @@ export async function updateUserStatus(userId: number, status: "ACTIVE" | "BLOCK
     revalidatePath("/admin/users");
     return { success: true };
 }
+
+export async function adminDeleteUser(userId: number) {
+    // Find the user first to get their email for anonymization
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true }
+    });
+
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    // Perform Soft Delete / Anonymization
+    await prisma.user.update({
+        where: { id: userId },
+        data: {
+            status: "DELETED",
+            deletedAt: new Date(),
+            email: `${user.email}.deleted.${Date.now()}`,
+            phoneNumber: "DELETED",
+            password: `DELETED_${Math.random().toString(36).substring(7)}`,
+            lastIp: null,
+            lastDevice: null,
+            fcmToken: null
+        }
+    });
+
+    // Clear sessions
+    await prisma.session.deleteMany({
+        where: { userId: userId }
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+}

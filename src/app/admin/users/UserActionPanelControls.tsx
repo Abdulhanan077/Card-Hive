@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateUserRewardPoints, updateUserVipTrades, updateUserStatus } from "@/app/actions/admin-users";
+import { updateUserRewardPoints, updateUserVipTrades, updateUserStatus, adminDeleteUser } from "@/app/actions/admin-users";
 import { useNotification } from "@/context/NotificationContext";
 
 interface Props {
@@ -56,6 +56,25 @@ export default function UserActionPanelControls({ userId, username, status, comp
             showNotification('SUCCESS', `Account @${username} is now ${newStatus}`);
         } catch (err: any) {
             showNotification('ERROR', err.message || "Failed to update status");
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const handleDeleteAccount = async () => {
+        if (!showDeleteConfirm) {
+            setShowDeleteConfirm(true);
+            return;
+        }
+
+        setLoading("delete");
+        try {
+            await adminDeleteUser(userId);
+            showNotification('SUCCESS', `Account @${username} has been permanently deleted.`);
+        } catch (err: any) {
+            showNotification('ERROR', err.message || "Failed to delete account");
+            setShowDeleteConfirm(false);
         } finally {
             setLoading(null);
         }
@@ -134,14 +153,40 @@ export default function UserActionPanelControls({ userId, username, status, comp
             </div>
 
             {/* Status Toggle */}
-            <button 
-                onClick={handleStatusToggle}
-                disabled={!!loading}
-                className={status === 'ACTIVE' ? "btn btn-secondary" : "btn btn-primary"}
-                style={status === 'ACTIVE' ? { flex: 1, color: 'var(--danger)', border: '1px solid currentColor' } : { flex: 1, backgroundColor: 'var(--success)', color: 'white' }}
-            >
-                {loading === "status" ? "..." : (status === 'ACTIVE' ? "Block Account" : "Activate Account")}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <button 
+                    onClick={handleStatusToggle}
+                    disabled={!!loading}
+                    className={status === 'ACTIVE' ? "btn btn-secondary" : "btn btn-primary"}
+                    style={status === 'ACTIVE' ? { width: '100%', color: 'var(--danger)', border: '1px solid currentColor' } : { width: '100%', backgroundColor: 'var(--success)', color: 'white' }}
+                >
+                    {loading === "status" ? "..." : (status === 'ACTIVE' ? "Block Account" : "Activate Account")}
+                </button>
+
+                <button 
+                    onClick={handleDeleteAccount}
+                    disabled={!!loading}
+                    className="btn btn-danger"
+                    style={{ 
+                        width: '100%', 
+                        backgroundColor: showDeleteConfirm ? '#dc2626' : 'transparent',
+                        color: showDeleteConfirm ? 'white' : '#dc2626',
+                        border: '1px solid #dc2626'
+                    }}
+                >
+                    {loading === "delete" ? "..." : (showDeleteConfirm ? "Confirm Delete?" : "Delete Account")}
+                </button>
+                
+                {showDeleteConfirm && (
+                    <button 
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="btn"
+                        style={{ width: '100%', fontSize: '0.75rem', color: 'var(--text-muted)' }}
+                    >
+                        Cancel Deletion
+                    </button>
+                )}
+            </div>
         </div>
     );
 }

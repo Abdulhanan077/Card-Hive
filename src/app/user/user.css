@@ -65,6 +65,9 @@
     color: var(--foreground);
     font-weight: 500;
     transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .sidebar-link:hover:not(.btn-primary) {

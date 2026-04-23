@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:mycardhive_mobile/services/referral_service.dart';
+import 'package:mycardhive_mobile/services/cache_service.dart';
+import 'package:mycardhive_mobile/utils/error_utils.dart';
 
 class ReferralsScreen extends StatefulWidget {
   const ReferralsScreen({super.key});
@@ -34,16 +36,39 @@ class _ReferralsScreenState extends State<ReferralsScreen> {
     try {
       final data = await _referralService.getReferralStats();
       if (!mounted) return;
+      
       setState(() {
         _userData = data['userData'];
         if (data['stats'] != null) _stats = data['stats'];
         _referralsList = data['referralsList'] ?? [];
         _isLoading = false;
       });
+      
+      // Cache for offline use
+      CacheService.cacheReferralData(data);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+      
+      // Try to load from cache
+      final cachedData = CacheService.getCachedReferralData();
+      if (cachedData != null) {
+        setState(() {
+          _userData = cachedData['userData'];
+          if (cachedData['stats'] != null) _stats = cachedData['stats'];
+          _referralsList = cachedData['referralsList'] ?? [];
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(ErrorUtils.getFriendlyErrorMessage(e)), 
+          backgroundColor: Colors.orangeAccent,
+          behavior: SnackBarBehavior.floating,
+        )
+      );
     }
   }
 

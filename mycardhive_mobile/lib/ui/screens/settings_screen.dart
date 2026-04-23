@@ -5,6 +5,9 @@ import 'package:mycardhive_mobile/providers/theme_provider.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/services/biometric_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
+import 'package:mycardhive_mobile/utils/error_utils.dart';
+
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,9 +23,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isSaving = false;
 
   Map<String, dynamic>? _user;
-  late TextEditingController _nameController;
-  late TextEditingController _currentPasswordController;
-  late TextEditingController _newPasswordController;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
   bool _emailNotifications = false;
   bool _obscureCurrent = true;
   bool _obscureNew = true;
@@ -51,16 +54,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final data = await _settingsService.getSettings();
       setState(() {
         _user = data;
-        _nameController = TextEditingController(text: _user?['username']);
-        _currentPasswordController = TextEditingController();
-        _newPasswordController = TextEditingController();
+        _nameController.text = _user?['username'] ?? '';
         _emailNotifications = _user?['emailNotificationsEnabled'] ?? false;
         _isLoading = false;
       });
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorUtils.getFriendlyErrorMessage(e)), 
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          )
+        );
       }
     }
   }
@@ -146,9 +153,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (result['success'] == true) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account deleted. Logging out..."), backgroundColor: Colors.red));
-          // Navigate to login screen and clear history
-          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+          // Navigate to home screen and clear history
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false
+          );
         }
       } else {
         if (mounted) {
@@ -445,7 +454,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _logout() async {
     await _authService.logout();
     if (mounted) {
-       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+       Navigator.of(context).pushAndRemoveUntil(
+         MaterialPageRoute(builder: (context) => const HomeScreen()),
+         (route) => false
+       );
     }
   }
 

@@ -31,7 +31,7 @@ class LeaderboardService {
         throw Exception('Failed to load leaderboard. Server returned ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Failed to fetch leaderboard: $e');
+      rethrow;
     }
   }
 }

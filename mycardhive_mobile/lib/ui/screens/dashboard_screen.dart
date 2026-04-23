@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/config.dart';
+import 'package:mycardhive_mobile/utils/error_utils.dart';
 import 'package:mycardhive_mobile/ui/screens/general_support_chat_screen.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/main.dart';
@@ -129,6 +130,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final cachedTrades = CacheService.getCachedTrades();
       if (cachedTrades != null) {
         setState(() => _recentTrades = cachedTrades.take(3).toList());
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorUtils.getFriendlyErrorMessage(e)),
+            backgroundColor: Colors.orangeAccent,
+            behavior: SnackBarBehavior.floating,
+          )
+        );
       }
     } finally {
       if (mounted) setState(() => _isRefreshing = false);
@@ -892,16 +903,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            _buildDrawerItem("Dashboard Home", isSelected: true),
-            _buildDrawerItem("My Trades"),
-            _buildDrawerItem("Support Chat", onTap: () {
+            _buildDrawerItem("Dashboard Home", Icons.home_outlined, isSelected: true),
+            _buildDrawerItem("My Trades", Icons.receipt_long_outlined),
+            _buildDrawerItem("Support Chat", Icons.chat_outlined, onTap: () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (context) => GeneralSupportChatScreen(user: _user)));
             }),
-            _buildDrawerItem("Leaderboard"),
-            _buildDrawerItem("Referrals"),
-            _buildDrawerItem("Settings"),
-            _buildDrawerItem("Security & Sessions"),
+            _buildDrawerItem("Leaderboard", Icons.emoji_events_outlined),
+            _buildDrawerItem("Referrals", Icons.people_outline),
+            _buildDrawerItem("Settings", Icons.settings_outlined),
+            _buildDrawerItem("Security & Sessions", Icons.shield_outlined),
             const SizedBox(height: 20),
             
             // Lifetime Stats
@@ -935,9 +946,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    child: TextButton(
+                    child: TextButton.icon(
                       onPressed: _logout,
-                      child: const Text("Log Out", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                      icon: const Icon(Icons.logout, color: Colors.red, size: 18),
+                      label: const Text("Log Out", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -950,7 +962,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   );
 }
 
-  Widget _buildDrawerItem(String title, {bool isSelected = false, VoidCallback? onTap}) {
+  Widget _buildDrawerItem(String title, IconData icon, {bool isSelected = false, VoidCallback? onTap}) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -972,13 +984,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white70 : const Color(0xFF475569)),
-          ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white54 : const Color(0xFF64748B)),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white70 : const Color(0xFF475569)),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -6,6 +6,7 @@ import 'package:mycardhive_mobile/ui/widgets/rates_calculator.dart';
 import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/signup_screen.dart';
 import 'package:mycardhive_mobile/models/rate.dart';
+import 'package:mycardhive_mobile/utils/error_utils.dart';
 import 'package:mycardhive_mobile/ui/screens/general_support_chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -178,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return Center(child: Text("Error loading rates: ${snapshot.error}", style: TextStyle(color: theme.colorScheme.onSurface)));
+                    return Center(child: Text(ErrorUtils.getFriendlyErrorMessage(snapshot.error), style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 13), textAlign: TextAlign.center));
                   } else if (!snapshot.hasData) {
                     return Center(child: Text("No data available", style: TextStyle(color: theme.colorScheme.onSurface)));
                   }

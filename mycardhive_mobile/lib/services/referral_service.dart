@@ -31,7 +31,7 @@ class ReferralService {
         throw Exception('Failed to load referral stats. Server returned ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Failed to fetch referral stats: $e');
+      rethrow;
     }
   }
 }

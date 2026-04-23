@@ -155,7 +155,7 @@ export const authOptions: NextAuthOptions = {
                     select: { status: true }
                 });
                 
-                if (!dbUser || dbUser.status === 'BLOCKED') {
+                if (!dbUser || dbUser.status === 'BLOCKED' || dbUser.status === 'DELETED') {
                     // Return null or an invalid token to clear the session
                     return null as any;
                 }

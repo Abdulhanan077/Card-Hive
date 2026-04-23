@@ -32,7 +32,7 @@ export async function GET() {
     } catch (error) {
         console.error("Leaderboard API Error:", error);
         return NextResponse.json(
-            { success: false, message: "Failed to fetch leaderboard data" },
+            { success: false, message: "Failed to fetch leaderboard data", error: error instanceof Error ? error.message : String(error) },
             { status: 500 }
         );
     }

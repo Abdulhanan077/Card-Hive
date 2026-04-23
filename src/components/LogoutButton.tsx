@@ -1,6 +1,7 @@
 "use client";
 
 import { signOut } from "next-auth/react";
+import { HiOutlineArrowLeftOnRectangle } from "react-icons/hi2";
 
 export default function LogoutButton({ className = "sidebar-link" }: { className?: string }) {
     const handleLogout = async () => {
@@ -20,8 +21,13 @@ export default function LogoutButton({ className = "sidebar-link" }: { className
                 cursor: "pointer",
                 marginTop: "auto", // Push to bottom if flexbox allows
                 color: "var(--danger)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                padding: "0.75rem 1rem"
             }}
         >
+            <HiOutlineArrowLeftOnRectangle style={{ fontSize: '1.2rem' }} />
             Log Out
         </button>
     );

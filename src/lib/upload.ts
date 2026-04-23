@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const s3Client = new S3Client({
     region: "auto",
@@ -28,4 +29,21 @@ export async function uploadToR2(file: Buffer | ArrayBuffer, fileName: string, c
 
     const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${uniqueName}`;
     return publicUrl;
+}
+
+/**
+ * Generates a presigned URL for direct client-side upload to R2.
+ */
+export async function getR2PresignedUrl(fileName: string, contentType: string) {
+    const uniqueName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.]/g, "")}`;
+    const command = new PutObjectCommand({
+        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
+        Key: uniqueName,
+        ContentType: contentType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+    const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${uniqueName}`;
+
+    return { uploadUrl, publicUrl, key: uniqueName };
 }

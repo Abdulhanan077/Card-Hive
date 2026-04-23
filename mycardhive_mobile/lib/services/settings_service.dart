@@ -25,7 +25,7 @@ class SettingsService {
         throw Exception(data['message'] ?? 'Failed to load settings');
       }
     } catch (e) {
-      throw Exception('Failed to fetch settings: $e');
+      rethrow;
     }
   }
 

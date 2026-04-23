@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/reward_service.dart';
 import 'package:intl/intl.dart';
+import 'package:mycardhive_mobile/services/cache_service.dart';
+import 'package:mycardhive_mobile/utils/error_utils.dart';
 import 'package:mycardhive_mobile/ui/widgets/modern_dropdown.dart';
 
 class RewardsScreen extends StatefulWidget {
@@ -32,37 +34,66 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
   Future<void> _loadHistory() async {
     setState(() => _isLoading = true);
-    final history = await _rewardService.getRedemptionHistory();
-    setState(() {
-      _history = history;
-      _isLoading = false;
-    });
+    try {
+      final history = await _rewardService.getRedemptionHistory();
+      if (!mounted) return;
+      setState(() {
+        _history = history;
+        _isLoading = false;
+      });
+      CacheService.cacheRewardsHistory(history);
+    } catch (e) {
+      if (!mounted) return;
+      
+      final cached = CacheService.getCachedRewardsHistory();
+      setState(() {
+        if (cached != null) _history = cached;
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(ErrorUtils.getFriendlyErrorMessage(e)),
+          backgroundColor: Colors.orangeAccent,
+          behavior: SnackBarBehavior.floating,
+        )
+      );
+    }
   }
 
   Future<void> _submitRedemption() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSubmitting = true);
     final points = double.tryParse(_pointsController.text) ?? 0;
-    
-    final result = await _rewardService.redeemRewards(
-      points: points,
-      payoutMethod: _selectedMethod,
-      payoutDetails: _detailsController.text,
-    );
-
-    setState(() => _isSubmitting = false);
-
-    if (result['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Redemption request submitted successfully!"), backgroundColor: Colors.green),
+    setState(() => _isSubmitting = true);
+    try {
+      final result = await _rewardService.redeemRewards(
+        points: points,
+        payoutMethod: _selectedMethod,
+        payoutDetails: _detailsController.text,
       );
-      _pointsController.clear();
-      _detailsController.clear();
-      _loadHistory();
-    } else {
+
+      setState(() => _isSubmitting = false);
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Redemption request submitted successfully!"), backgroundColor: Colors.green),
+        );
+        _pointsController.clear();
+        _detailsController.clear();
+        _loadHistory();
+      } else {
+        throw Exception(result['error'] ?? "Failed to submit request");
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['error'] ?? "Failed to submit request"), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(ErrorUtils.getFriendlyErrorMessage(e)), 
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        )
       );
     }
   }

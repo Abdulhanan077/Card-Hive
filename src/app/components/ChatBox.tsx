@@ -155,17 +155,39 @@ export default function ChatBox({
                 };
                 setMessages(prev => [...prev, optimisticMsg]);
 
-                const formData = new FormData();
-                formData.append("file", file);
-                const result = await uploadChatFileAction(formData);
+                // 1. Get presigned URL
+                const presignedRes = await fetch("/api/uploads/presigned", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fileName: file.name, fileType: file.type }),
+                });
+
+                if (!presignedRes.ok) {
+                    throw new Error("Failed to get upload authorization");
+                }
+
+                const { uploadUrl, publicUrl } = await presignedRes.json();
+
+                // 2. Upload directly to R2
+                const uploadRes = await fetch(uploadUrl, {
+                    method: "PUT",
+                    body: file,
+                    headers: { "Content-Type": file.type },
+                });
+
+                if (!uploadRes.ok) {
+                    throw new Error("Failed to upload file to storage");
+                }
                 
                 // Remove the "Uploading..." placeholder and send the real message
                 setMessages(prev => prev.filter(m => m.id !== tempId));
-                await handleSend(undefined, result.url, result.type as any);
+                await handleSend(undefined, publicUrl, file.type.startsWith('image/') ? 'IMAGE' : 'FILE');
             }
         } catch (err) {
             console.error("Upload failed", err);
             toast.error("Failed to upload one or more files. Please try again.");
+            // Clean up any remaining "Uploading..." placeholders
+            setMessages(prev => prev.filter(m => m.content !== "Uploading attachment..."));
         } finally {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -217,12 +239,9 @@ export default function ChatBox({
         <div style={{
             display: "flex",
             flexDirection: "column",
-            height: "700px", // Fixed height for stability
-            border: "1px solid var(--border)",
-            borderRadius: "16px",
+            height: "100%", 
             overflow: "hidden",
             backgroundColor: "var(--surface)",
-            boxShadow: "var(--shadow-md)"
         }}>
             {/* Header / Info bar (optional) */}
             <div style={{ padding: "0.75rem 1.5rem", borderBottom: "1px solid var(--border)", backgroundColor: "var(--bg-alt)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
