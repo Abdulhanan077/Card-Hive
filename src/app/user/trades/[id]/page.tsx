@@ -233,7 +233,7 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
                                         </div>
                                         <div className="id-value-modern">
                                             <code>{trade.cryptoReceiverId}</code>
-                                            <CopyButton text={trade.cryptoReceiverId} />
+                                            <CopyButton text={trade.cryptoReceiverId || ""} />
                                         </div>
                                     </div>
                                 </div>
