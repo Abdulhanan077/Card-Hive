@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { IoCheckmark, IoCheckmarkDone, IoImageOutline, IoDocumentAttachOutline, IoSend, IoEllipsisHorizontal, IoPencilOutline, IoTrashOutline, IoClose } from "react-icons/io5";
 import { pusherClient } from "@/lib/pusher";
-import { postMessage, markMessageAsRead, triggerTypingIndicator, uploadChatFileAction, deleteMessageAction, editMessageAction } from "../actions/chat";
+import { postMessage, markMessageAsRead, triggerTypingIndicator, deleteMessageAction, editMessageAction } from "../actions/chat";
 import { toast } from "react-hot-toast";
 
 interface Message {
