@@ -9,9 +9,10 @@ interface SafeImageProps {
     className?: string;
     style?: React.CSSProperties;
     useLink?: boolean;
+    fallbackText?: string;
 }
 
-export default function SafeImage({ src, alt, className, style, useLink }: SafeImageProps) {
+export default function SafeImage({ src, alt, className, style, useLink, fallbackText }: SafeImageProps) {
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
 
     useEffect(() => {
@@ -32,7 +33,7 @@ export default function SafeImage({ src, alt, className, style, useLink }: SafeI
                     <div className="error-icon-box">
                         <IoWarningOutline />
                     </div>
-                    <span>Preview unavailable</span>
+                    <span>{fallbackText || "Preview unavailable"}</span>
                 </div>
             )}
 
