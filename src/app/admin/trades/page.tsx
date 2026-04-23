@@ -84,22 +84,22 @@ export default async function AdminTradesList(props: {
     });
 
     return (
-        <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-            <div className="dashboard-header" style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <div>
+        <div className="admin-trades-container">
+            <div className="admin-dashboard-header">
+                <div className="header-text-content">
                     <h1 style={{ fontSize: '2.25rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>
                         Trade Management
                     </h1>
                     <p style={{ color: '#64748b', fontWeight: 500 }}>Review submissions, chat with users, and process payouts.</p>
                 </div>
-                <div style={{ background: '#f1f5f9', padding: '0.5rem 1rem', borderRadius: '12px', color: '#475569', fontWeight: 700, fontSize: '0.9rem' }}>
+                <div className="active-workspaces-badge">
                     {groupedTrades.length} Active Workspaces
                 </div>
             </div>
 
-            <div className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-                <form style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+            <div className="card admin-filters-card">
+                <form className="admin-filters-form">
+                    <div className="filter-search-wrapper">
                         <HiOutlineSearch style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={18} />
                         <input
                             type="search"
@@ -110,27 +110,27 @@ export default async function AdminTradesList(props: {
                             style={{ marginBottom: 0, paddingLeft: '3rem', height: '48px', borderRadius: '12px' }}
                         />
                     </div>
-                    <div style={{ flex: 2, minWidth: '350px' }}>
+                    <div className="filter-dropdowns-wrapper">
                         <TradeFilterModern />
                     </div>
-                    <button type="submit" className="btn btn-primary" style={{ padding: '0 2rem', height: '48px', borderRadius: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button type="submit" className="btn btn-primary filter-submit-btn">
                         <HiOutlineFilter /> Apply Filters
                     </button>
                 </form>
             </div>
 
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div className="table-container" style={{ margin: 0 }}>
+            <div className="card table-card" style={{ padding: 0 }}>
+                <div className="table-responsive-wrapper">
                     <table className="data-table">
                         <thead>
                             <tr style={{ background: 'var(--bg-alt)' }}>
-                                <th style={{ padding: '1.25rem 1.5rem', width: '180px' }}>Identification</th>
-                                <th style={{ width: '300px' }}>Submitter</th>
-                                <th style={{ width: '120px' }}>Method</th>
-                                <th>Details</th>
-                                <th>Value</th>
-                                <th>Status</th>
-                                <th style={{ textAlign: 'right', paddingRight: '1.5rem' }}>Action</th>
+                                <th style={{ padding: '1.25rem 1.5rem', minWidth: '200px' }}>Identification</th>
+                                <th style={{ minWidth: '200px' }}>Submitter</th>
+                                <th style={{ minWidth: '120px' }}>Method</th>
+                                <th style={{ minWidth: '150px' }}>Details</th>
+                                <th style={{ minWidth: '120px' }}>Value</th>
+                                <th style={{ minWidth: '120px' }}>Status</th>
+                                <th style={{ textAlign: 'right', paddingRight: '1.5rem', minWidth: '120px' }}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -147,11 +147,11 @@ export default async function AdminTradesList(props: {
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                     {trade.isBatch ? (
-                                                        <HiOutlineFolderOpen size={18} style={{ color: 'var(--primary)' }} />
+                                                        <HiOutlineFolderOpen size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                                                     ) : (
-                                                        <HiOutlineDocumentText size={18} style={{ color: 'var(--text-muted)' }} />
+                                                        <HiOutlineDocumentText size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                                                     )}
-                                                    <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--foreground)' }}>
+                                                    <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--foreground)', wordBreak: 'break-all' }}>
                                                         {trade.isBatch ? trade.batchId : trade.tradeId}
                                                     </span>
                                                 </div>
@@ -175,21 +175,21 @@ export default async function AdminTradesList(props: {
                                         </td>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold', flexShrink: 0 }}>
                                                     {String(trade.user.username || 'U').trim().charAt(0).toUpperCase() || 'U'}
                                                 </div>
-                                                <div>
-                                                    <div style={{ fontWeight: 700, color: 'var(--foreground)' }}>@{trade.user.username}</div>
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{trade.user.email}</div>
+                                                <div style={{ minWidth: 0 }}>
+                                                    <div style={{ fontWeight: 700, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis' }}>@{trade.user.username}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trade.user.email}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.85rem' }}>
                                                 {trade.payoutMethod === 'CRYPTO' ? (
-                                                    <span style={{ color: 'var(--warning)', background: 'var(--warning-light)', padding: '0.3rem 0.6rem', borderRadius: '8px' }}>CRYPTO</span>
+                                                    <span style={{ color: 'var(--warning)', background: 'var(--warning-light)', padding: '0.3rem 0.6rem', borderRadius: '8px', whiteSpace: 'nowrap' }}>CRYPTO</span>
                                                 ) : (
-                                                    <span style={{ color: 'var(--info)', background: 'var(--info-light)', padding: '0.3rem 0.6rem', borderRadius: '8px' }}>M-MONEY</span>
+                                                    <span style={{ color: 'var(--info)', background: 'var(--info-light)', padding: '0.3rem 0.6rem', borderRadius: '8px', whiteSpace: 'nowrap' }}>M-MONEY</span>
                                                 )}
                                             </div>
                                         </td>
@@ -203,23 +203,23 @@ export default async function AdminTradesList(props: {
                                                 </div>
                                             ) : (
                                                 <div>
-                                                    <div style={{ fontWeight: 700, color: 'var(--foreground)' }}>{trade.cardBrand}</div>
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{trade.cardType}</div>
+                                                    <div style={{ fontWeight: 700, color: 'var(--foreground)', whiteSpace: 'nowrap' }}>{trade.cardBrand}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{trade.cardType}</div>
                                                 </div>
                                             )}
                                         </td>
                                         <td>
-                                            <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.1rem' }}>
+                                            <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.1rem', whiteSpace: 'nowrap' }}>
                                                 {Number(trade.isBatch ? trade.totalValue : trade.faceValue).toLocaleString('en-US', { minimumFractionDigits: 2 })} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{trade.currency}</span>
                                             </div>
                                         </td>
                                         <td>
-                                            <span className={`badge badge-${trade.status.toLowerCase()}`} style={{ fontWeight: 800, letterSpacing: '0.02em', fontSize: '0.7rem' }}>
+                                            <span className={`badge badge-${trade.status.toLowerCase()}`} style={{ fontWeight: 800, letterSpacing: '0.02em', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
                                                 {trade.status.replace("_", " ")}
                                             </span>
                                         </td>
                                         <td style={{ textAlign: 'right', paddingRight: '1.5rem' }}>
-                                            <Link href={`/admin/trades/${trade.tradeId}`} className="btn btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', fontWeight: 700, borderRadius: '10px' }}>
+                                            <Link href={`/admin/trades/${trade.tradeId}`} className="btn btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', fontWeight: 700, borderRadius: '10px', whiteSpace: 'nowrap' }}>
                                                 {trade.isBatch ? 'Workspace' : 'Review'}
                                             </Link>
                                         </td>
@@ -232,11 +232,101 @@ export default async function AdminTradesList(props: {
             </div>
 
             <style dangerouslySetInnerHTML={{ __html: `
+                .admin-trades-container {
+                    padding: 2rem;
+                    max-width: 1400px;
+                    margin: 0 auto;
+                }
+                .admin-dashboard-header {
+                    margin-bottom: 2.5rem;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-end;
+                    gap: 1rem;
+                }
+                .active-workspaces-badge {
+                    background: #f1f5f9;
+                    padding: 0.5rem 1rem;
+                    border-radius: 12px;
+                    color: #475569;
+                    font-weight: 700;
+                    font-size: 0.9rem;
+                    white-space: nowrap;
+                }
+                .admin-filters-card {
+                    padding: 1.5rem;
+                    margin-bottom: 2rem;
+                }
+                .admin-filters-form {
+                    display: flex;
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                }
+                .filter-search-wrapper {
+                    flex: 1;
+                    min-width: 250px;
+                    position: relative;
+                }
+                .filter-dropdowns-wrapper {
+                    flex: 2;
+                    min-width: 350px;
+                }
+                .filter-submit-btn {
+                    padding: 0 2rem;
+                    height: 48px;
+                    border-radius: 12px;
+                    font-weight: 700;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
+                    white-space: nowrap;
+                }
+                .table-responsive-wrapper {
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                    width: 100%;
+                    border-radius: 16px;
+                }
                 .trade-row-hover {
                     transition: background-color 0.2s ease;
                 }
                 .trade-row-hover:hover {
                     background-color: var(--surface-hover) !important;
+                }
+                
+                @media (max-width: 768px) {
+                    .admin-trades-container {
+                        padding: 1rem;
+                    }
+                    .admin-dashboard-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        margin-bottom: 1.5rem;
+                    }
+                    .header-text-content h1 {
+                        font-size: 1.75rem !important;
+                    }
+                    .admin-filters-card {
+                        padding: 1rem;
+                    }
+                    .admin-filters-form {
+                        flex-direction: column;
+                    }
+                    .filter-search-wrapper,
+                    .filter-dropdowns-wrapper {
+                        width: 100%;
+                        min-width: 100%;
+                    }
+                    .filter-submit-btn {
+                        width: 100%;
+                    }
+                    .table-card {
+                        border-radius: 12px;
+                    }
+                    .data-table th, .data-table td {
+                        padding: 1rem;
+                    }
                 }
             `}} />
         </div>

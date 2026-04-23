@@ -80,7 +80,7 @@ export default async function AdminDashboardHome() {
         ];
 
         return (
-            <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+            <div className="admin-dashboard-container">
                 <div style={{ marginBottom: '3rem' }}>
                     <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.03em', color: '#0f172a', marginBottom: '0.5rem' }}>
                         Dashboard Overview
@@ -90,7 +90,7 @@ export default async function AdminDashboardHome() {
                     </p>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+                <div className="admin-stats-grid">
                     {/* Primary Stats */}
                     <StatCard
                         title="Total Lifetime Trades"
@@ -150,7 +150,7 @@ export default async function AdminDashboardHome() {
                     </Link>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '4rem' }}>
+                <div className="admin-charts-grid">
                     <div className="card" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column' }}>
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
@@ -220,6 +220,41 @@ export default async function AdminDashboardHome() {
                         )}
                     </div>
                 </div>
+                
+                <style dangerouslySetInnerHTML={{ __html: `
+                    .admin-dashboard-container {
+                        padding: 2rem;
+                        max-width: 1400px;
+                        margin: 0 auto;
+                    }
+                    .admin-stats-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                        gap: 1.5rem;
+                        margin-bottom: 3rem;
+                    }
+                    .admin-charts-grid {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 2rem;
+                        margin-bottom: 4rem;
+                    }
+                    @media (max-width: 768px) {
+                        .admin-dashboard-container {
+                            padding: 1rem;
+                        }
+                        .admin-stats-grid {
+                            grid-template-columns: 1fr;
+                            gap: 1rem;
+                            margin-bottom: 2rem;
+                        }
+                        .admin-charts-grid {
+                            grid-template-columns: 1fr;
+                            gap: 1.5rem;
+                            margin-bottom: 2rem;
+                        }
+                    }
+                `}} />
             </div>
         );
     } catch (error: any) {

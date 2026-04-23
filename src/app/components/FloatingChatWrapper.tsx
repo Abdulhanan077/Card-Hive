@@ -114,21 +114,37 @@ export default function FloatingChatWrapper({
 
             {/* Chat Container Overlay */}
             {isOpen && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: '6rem',
-                    right: '2rem',
-                    width: 'min(450px, calc(100vw - 2rem))',
-                    height: 'min(600px, calc(100vh - 8rem))',
-                    zIndex: 1000,
-                    animation: 'slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
+                <div className="floating-chat-container">
                     <style dangerouslySetInnerHTML={{ __html: `
                         @keyframes slideUp {
                             from { opacity: 0; transform: translateY(20px); }
                             to { opacity: 1; transform: translateY(0); }
+                        }
+                        .floating-chat-container {
+                            position: fixed;
+                            bottom: 6rem;
+                            right: 2rem;
+                            width: 450px;
+                            height: 600px;
+                            max-width: calc(100vw - 4rem);
+                            max-height: calc(100vh - 8rem);
+                            z-index: 1000;
+                            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                            display: flex;
+                            flex-direction: column;
+                            border-radius: 24px;
+                            overflow: hidden;
+                            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                        }
+                        @media (max-width: 768px) {
+                            .floating-chat-container {
+                                right: 1rem;
+                                bottom: 6rem;
+                                width: calc(100vw - 2rem);
+                                max-width: calc(100vw - 2rem);
+                                height: 500px;
+                                max-height: calc(100dvh - 8rem);
+                            }
                         }
                     `}} />
                     <ChatBox 

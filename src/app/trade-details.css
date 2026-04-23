@@ -319,16 +319,19 @@
 }
 
 @media (max-width: 768px) {
-    .trade-details-container { padding: 1rem; }
+    .trade-details-container { padding: 0.5rem; }
     .trade-header-admin { 
-        padding: 1.5rem; 
+        padding: 1rem; 
         border-radius: 16px;
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 1rem;
         align-items: flex-start !important;
     }
-    .trade-header-admin .trade-title { font-size: 1.75rem; }
+    .trade-header-admin .trade-title { 
+        font-size: 1.5rem; 
+        word-break: break-all;
+    }
     .header-actions { 
         width: 100%; 
         display: flex;
@@ -336,7 +339,34 @@
         gap: 0.75rem;
     }
     .header-actions button { width: 100%; }
-    .card { padding: 1.5rem; border-radius: 20px; }
-    .payout-ghs { font-size: 2rem; }
-    .trade-grid-admin { gap: 1.5rem; }
+    .card { padding: 1rem; border-radius: 16px; }
+    .payout-ghs { font-size: 1.75rem; }
+    .trade-grid-admin { gap: 1rem; }
+    
+    .batch-item {
+        padding: 1rem;
+        gap: 1rem;
+    }
+    .batch-item-content {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .item-index {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+    .batch-item-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    .item-code-box {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    .image-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
 }

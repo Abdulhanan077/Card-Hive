@@ -119,7 +119,7 @@ export default async function TradeDetailView(props: { params: Promise<{ id: str
         <div className="trade-details-container">
             <div className="trade-header-admin">
                 <div className="header-info">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
                         <span style={{ 
                             backgroundColor: 'rgba(59, 130, 246, 0.1)', 
                             color: 'var(--primary)', 
