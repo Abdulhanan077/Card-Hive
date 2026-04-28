@@ -31,11 +31,10 @@ workflows:
           flutter build ipa --release --no-codesign
       - name: Code sign iOS IPA
         script: |
-          # The --bundle-id flag tells the tool which profile to use from your "Signing Identities"
+          # Codemagic automatically detects the bundle ID from the Xcode project.
           xcode-project build-ipa \
             --workspace mycardhive_mobile/ios/Runner.xcworkspace \
-            --scheme Runner \
-            --bundle-id com.mycardhive.trading
+            --scheme Runner
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
