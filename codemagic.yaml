@@ -1,19 +1,16 @@
 workflows:
   distribution-workflow:
-    name: App Distribution Workflow (Android & iOS)
+    name: Card-Hive App Store & Play Store Production
     instance_type: mac_mini_m2
     max_build_duration: 120
     environment:
-      flutter: stable
-      xcode: latest
       groups:
         - firebase
-        # - shorebird # Uncomment this in Codemagic UI and add your SHOREBIRD_TOKEN if using Shorebird
-      # uncomment and configure below in Codemagic UI for automatic code signing
-      # ios_signing:
-      #   distribution_type: app_store
-      #   bundle_identifier: com.mycardhive.mobile # Replace with your actual bundle identifier
-    
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.mycardhive.mobile # Ensure this matches App Store Connect!
+      flutter: stable
+      xcode: latest
     scripts:
       - name: Get Flutter packages
         script: |
@@ -21,33 +18,30 @@ workflows:
           flutter precache --ios
           flutter clean
           flutter pub get
-          
       - name: Install CocoaPods
         script: |
           cd mycardhive_mobile/ios
           rm -rf Pods Podfile.lock
           pod install --repo-update
-
-      - name: Build Android App Bundle & APK
+      - name: Build Android App Bundle
         script: |
           cd mycardhive_mobile
-          # Standard Flutter Release
           flutter build appbundle --release
-          flutter build apk --release
-          
-          # IF USING SHOREBIRD: Comment the 2 lines above and uncomment the line below
-          # shorebird release android --force
-          
       - name: Build iOS IPA
         script: |
           cd mycardhive_mobile
-          # Standard Flutter Release
-          flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
-          
-          # IF USING SHOREBIRD: Comment the line above and uncomment the line below
-          # shorebird release ios --force --export-options-plist=/Users/builder/export_options.plist
-          
+          # We remove the manual plist path because Codemagic 
+          # will handle the export automatically since ios_signing is enabled above
+          flutter build ipa --release --no-codesign
+      - name: Code sign iOS IPA
+        script: |
+          # This command is what actually uses your Apple API Key
+          xcode-project build-ipa --workspace mycardhive_mobile/ios/Runner.xcworkspace --scheme Runner
     artifacts:
       - mycardhive_mobile/build/app/outputs/bundle/release/app-release.aab
-      - mycardhive_mobile/build/app/outputs/flutter-apk/app-release.apk
       - mycardhive_mobile/build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        api_key: Codemagic API Key
+        submit_to_testflight: true
