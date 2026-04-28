@@ -1,13 +1,18 @@
 workflows:
-  ios-simulator-build:
-    name: iOS Simulator Build (Appetize.io)
+  distribution-workflow:
+    name: App Distribution Workflow (Android & iOS)
     instance_type: mac_mini_m2
-    max_build_duration: 30
+    max_build_duration: 120
     environment:
       flutter: stable
       xcode: latest
       groups:
-        - firebase # Optional: For any firebase related env vars if needed
+        - firebase
+        # - shorebird # Uncomment this in Codemagic UI and add your SHOREBIRD_TOKEN if using Shorebird
+      # uncomment and configure below in Codemagic UI for automatic code signing
+      # ios_signing:
+      #   distribution_type: app_store
+      #   bundle_identifier: com.mycardhive.mobile # Replace with your actual bundle identifier
     
     scripts:
       - name: Get Flutter packages
@@ -22,11 +27,27 @@ workflows:
           cd mycardhive_mobile/ios
           rm -rf Pods Podfile.lock
           pod install --repo-update
-          
-      - name: Build iOS Debug Application for Simulator
+
+      - name: Build Android App Bundle & APK
         script: |
           cd mycardhive_mobile
-          flutter build ios --simulator --debug --verbose
+          # Standard Flutter Release
+          flutter build appbundle --release
+          flutter build apk --release
+          
+          # IF USING SHOREBIRD: Comment the 2 lines above and uncomment the line below
+          # shorebird release android --force
+          
+      - name: Build iOS IPA
+        script: |
+          cd mycardhive_mobile
+          # Standard Flutter Release
+          flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
+          
+          # IF USING SHOREBIRD: Comment the line above and uncomment the line below
+          # shorebird release ios --force --export-options-plist=/Users/builder/export_options.plist
           
     artifacts:
-      - mycardhive_mobile/build/ios/iphonesimulator/Runner.app
+      - mycardhive_mobile/build/app/outputs/bundle/release/app-release.aab
+      - mycardhive_mobile/build/app/outputs/flutter-apk/app-release.apk
+      - mycardhive_mobile/build/ios/ipa/*.ipa
