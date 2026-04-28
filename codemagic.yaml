@@ -8,7 +8,7 @@ workflows:
         - firebase
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.mycardhive.mobile # Ensure this matches App Store Connect!
+        bundle_identifier: com.mycardhive.trading # Matched to your iOS project!
       flutter: stable
       xcode: latest
     scripts:
