@@ -31,7 +31,11 @@ workflows:
           flutter build ipa --release --no-codesign
       - name: Code sign iOS IPA
         script: |
-          xcode-project build-ipa --workspace mycardhive_mobile/ios/Runner.xcworkspace --scheme Runner
+          # The --bundle-id flag tells the tool which profile to use from your "Signing Identities"
+          xcode-project build-ipa \
+            --workspace mycardhive_mobile/ios/Runner.xcworkspace \
+            --scheme Runner \
+            --bundle-id com.mycardhive.trading
     artifacts:
       - mycardhive_mobile/build/ios/ipa/*.ipa
     publishing:
