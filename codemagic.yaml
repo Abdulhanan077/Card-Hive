@@ -25,16 +25,13 @@ workflows:
           cd mycardhive_mobile/ios
           rm -rf Pods Podfile.lock
           pod install --repo-update
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
       - name: Build iOS IPA
         script: |
           cd mycardhive_mobile
-          flutter build ipa --release --no-codesign
-      - name: Code sign iOS IPA
-        script: |
-          # Codemagic automatically detects the bundle ID from the Xcode project.
-          xcode-project build-ipa \
-            --workspace mycardhive_mobile/ios/Runner.xcworkspace \
-            --scheme Runner
+          flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
