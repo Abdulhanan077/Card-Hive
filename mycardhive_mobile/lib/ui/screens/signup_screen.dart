@@ -156,8 +156,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         color: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF1F5F9), // surface-hover
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Center(
-                        child: Text("✨", style: TextStyle(fontSize: 24)),
+                      child: Center(
+                        child: Icon(Icons.auto_awesome, size: 28, color: theme.colorScheme.primary),
                       ),
                     ),
                   ),
@@ -353,7 +353,11 @@ class _SignupScreenState extends State<SignupScreen> {
                padding: const EdgeInsets.all(8),
                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
              ),
-             child: Text(obscure ? "👁️" : "👁️‍🗨️", style: const TextStyle(fontSize: 18)),
+             child: Icon(
+               obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+               size: 20,
+               color: isDark ? Colors.white70 : const Color(0xFF64748B),
+             ),
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

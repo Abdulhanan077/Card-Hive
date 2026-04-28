@@ -25,6 +25,7 @@ import 'package:mycardhive_mobile/services/update_service.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:restart_app/restart_app.dart';
+import 'package:mycardhive_mobile/utils/vip_tiers.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -765,7 +766,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildVipCard(bool isDark, ThemeData theme) {
-    final pts = _user['completedTradesCount'] ?? 0;
+    final rawPts = _user['completedTradesCount'] ?? 0;
+    final pts = rawPts is int ? rawPts : int.tryParse(rawPts.toString()) ?? 0;
+    final currentTier = VipTiersConfig.calculateVipTier(pts);
+    final nextTier = VipTiersConfig.getNextVipTier(currentTier.level);
+    
+    final tierColor = Color(int.parse(currentTier.colorHex.replaceFirst('#', '0xFF')));
     
     return Container(
       padding: const EdgeInsets.all(20),
@@ -782,8 +788,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const Text("VIP Status", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(color: const Color(0xFFB45309), borderRadius: BorderRadius.circular(20)),
-                child: const Text("BRONZE", style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                decoration: BoxDecoration(color: tierColor, borderRadius: BorderRadius.circular(20)),
+                child: Text(currentTier.name.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -800,23 +806,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const Text("Accumulated from successful trades", style: TextStyle(color: Colors.white54, fontSize: 12)),
           const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Progress to Silver", style: TextStyle(color: Colors.white, fontSize: 13)),
-              Text("$pts / 51 Pts", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: (pts / 51).clamp(0, 1).toDouble(), 
-            backgroundColor: Colors.white12, 
-            color: const Color(0xFFEAB308), 
-            minHeight: 6, 
-            borderRadius: BorderRadius.circular(10)
-          ),
+          if (nextTier != null) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Progress to ${nextTier.name}", style: const TextStyle(color: Colors.white, fontSize: 13)),
+                Text("$pts / ${nextTier.minTrades} Pts", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(
+              value: (pts / nextTier.minTrades).clamp(0, 1).toDouble(), 
+              backgroundColor: Colors.white12, 
+              color: const Color(0xFFEAB308), 
+              minHeight: 6, 
+              borderRadius: BorderRadius.circular(10)
+            ),
+          ] else ...[
+             const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Max VIP Level Reached", style: TextStyle(color: Colors.white, fontSize: 13)),
+                Text("Max", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(
+              value: 1.0, 
+              backgroundColor: Colors.white12, 
+              color: const Color(0xFFEAB308), 
+              minHeight: 6, 
+              borderRadius: BorderRadius.circular(10)
+            ),
+          ],
           const SizedBox(height: 12),
-          const Text("Benefit: 1.5x Reward Multiplier", style: TextStyle(color: Colors.white54, fontSize: 12, fontStyle: FontStyle.italic)),
+          Text("Benefit: ${currentTier.multiplier}x Reward Multiplier", style: const TextStyle(color: Colors.white54, fontSize: 12, fontStyle: FontStyle.italic)),
         ],
       ),
     );
