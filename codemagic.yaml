@@ -37,7 +37,7 @@ workflows:
             --scheme Runner \
             --bundle-id com.mycardhive.trading
     artifacts:
-      - mycardhive_mobile/build/ios/ipa/*.ipa
+      - build/ios/ipa/*.ipa
     publishing:
       app_store_connect:
         auth: integration
