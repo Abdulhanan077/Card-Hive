@@ -1,6 +1,6 @@
 workflows:
   distribution-workflow:
-    name: Card-Hive App Store & Play Store Production
+    name: Card-Hive App Store Production
     integrations:
       app_store_connect: Codemagic API Key
     instance_type: mac_mini_m2
@@ -10,7 +10,7 @@ workflows:
         - firebase
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.mycardhive.trading # Matched to your iOS project!
+        bundle_identifier: com.mycardhive.trading
       flutter: stable
       xcode: latest
     scripts:
@@ -25,22 +25,14 @@ workflows:
           cd mycardhive_mobile/ios
           rm -rf Pods Podfile.lock
           pod install --repo-update
-      - name: Build Android App Bundle
-        script: |
-          cd mycardhive_mobile
-          flutter build appbundle --release
       - name: Build iOS IPA
         script: |
           cd mycardhive_mobile
-          # We remove the manual plist path because Codemagic 
-          # will handle the export automatically since ios_signing is enabled above
           flutter build ipa --release --no-codesign
       - name: Code sign iOS IPA
         script: |
-          # This command is what actually uses your Apple API Key
           xcode-project build-ipa --workspace mycardhive_mobile/ios/Runner.xcworkspace --scheme Runner
     artifacts:
-      - mycardhive_mobile/build/app/outputs/bundle/release/app-release.aab
       - mycardhive_mobile/build/ios/ipa/*.ipa
     publishing:
       app_store_connect:
