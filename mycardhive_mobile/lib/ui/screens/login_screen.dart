@@ -311,8 +311,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Divider(color: Color(0xFFE2E8F0)),
                   const SizedBox(height: 20),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
                     children: [
                       const Text("Don't have an account? ", style: TextStyle(color: Color(0xFF475569), fontSize: 14)),
                       GestureDetector(

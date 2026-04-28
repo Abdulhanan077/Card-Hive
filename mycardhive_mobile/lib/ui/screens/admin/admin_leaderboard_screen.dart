@@ -150,13 +150,14 @@ class _AdminLeaderboardScreenState extends State<AdminLeaderboardScreen> with Si
     final monthly = entry['monthlyValue'] as num;
     final points = entry['pointsEarned'] as num;
 
-    String rankIcon = "#$rank";
-    if (rank == 1) rankIcon = "🥇";
-    else if (rank == 2) rankIcon = "🥈";
-    else if (rank == 3) rankIcon = "🥉";
+    Widget rankWidget;
+    if (rank == 1) rankWidget = const Icon(Icons.emoji_events, color: Color(0xFFFFD700), size: 24);
+    else if (rank == 2) rankWidget = const Icon(Icons.emoji_events, color: Color(0xFFC0C0C0), size: 24);
+    else if (rank == 3) rankWidget = const Icon(Icons.emoji_events, color: Color(0xFFCD7F32), size: 24);
+    else rankWidget = Text("#$rank", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16));
 
     return ListTile(
-      leading: SizedBox(width: 32, child: Center(child: Text(rankIcon, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)))),
+      leading: SizedBox(width: 32, child: Center(child: rankWidget)),
       title: Text("@$username", style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 14)),
       subtitle: Text(unit == '₵' ? "₵${monthly.toLocaleString()}" : "$monthly $unit", style: const TextStyle(fontSize: 11)),
       trailing: Text("${points.toLocaleString()} pts", style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF2563EB))),
