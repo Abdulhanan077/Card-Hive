@@ -33,7 +33,7 @@ workflows:
           cd mycardhive_mobile
           flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
     artifacts:
-      - build/ios/ipa/*.ipa
+      - mycardhive_mobile/build/ios/ipa/*.ipa
     publishing:
       app_store_connect:
         auth: integration
