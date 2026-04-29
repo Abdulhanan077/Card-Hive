@@ -155,7 +155,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (mounted) {
           // Navigate to home screen and clear history
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
             (route) => false
           );
         }
@@ -455,7 +455,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await _authService.logout();
     if (mounted) {
        Navigator.of(context).pushAndRemoveUntil(
-         MaterialPageRoute(builder: (context) => const HomeScreen()),
+         MaterialPageRoute(builder: (context) => const LoginScreen()),
          (route) => false
        );
     }

@@ -250,6 +250,12 @@ class AuthService {
     await _deleteSecure('user_id');
     await _deleteSecure('username');
     await _deleteSecure('role');
+    await _deleteSecure('saved_username');
+    await _deleteSecure('saved_password');
+    await _deleteSecure('remember_me');
+    await _deleteSecure('biometrics_enabled'); // Also clear biometrics on explicit logout? 
+    // Maybe keep biometrics but clear the credentials they use. 
+    // Actually, if they logout, we should probably stop auto-logging them in.
   }
 
   Future<Map<String, dynamic>> deleteAccount() async {

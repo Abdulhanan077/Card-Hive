@@ -41,7 +41,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             icon: const Icon(Icons.logout_rounded, color: Colors.red),
             onPressed: () async {
               await _authService.logout();
-              if (mounted) Navigator.pushReplacementNamed(context, '/login');
+              if (mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false
+                );
+              }
             },
           ),
           const SizedBox(width: 8),

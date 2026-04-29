@@ -30,8 +30,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _checkBiometrics();
-    _loadSavedCredentials();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkBiometrics().catchError((e) => debugPrint("Biometric Check Error: $e"));
+      _loadSavedCredentials().catchError((e) => debugPrint("Load Credentials Error: $e"));
+    });
   }
 
   Future<void> _checkBiometrics() async {
@@ -184,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset('assets/logo.png', height: 250),
+                Image.asset('assets/logo.png', height: 120),
                 const SizedBox(height: 10),
                 Container(
                   // The exact "authCard" CSS recreation

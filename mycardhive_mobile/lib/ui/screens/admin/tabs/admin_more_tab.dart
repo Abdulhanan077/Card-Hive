@@ -111,7 +111,7 @@ class AdminMoreTab extends StatelessWidget {
                 await authService.logout();
                 if (context.mounted) {
                     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
                       (route) => false
                     );
                 }

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:math';
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService {
@@ -30,6 +31,22 @@ class NotificationService {
     );
 
     await _notificationsPlugin.initialize(settings: initializationSettings);
+    
+    // 0. Request iOS FCM Permissions
+    final messaging = FirebaseMessaging.instance;
+    await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+    );
+
+    // Enable foreground notifications on iOS
+    await messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
     
     // Initialize timezone data
     tz.initializeTimeZones();
@@ -65,12 +82,37 @@ class NotificationService {
   static Future<void> syncFcmToken(AuthService authService) async {
     try {
       final messaging = FirebaseMessaging.instance;
+
+      // On iOS, we need to ensure the APNS token is available before getting the FCM token
+      if (Platform.isIOS) {
+        String? apnsToken = await messaging.getAPNSToken();
+        if (apnsToken == null) {
+          debugPrint("FCM: APNS Token is null, waiting...");
+          // Wait up to 5 seconds for APNS
+          for (int i = 0; i < 5; i++) {
+            await Future.delayed(const Duration(seconds: 1));
+            apnsToken = await messaging.getAPNSToken();
+            if (apnsToken != null) break;
+          }
+        }
+        if (apnsToken == null) {
+           debugPrint("FCM: APNS Token still null after waiting. FCM may not work.");
+        }
+      }
+
       final token = await messaging.getToken();
       
       if (token != null) {
         debugPrint("FCM Token: $token");
         await authService.updateFcmToken(token);
       }
+
+      // Listen for token refresh
+      messaging.onTokenRefresh.listen((newToken) {
+        debugPrint("FCM Token Refreshed: $newToken");
+        authService.updateFcmToken(newToken);
+      });
+
     } catch (e) {
       debugPrint("FCM Token Sync Error: $e");
     }
@@ -200,7 +242,17 @@ class NotificationService {
       category: AndroidNotificationCategory.message,
     );
 
-    const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
+    const DarwinNotificationDetails darwinDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.active,
+    );
+
+    const NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+    );
     
     await _notificationsPlugin.show(
       id: id,
@@ -239,7 +291,14 @@ class NotificationService {
         title: 'Time to Trade!',
         body: 'Don\'t let your gift cards go to waste. Check today\'s best rates and trade them for instant cash!',
         scheduledDate: _nextInstanceOfTime(hour, minute),
-        notificationDetails: platformDetails,
+        notificationDetails: NotificationDetails(
+          android: androidDetails,
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );
