@@ -389,6 +389,30 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
                 contentPadding: EdgeInsets.zero,
                 leading: Container(
                   padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: const Color(0xFF6366F1).withOpacity(0.1), shape: BoxShape.circle),
+                  child: const Icon(Icons.notifications_active_outlined, color: Color(0xFF6366F1), size: 20),
+                ),
+                title: const Text("Test Notifications", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: const Text("Receive a sample notification immediately", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                trailing: OutlinedButton(
+                  onPressed: () async {
+                    await NotificationService.showNotification(
+                      id: 999,
+                      title: "Admin Notification Test",
+                      body: "If you see this, your admin notifications are working! 🚀",
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text("Send", style: TextStyle(fontSize: 12)),
+                ),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), shape: BoxShape.circle),
                   child: const Icon(Icons.battery_saver_rounded, color: Colors.orange, size: 20),
                 ),
