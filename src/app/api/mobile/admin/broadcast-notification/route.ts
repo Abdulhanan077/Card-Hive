@@ -63,11 +63,14 @@ export async function POST(request: Request) {
                 const res = response.responses[i];
                 if (!res.success) {
                     const errorCode = res.error?.code || 'unknown';
+                    const errorMessage = res.error?.message || '';
                     errorCodes.push(errorCode);
                     
-                    // Cleanup common invalid token errors
-                    if (errorCode === 'messaging/invalid-registration-token' || 
-                        errorCode === 'messaging/registration-token-not-registered') {
+                    // Cleanup any "not found" or invalid token errors
+                    if (errorCode.includes('not-registered') || 
+                        errorCode.includes('invalid-registration-token') ||
+                        errorMessage.toLowerCase().includes('not found')) {
+                        console.warn(`Deep Cleaning invalid token: ${tokens[i].substring(0, 10)}...`);
                         await prisma.user.updateMany({
                             where: { fcmToken: tokens[i] },
                             data: { fcmToken: null }
