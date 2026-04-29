@@ -111,9 +111,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _toggleBiometrics(bool value) async {
     if (value) {
-      // Prompt for authentication before enabling
+      // 1. Check if biometrics are enrolled
+      final enrolled = await BiometricService.isBiometricEnrolled();
+      if (!enrolled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("No biometrics enrolled. Please set up FaceID/TouchID in system settings."),
+            backgroundColor: Colors.orange,
+          ));
+        }
+        return;
+      }
+
+      // 2. Prompt for authentication
       final authenticated = await BiometricService.authenticate();
-      if (!authenticated) return;
+      if (!authenticated) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Biometric authentication failed."),
+            backgroundColor: Colors.redAccent,
+          ));
+        }
+        return;
+      }
     }
     
     await _authService.setBiometricsEnabled(value);

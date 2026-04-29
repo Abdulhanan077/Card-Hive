@@ -60,9 +60,31 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
 
   Future<void> _toggleBiometrics(bool value) async {
     if (value) {
+      // 1. Check if biometrics are even enrolled on device
+      final enrolled = await BiometricService.isBiometricEnrolled();
+      if (!enrolled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("No biometrics (FaceID/TouchID) enrolled on this device. Please set them up in system settings first."),
+            backgroundColor: Colors.orange,
+          ));
+        }
+        return;
+      }
+
+      // 2. Try to authenticate
       final authenticated = await BiometricService.authenticate();
-      if (!authenticated) return;
+      if (!authenticated) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Biometric authentication failed or was cancelled."),
+            backgroundColor: Colors.redAccent,
+          ));
+        }
+        return;
+      }
     }
+
     await _authService.setBiometricsEnabled(value);
     setState(() => _biometricsEnabled = value);
     if (mounted) {

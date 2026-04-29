@@ -63,6 +63,14 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleBiometricLogin() async {
+    final enrolled = await BiometricService.isBiometricEnrolled();
+    if (!enrolled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No biometrics enrolled. Please log in manually.'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
     final authenticated = await BiometricService.authenticate();
     if (authenticated) {
       final creds = await _authService.getSavedCredentials();
@@ -75,6 +83,10 @@ class _LoginScreenState extends State<LoginScreen> {
           const SnackBar(content: Text('Please log in manually first to enable Biometrics')),
         );
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Biometric authentication failed.'), backgroundColor: Colors.redAccent),
+      );
     }
   }
 

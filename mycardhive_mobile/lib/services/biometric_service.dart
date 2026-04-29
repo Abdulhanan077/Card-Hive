@@ -1,5 +1,6 @@
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 class BiometricService {
   static final LocalAuthentication _auth = LocalAuthentication();
@@ -16,11 +17,22 @@ class BiometricService {
     try {
       return await _auth.authenticate(
         localizedReason: 'Please authenticate to access your MyCardHive account',
-        authMessages: const [], 
-        persistAcrossBackgrounding: true,
-        biometricOnly: true,
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
       );
-    } on PlatformException catch (_) {
+    } catch (e) {
+      debugPrint("Biometric Authentication Error: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> isBiometricEnrolled() async {
+    try {
+      final List<BiometricType> availableBiometrics = await _auth.getAvailableBiometrics();
+      return availableBiometrics.isNotEmpty;
+    } catch (e) {
       return false;
     }
   }
