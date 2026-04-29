@@ -419,8 +419,9 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
 
                     if (mounted) {
                       if (result['success']) {
+                        final msg = result['message'] ?? "Broadcast sent successfully!";
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(result['message'] ?? "Broadcast sent successfully!"),
+                          content: Text(msg),
                           backgroundColor: const Color(0xFF10B981),
                         ));
                       } else {

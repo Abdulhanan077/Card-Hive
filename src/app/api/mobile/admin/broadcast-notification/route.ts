@@ -50,14 +50,29 @@ export async function POST(request: Request) {
 
         // 2. Send the multicast notification
         const fcmTitle = title || "Notification from Admin";
-        await sendFcmToAllUsers(tokens, fcmTitle, message, {
+        console.log(`Broadcasting to ${tokens.length} tokens:`, tokens);
+        
+        const response = await sendFcmToAllUsers(tokens, fcmTitle, message, {
             type: 'broadcast',
             senderId: String(admin.id)
         });
 
+        if (response && response.responses) {
+            response.responses.forEach((res, idx) => {
+                if (!res.success) {
+                    console.error(`FCM Failure for token ${tokens[idx]}:`, res.error);
+                }
+            });
+        }
+
         return NextResponse.json({ 
             success: true, 
-            message: `Successfully sent broadcast to ${tokens.length} users.` 
+            message: `Sent to ${response?.successCount || 0} devices. Failures: ${response?.failureCount || 0}`,
+            debug: {
+                total: tokens.length,
+                success: response?.successCount,
+                failure: response?.failureCount
+            }
         });
 
     } catch (error) {
