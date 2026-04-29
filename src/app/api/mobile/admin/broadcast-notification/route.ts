@@ -23,13 +23,16 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Message is required" }, { status: 400 });
         }
 
-        // 1. Fetch all users who have an FCM token
+        // 1. Fetch all users who have an FCM token, EXCLUDING the current admin
         const users = await prisma.user.findMany({
             where: {
                 fcmToken: {
                     not: null
                 },
-                status: 'ACTIVE'
+                status: 'ACTIVE',
+                id: {
+                    not: admin.id // Exclude the person sending the broadcast
+                }
             },
             select: {
                 fcmToken: true
