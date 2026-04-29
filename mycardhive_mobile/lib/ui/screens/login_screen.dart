@@ -31,10 +31,15 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkBiometrics().catchError((e) => debugPrint("Biometric Check Error: $e"));
-      _loadSavedCredentials().catchError((e) => debugPrint("Load Credentials Error: $e"));
-    });
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    // Start both checks immediately for maximum speed on fast devices
+    await Future.wait([
+      _checkBiometrics().catchError((e) => debugPrint("Biometric Check Error: $e")),
+      _loadSavedCredentials().catchError((e) => debugPrint("Load Credentials Error: $e")),
+    ]);
   }
 
   Future<void> _checkBiometrics() async {
