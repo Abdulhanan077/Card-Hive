@@ -336,27 +336,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Divider(height: 24, color: borderColor),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.notifications_active_outlined, color: Color(0xFF6366F1), size: 20),
-                    title: const Text("Test Notifications", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    subtitle: const Text("Receive a sample notification immediately", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    trailing: OutlinedButton(
-                      onPressed: () async {
-                        await NotificationService.showNotification(
-                          id: 999,
-                          title: "Notification Test",
-                          body: "If you see this, your notifications are working perfectly! 🚀",
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text("Send", style: TextStyle(fontSize: 12)),
-                    ),
-                  ),
-                  Divider(height: 24, color: borderColor),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.battery_saver_rounded, color: Colors.orange, size: 20),
                     title: const Text("High Performance Mode", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     subtitle: const Text("Keep notifications active even when app is closed", style: TextStyle(fontSize: 10, color: Colors.grey)),

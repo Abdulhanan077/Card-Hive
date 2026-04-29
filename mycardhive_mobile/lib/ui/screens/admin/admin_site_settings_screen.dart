@@ -390,23 +390,29 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(color: const Color(0xFF6366F1).withOpacity(0.1), shape: BoxShape.circle),
-                  child: const Icon(Icons.notifications_active_outlined, color: Color(0xFF6366F1), size: 20),
+                  child: const Icon(Icons.campaign_rounded, color: Color(0xFF6366F1), size: 20),
                 ),
-                title: const Text("Test Notifications", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                subtitle: const Text("Receive a sample notification immediately", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                title: const Text("Broadcast App Reminder", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                subtitle: const Text("Manually trigger a trade reminder for all active users", style: TextStyle(fontSize: 10, color: Colors.grey)),
                 trailing: OutlinedButton(
                   onPressed: () async {
                     await NotificationService.showNotification(
                       id: 999,
-                      title: "Admin Notification Test",
-                      body: "If you see this, your admin notifications are working! 🚀",
+                      title: "Time to Trade! 🚀",
+                      body: "Rates are up! Check the dashboard now to see today's best gift card offers.",
                     );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Broadcast reminder triggered successfully!"),
+                        backgroundColor: Color(0xFF2563EB),
+                      ));
+                    }
                   },
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text("Send", style: TextStyle(fontSize: 12)),
+                  child: const Text("Broadcast", style: TextStyle(fontSize: 12)),
                 ),
               ),
               ListTile(
