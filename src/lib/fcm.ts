@@ -83,8 +83,40 @@ export const sendFcmNotification = async (token: string, title: string, body: st
     }
 };
 
-export const sendFcmToUser = async (userId: number, title: string, body: string, data?: any) => {
-    // This requires a prisma import, we handle it in the caller or inject it.
-    // For now, let's keep it simple and let the caller provide the token.
-    console.log(`Queueing FCM for user ${userId}: ${title}`);
+export const sendFcmToAllUsers = async (tokens: string[], title: string, body: string, data?: any) => {
+    if (!admin.apps.length || tokens.length === 0) return;
+
+    try {
+        const message = {
+            notification: {
+                title,
+                body,
+            },
+            data: data || {},
+            android: {
+                priority: 'high' as const,
+                notification: {
+                    sound: 'default',
+                    clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+                },
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        sound: 'default',
+                        badge: 1,
+                    },
+                },
+            },
+        };
+
+        const response = await admin.messaging().sendEachForMulticast({
+            ...message,
+            tokens: tokens,
+        });
+        console.log(`FCM Multicast sent: ${response.successCount} successes, ${response.failureCount} failures`);
+        return response;
+    } catch (error) {
+        console.error('Error sending Multicast FCM:', error);
+    }
 };

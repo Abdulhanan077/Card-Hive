@@ -30,6 +30,7 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
   
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isBroadcasting = false;
   
   bool _canCheckBiometrics = false;
   bool _biometricsEnabled = false;
@@ -403,30 +404,42 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () async {
+                  onPressed: _isBroadcasting ? null : () async {
                     if (_broadcastController.text.trim().isEmpty) {
                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a message")));
                        return;
                     }
-                    await NotificationService.showNotification(
-                      id: 999,
-                      title: "Time to Trade! 🚀",
-                      body: _broadcastController.text.trim(),
+                    
+                    setState(() => _isBroadcasting = true);
+                    final result = await _adminService.broadcastNotification(
+                      "Time to Trade! 🚀", 
+                      _broadcastController.text.trim()
                     );
+                    setState(() => _isBroadcasting = false);
+
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("Broadcast reminder triggered successfully!"),
-                        backgroundColor: Color(0xFF2563EB),
-                      ));
+                      if (result['success']) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(result['message'] ?? "Broadcast sent successfully!"),
+                          backgroundColor: const Color(0xFF10B981),
+                        ));
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(result['error'] ?? "Failed to send broadcast"),
+                          backgroundColor: Colors.redAccent,
+                        ));
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6366F1),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: const Text("Broadcast to All Users", style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: _isBroadcasting 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text("Broadcast to All Users", style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
               ListTile(

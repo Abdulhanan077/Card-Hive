@@ -527,4 +527,28 @@ class AdminService {
       return {'success': false, 'error': 'Connection failed'};
     }
   }
+
+  Future<Map<String, dynamic>> broadcastNotification(String title, String message) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return {'success': false, 'error': 'Unauthorized'};
+
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl}/mobile/admin/broadcast-notification'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Cookie': '${AuthService.baseUrl.startsWith('https') ? '__Secure-' : ''}next-auth.session-token=$token',
+        },
+        body: json.encode({
+          'title': title,
+          'message': message,
+        }),
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Connection failed'};
+    }
+  }
 }
