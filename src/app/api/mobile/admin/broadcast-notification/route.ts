@@ -31,7 +31,7 @@ export async function POST(request: Request) {
                 },
                 status: 'ACTIVE',
                 id: {
-                    not: admin.id // Exclude the person sending the broadcast
+                    not: Number(admin.id) // Ensure ID is a number for matching
                 }
             },
             select: {
@@ -50,7 +50,10 @@ export async function POST(request: Request) {
 
         // 2. Send the multicast notification
         const fcmTitle = title || "Notification from Admin";
-        await sendFcmToAllUsers(tokens, fcmTitle, message);
+        await sendFcmToAllUsers(tokens, fcmTitle, message, {
+            type: 'broadcast',
+            senderId: String(admin.id)
+        });
 
         return NextResponse.json({ 
             success: true, 
