@@ -4,6 +4,7 @@ import 'package:mycardhive_mobile/utils/error_utils.dart';
 import 'package:mycardhive_mobile/ui/screens/general_support_chat_screen.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:mycardhive_mobile/main.dart';
+import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/sell_card_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/trades_screen.dart';
@@ -159,7 +160,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _logout() async {
     await _authService.logout();
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => LoginScreen()), (route) => false);
+    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (route) => false);
   }
 
   @override

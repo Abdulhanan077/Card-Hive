@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
+import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/dashboard_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -117,10 +118,20 @@ class _SignupScreenState extends State<SignupScreen> {
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        leading: Navigator.canPop(context) ? IconButton(
+        leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
-        ) : null,
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushAndRemoveUntil(
+                context, 
+                MaterialPageRoute(builder: (context) => const HomeScreen()), 
+                (route) => false
+              );
+            }
+          },
+        ),
       ),
       body: SafeArea(
         child: Center(

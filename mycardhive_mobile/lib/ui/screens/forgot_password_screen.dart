@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/auth_service.dart';
+import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -78,10 +79,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        leading: Navigator.canPop(context) ? IconButton(
+        leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
-        ) : null,
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushAndRemoveUntil(
+                context, 
+                MaterialPageRoute(builder: (context) => const HomeScreen()), 
+                (route) => false
+              );
+            }
+          },
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
