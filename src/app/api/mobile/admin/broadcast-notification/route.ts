@@ -58,11 +58,21 @@ export async function POST(request: Request) {
         });
 
         if (response && response.responses) {
-            response.responses.forEach((res, idx) => {
+            for (let i = 0; i < response.responses.length; i++) {
+                const res = response.responses[i];
                 if (!res.success) {
-                    console.error(`FCM Failure for token ${tokens[idx]}:`, res.error);
+                    const errorCode = res.error?.code;
+                    // If the token is invalid or not registered, clear it from the DB
+                    if (errorCode === 'messaging/invalid-registration-token' || 
+                        errorCode === 'messaging/registration-token-not-registered') {
+                        console.warn(`Clearing invalid token for user ${tokens[i]}`);
+                        await prisma.user.updateMany({
+                            where: { fcmToken: tokens[i] },
+                            data: { fcmToken: null }
+                        });
+                    }
                 }
-            });
+            }
         }
 
         return NextResponse.json({ 
