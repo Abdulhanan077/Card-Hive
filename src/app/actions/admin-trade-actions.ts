@@ -74,6 +74,21 @@ export async function toggleCardStatusAction(
             await sendItemRejectionEmail(trade.user, trade, batchTrades);
         }
 
+        // NEW: FCM Notification for Rejection
+        if (newStatus === "REJECTED" && trade.user.fcmToken) {
+            try {
+                const { sendFcmNotification } = await import("@/lib/fcm");
+                const title = "Card Rejected ❌";
+                const body = `Your ${trade.cardBrand} card (${trade.faceValue} ${trade.currency}) was rejected. See chat for details.`;
+                await sendFcmNotification(trade.user.fcmToken, title, body, {
+                    type: 'CARD_REJECTED',
+                    tradeId: trade.id.toString(),
+                });
+            } catch (fcmErr) {
+                console.error("FCM Card Rejection Error:", fcmErr);
+            }
+        }
+
         revalidatePath(`/admin/trades/${pageTradeId}`);
         revalidatePath(`/admin/trades`);
         return { success: true };

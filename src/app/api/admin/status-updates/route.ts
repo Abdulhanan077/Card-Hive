@@ -56,6 +56,28 @@ export async function POST(req: Request) {
             },
         });
 
+        // Send push notification to all users about the new status update
+        try {
+            const { sendFcmToAllUsers } = await import("@/lib/fcm");
+            // Fetch all active tokens
+            const users = await prisma.user.findMany({
+                where: { fcmToken: { not: null }, status: 'ACTIVE' },
+                select: { fcmToken: true }
+            });
+            const tokens = Array.from(new Set(users.map(u => u.fcmToken as string)));
+            
+            if (tokens.length > 0) {
+                await sendFcmToAllUsers(
+                    tokens, 
+                    "New Status Update 📢", 
+                    message.length > 50 ? message.substring(0, 47) + "..." : message,
+                    { type: 'GLOBAL_STATUS_UPDATE', id: update.id.toString() }
+                );
+            }
+        } catch (fcmErr) {
+            console.error("FCM Status Update Error:", fcmErr);
+        }
+
         return NextResponse.json({ update }, { status: 201 });
     } catch (error) {
         console.error("Error creating status update:", error);

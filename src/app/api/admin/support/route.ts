@@ -45,5 +45,25 @@ export async function POST(request: Request) {
     // Notify the user in real-time
     await pusherServer.trigger(`support-${sessionId}`, "new-message", message);
 
+    // Send push notification to the user
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: parseInt(sessionId) },
+            select: { fcmToken: true }
+        });
+
+        if (user?.fcmToken) {
+            const { sendFcmNotification } = await import("@/lib/fcm");
+            await sendFcmNotification(
+                user.fcmToken,
+                "New Support Message 💬",
+                content.length > 50 ? content.substring(0, 47) + "..." : content,
+                { type: 'SUPPORT_MESSAGE', sessionId: sessionId.toString() }
+            );
+        }
+    } catch (fcmErr) {
+        console.error("FCM Support Message Error:", fcmErr);
+    }
+
     return NextResponse.json({ success: true, message });
 }
