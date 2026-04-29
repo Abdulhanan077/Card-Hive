@@ -7,6 +7,7 @@ import 'package:mycardhive_mobile/services/biometric_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
 import 'package:mycardhive_mobile/utils/error_utils.dart';
+import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
 
 
 class SettingsScreen extends StatefulWidget {
@@ -155,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (mounted) {
           // Navigate to home screen and clear history
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            MaterialPageRoute(builder: (context) => LoginScreen()),
             (route) => false
           );
         }
@@ -455,7 +456,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await _authService.logout();
     if (mounted) {
        Navigator.of(context).pushAndRemoveUntil(
-         MaterialPageRoute(builder: (context) => const LoginScreen()),
+         MaterialPageRoute(builder: (context) => LoginScreen()),
          (route) => false
        );
     }
