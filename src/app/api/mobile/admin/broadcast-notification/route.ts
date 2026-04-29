@@ -57,15 +57,17 @@ export async function POST(request: Request) {
             senderId: String(admin.id)
         });
 
+        const errorCodes = [];
         if (response && response.responses) {
             for (let i = 0; i < response.responses.length; i++) {
                 const res = response.responses[i];
                 if (!res.success) {
-                    const errorCode = res.error?.code;
-                    // If the token is invalid or not registered, clear it from the DB
+                    const errorCode = res.error?.code || 'unknown';
+                    errorCodes.push(errorCode);
+                    
+                    // Cleanup common invalid token errors
                     if (errorCode === 'messaging/invalid-registration-token' || 
                         errorCode === 'messaging/registration-token-not-registered') {
-                        console.warn(`Clearing invalid token for user ${tokens[i]}`);
                         await prisma.user.updateMany({
                             where: { fcmToken: tokens[i] },
                             data: { fcmToken: null }
@@ -77,11 +79,12 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ 
             success: true, 
-            message: `Sent to ${response?.successCount || 0} devices. Failures: ${response?.failureCount || 0}`,
+            message: `Success: ${response?.successCount || 0}, Fail: ${response?.failureCount || 0}`,
             debug: {
                 total: tokens.length,
                 success: response?.successCount,
-                failure: response?.failureCount
+                failure: response?.failureCount,
+                errors: errorCodes.slice(0, 5) // Show the first few errors
             }
         });
 

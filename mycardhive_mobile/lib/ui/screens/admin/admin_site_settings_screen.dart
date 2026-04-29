@@ -419,10 +419,14 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
 
                     if (mounted) {
                       if (result['success']) {
-                        final msg = result['message'] ?? "Broadcast sent successfully!";
+                        String msg = result['message'] ?? "Broadcast sent successfully!";
+                        if (result['debug'] != null && result['debug']['errors'] != null && (result['debug']['errors'] as List).isNotEmpty) {
+                          msg += "\nErrors: ${result['debug']['errors'].join(', ')}";
+                        }
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text(msg),
                           backgroundColor: const Color(0xFF10B981),
+                          duration: const Duration(seconds: 5),
                         ));
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
