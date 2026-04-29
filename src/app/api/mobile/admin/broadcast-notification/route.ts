@@ -24,22 +24,32 @@ export async function POST(request: Request) {
         }
 
         // 1. Fetch all users who have an FCM token, EXCLUDING the current admin
-        const users = await prisma.user.findMany({
+        const allUsers = await prisma.user.findMany({
             where: {
-                fcmToken: {
-                    not: null
-                },
+                fcmToken: { not: null },
                 status: 'ACTIVE',
-                id: {
-                    not: Number(admin.id) // Ensure ID is a number for matching
-                }
+                id: { not: Number(admin.id) }
             },
             select: {
+                id: true,
+                username: true,
                 fcmToken: true
             }
         });
 
-        const tokens = users.map(u => u.fcmToken as string);
+        // Deduplicate tokens (keep only one user per unique token)
+        const uniqueTokensMap = new Map();
+        for (const u of allUsers) {
+            if (u.fcmToken) {
+                uniqueTokensMap.set(u.fcmToken, u);
+            }
+        }
+        
+        const tokens = Array.from(uniqueTokensMap.keys());
+        const targetUsers = Array.from(uniqueTokensMap.values());
+
+        console.log(`FCM: Unique tokens found: ${tokens.length} (Total in DB: ${allUsers.length})`);
+        console.log(`FCM: Target Usernames:`, targetUsers.map(u => u.username));
 
         if (tokens.length === 0) {
             return NextResponse.json({ 
