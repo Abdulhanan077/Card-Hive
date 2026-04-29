@@ -16,6 +16,7 @@ class NotificationService {
   static final Set<String> _seenNotifIds = {};
   static bool _initialCheckDone = false;
   static bool _notifIdsLoaded = false;
+  static bool isAdmin = false;
 
   static Future<void> init() async {
     const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -62,6 +63,13 @@ class NotificationService {
     // 1. Setup Firebase Messaging listeners
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint("FCM Foreground Message: ${message.notification?.title}");
+      
+      // Safety filter: Don't show broadcast notifications to admins (they sent them!)
+      if (message.data['type'] == 'broadcast' && isAdmin) {
+        debugPrint("FCM: Skipping broadcast notification display for Admin user.");
+        return;
+      }
+
       if (message.notification != null) {
         showNotification(
           id: message.hashCode,

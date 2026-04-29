@@ -60,6 +60,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _user = widget.user;
     _siteSettings = CacheService.getCachedSiteSettings() ?? {};
+    
+    // Set notification service admin status for filtering
+    NotificationService.isAdmin = _user['role'] == 'ADMIN';
+
     _loadDashboardData();
     StatusPollingService.startPolling();
     _startNotificationPolling();
