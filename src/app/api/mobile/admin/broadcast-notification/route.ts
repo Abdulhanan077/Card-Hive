@@ -67,20 +67,25 @@ export async function POST(request: Request) {
             senderId: String(admin.id)
         });
 
-        const errorCodes = [];
+        const successUsernames = [];
+        const failUsernames = [];
+        
         if (response && response.responses) {
             for (let i = 0; i < response.responses.length; i++) {
                 const res = response.responses[i];
-                if (!res.success) {
+                const username = targetUsers[i].username;
+                
+                if (res.success) {
+                    successUsernames.push(username);
+                } else {
+                    failUsernames.push(username);
                     const errorCode = res.error?.code || 'unknown';
                     const errorMessage = res.error?.message || '';
-                    errorCodes.push(errorCode);
                     
                     // Cleanup any "not found" or invalid token errors
                     if (errorCode.includes('not-registered') || 
                         errorCode.includes('invalid-registration-token') ||
                         errorMessage.toLowerCase().includes('not found')) {
-                        console.warn(`Deep Cleaning invalid token: ${tokens[i].substring(0, 10)}...`);
                         await prisma.user.updateMany({
                             where: { fcmToken: tokens[i] },
                             data: { fcmToken: null }
@@ -90,6 +95,9 @@ export async function POST(request: Request) {
             }
         }
 
+        console.log(`FCM Successes for:`, successUsernames);
+        console.log(`FCM Failures for:`, failUsernames);
+
         return NextResponse.json({ 
             success: true, 
             message: `Success: ${response?.successCount || 0}, Fail: ${response?.failureCount || 0}`,
@@ -97,7 +105,8 @@ export async function POST(request: Request) {
                 total: tokens.length,
                 success: response?.successCount,
                 failure: response?.failureCount,
-                errors: errorCodes.slice(0, 5) // Show the first few errors
+                successUsers: successUsernames,
+                failUsers: failUsernames
             }
         });
 
