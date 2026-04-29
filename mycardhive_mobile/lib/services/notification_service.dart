@@ -9,6 +9,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'dart:math';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -50,6 +51,13 @@ class NotificationService {
     
     // Initialize timezone data
     tz.initializeTimeZones();
+    try {
+      final String currentTimeZone = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(currentTimeZone));
+      debugPrint("NotificationService: Timezone set to $currentTimeZone");
+    } catch (e) {
+      debugPrint("NotificationService: Could not set local timezone, defaulting to UTC: $e");
+    }
 
     // 1. Setup Firebase Messaging listeners
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -266,7 +274,14 @@ class NotificationService {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // Re-randomize the time every time the app is opened to keep it feeling fresh.
+      // Prevent rescheduling if already set for today to avoid "pushing" it indefinitely
+      final lastScheduledStr = prefs.getString('last_scheduled_reminder_date');
+      final todayStr = DateTime.now().toIso8601String().split('T')[0];
+      
+      if (lastScheduledStr == todayStr) {
+        debugPrint("Daily reminder already scheduled for today. Skipping.");
+        return;
+      }
 
       // Pick a random time between 9 AM and 8 PM
       final random = Random();
@@ -303,6 +318,7 @@ class NotificationService {
         matchDateTimeComponents: DateTimeComponents.time,
       );
 
+      await prefs.setString('last_scheduled_reminder_date', todayStr);
       await prefs.setBool('daily_reminder_set', true);
     } catch (e) {
       debugPrint("Schedule Reminder Error: $e");

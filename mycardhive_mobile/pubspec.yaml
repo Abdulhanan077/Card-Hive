@@ -46,6 +46,8 @@ dependencies:
   uuid: ^4.5.3
   pusher_channels_flutter: ^2.4.0
   shorebird_code_push: ^2.0.5
+  flutter_timezone: ^1.2.0
+  timezone: ^0.10.1
   restart_app: ^1.7.3
 
 dev_dependencies:
