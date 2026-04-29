@@ -26,6 +26,7 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
   late TextEditingController _referralController;
   late TextEditingController _pointsCediController;
   late TextEditingController _usdtRateController;
+  late TextEditingController _broadcastController;
   
   bool _isLoading = true;
   bool _isSaving = false;
@@ -43,6 +44,7 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
     _referralController = TextEditingController();
     _pointsCediController = TextEditingController();
     _usdtRateController = TextEditingController();
+    _broadcastController = TextEditingController(text: "Rates are up! Check the dashboard now to see today's best gift card offers.");
     _loadSettings();
     _checkBiometricSupport();
   }
@@ -394,12 +396,22 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
                 ),
                 title: const Text("Broadcast App Reminder", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 subtitle: const Text("Manually trigger a trade reminder for all active users", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                trailing: OutlinedButton(
+              ),
+              const SizedBox(height: 8),
+              _buildTextField("Broadcast Message", _broadcastController, isDark),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
                   onPressed: () async {
+                    if (_broadcastController.text.trim().isEmpty) {
+                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a message")));
+                       return;
+                    }
                     await NotificationService.showNotification(
                       id: 999,
                       title: "Time to Trade! 🚀",
-                      body: "Rates are up! Check the dashboard now to see today's best gift card offers.",
+                      body: _broadcastController.text.trim(),
                     );
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -408,11 +420,13 @@ class _AdminSiteSettingsScreenState extends State<AdminSiteSettingsScreen> {
                       ));
                     }
                   },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text("Broadcast", style: TextStyle(fontSize: 12)),
+                  child: const Text("Broadcast to All Users", style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
               ListTile(
