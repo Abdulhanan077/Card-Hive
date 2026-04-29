@@ -79,6 +79,20 @@ class NotificationService {
       }
     });
 
+    // Create the high importance channel for Android
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'high_importance_channel', 
+      'High Importance Notifications',
+      description: 'This channel is used for important notifications.',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+    );
+
+    await _notificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     // Request permissions for Android 13+
@@ -245,9 +259,9 @@ class NotificationService {
   }) async {
     debugPrint("PUSHING NOTIF: $id - $title");
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'critical_alerts_v5', 
-      'Priority Admin Alerts',
-      channelDescription: 'Heads-up notifications for trade updates and messages',
+      'high_importance_channel', 
+      'High Importance Notifications',
+      channelDescription: 'This channel is used for important notifications.',
       importance: Importance.max,
       priority: Priority.high,
       showWhen: true,

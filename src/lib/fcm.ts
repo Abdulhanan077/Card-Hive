@@ -62,6 +62,7 @@ export const sendFcmNotification = async (token: string, title: string, body: st
                 priority: 'high' as const,
                 notification: {
                     sound: 'default',
+                    channelId: 'high_importance_channel',
                     clickAction: 'FLUTTER_NOTIFICATION_CLICK',
                 },
             },
@@ -97,6 +98,7 @@ export const sendFcmToAllUsers = async (tokens: string[], title: string, body: s
                 priority: 'high' as const,
                 notification: {
                     sound: 'default',
+                    channelId: 'high_importance_channel',
                     clickAction: 'FLUTTER_NOTIFICATION_CLICK',
                 },
             },
