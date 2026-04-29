@@ -64,6 +64,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     StatusPollingService.startPolling();
     _startNotificationPolling();
     _setupUpdateListener();
+    
+    // Force sync FCM token on every launch to catch users who were already logged in
+    NotificationService.syncFcmToken(_authService);
   }
 
   void _setupUpdateListener() {
