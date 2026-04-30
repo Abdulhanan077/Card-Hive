@@ -164,7 +164,7 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
         ],
         leading: IconButton(icon: Icon(Icons.arrow_back_ios_new, color: theme.colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
       ),
-      bottomNavigationBar: _status == "PAID" ? Container(
+      bottomNavigationBar: (_status == "PAID" && !ComplianceUtils.isReviewMode) ? Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: theme.cardColor,
