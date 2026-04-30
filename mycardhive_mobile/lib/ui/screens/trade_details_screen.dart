@@ -314,11 +314,11 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
           const SizedBox(height: 4),
           Text("${_fullTrade!['cardCountry']} - $cardType", style: const TextStyle(color: Colors.grey, fontSize: 13)),
           const Divider(height: 32),
-          _detailRow("Face Value", "$currency $faceValue"),
+          _detailRow(ComplianceUtils.isReviewMode ? "Asset Units" : "Face Value", "${ComplianceUtils.isReviewMode ? '' : currency} $faceValue"),
           _detailRow("Card Code", _fullTrade!['cardCode']?.toString() ?? "N/A"),
           if (_fullTrade!['serialNumber'] != null && _fullTrade!['serialNumber'].toString().isNotEmpty)
             _detailRow("Serial Number", _fullTrade!['serialNumber'].toString()),
-          _detailRow("Estimated ${ComplianceUtils.isReviewMode ? 'Valuation' : 'Payout'}", "GH₵ ${expectedPayout.toStringAsFixed(2)}", isBold: true, color: const Color(0xFF2563EB)),
+          _detailRow(ComplianceUtils.valuationLabel, ComplianceUtils.formatAmount(expectedPayout), isBold: true, color: const Color(0xFF2563EB)),
           if (_fullTrade!['adminNotes'] != null && _fullTrade!['adminNotes'].toString().isNotEmpty) ...[
             const Divider(height: 32),
             const Text("Admin Notes:", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
@@ -348,7 +348,7 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
           Text(ComplianceUtils.isReviewMode ? "Processing Destination" : "Payout Destination", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 12),
           if (method == 'MOBILE_MONEY') ...[
-            Text("${_fullTrade!['payoutNetwork']} ${ComplianceUtils.isReviewMode ? 'Credit' : 'Mobile Money'}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB), fontSize: 16)),
+            Text(ComplianceUtils.formatPayoutMethod("${_fullTrade!['payoutNetwork']} ${ComplianceUtils.isReviewMode ? 'Credit' : 'Mobile Money'}"), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB), fontSize: 16)),
             const SizedBox(height: 8),
             Row(
               children: [

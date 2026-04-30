@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycardhive_mobile/utils/compliance_utils.dart';
 import 'package:mycardhive_mobile/services/reward_service.dart';
 import 'package:intl/intl.dart';
 import 'package:mycardhive_mobile/services/cache_service.dart';
@@ -151,7 +152,8 @@ class _RewardsScreenState extends State<RewardsScreen> {
                         ),
                       ],
                     ),
-                    Text("≈ GHS $cediEquivalent", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                    if (!ComplianceUtils.isReviewMode)
+                      Text("≈ GHS $cediEquivalent", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 24),
 
                     // Requirements Box
@@ -165,11 +167,11 @@ class _RewardsScreenState extends State<RewardsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Withdrawal Requirements:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text(ComplianceUtils.isReviewMode ? "Access Requirements:" : "Withdrawal Requirements:", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           const SizedBox(height: 12),
                           _buildRequirementRow("Minimum 100 Reward Points", balance >= 100),
                           const SizedBox(height: 8),
-                          _buildRequirementRow("At least 5 Successful Trades ($tradesCount/5)", tradesCount >= 5),
+                          _buildRequirementRow("At least 5 Successful ${ComplianceUtils.tradeActionPlural} ($tradesCount/5)", tradesCount >= 5),
                         ],
                       ),
                     ),
@@ -180,7 +182,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
               const SizedBox(height: 32),
 
               // Redeem Form
-              const Text("Withdrawal Form", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(ComplianceUtils.isReviewMode ? "Exchange Request" : "Withdrawal Form", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 16),
               Form(
                 key: _formKey,
@@ -201,10 +203,12 @@ class _RewardsScreenState extends State<RewardsScreen> {
                     ),
                     const SizedBox(height: 16),
                     ModernDropdown(
-                      label: "Payout Method",
+                      label: ComplianceUtils.isReviewMode ? "Access Method" : "Payout Method",
                       hint: "Select method...",
-                      value: _selectedMethod,
-                      items: const ["Mobile Money", "Crypto", "Add to Next Trade"],
+                      value: _selectedMethod == "Mobile Money" && ComplianceUtils.isReviewMode ? "Internal Credit" : _selectedMethod,
+                      items: ComplianceUtils.isReviewMode 
+                        ? const ["Internal Credit", "Digital Asset", "Add to Next Submission"]
+                        : const ["Mobile Money", "Crypto", "Add to Next Trade"],
                       isDark: isDark,
                       onChanged: (val) => setState(() => _selectedMethod = val!),
                     ),
@@ -231,7 +235,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                         ),
                         child: _isSubmitting 
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text("Submit Redemption", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          : Text(ComplianceUtils.isReviewMode ? "Submit Request" : "Submit Redemption", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       ),
                     ),
                   ],

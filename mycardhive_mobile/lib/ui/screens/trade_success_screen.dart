@@ -134,7 +134,7 @@ class TradeSuccessScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
-                  child: const Text(
+                  child: Text(
                     "View My ${ComplianceUtils.tradeActionPlural}",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                   ),

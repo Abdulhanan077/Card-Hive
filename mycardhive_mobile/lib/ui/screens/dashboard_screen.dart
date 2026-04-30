@@ -983,9 +983,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  _buildStatBox(ComplianceUtils.isReviewMode ? "Total Credited (₵)" : "Total Received (₵)", "₵ ${(_user['stats']?['totalReceivedGHS'] ?? 0).toStringAsFixed(2)}", theme, isDark, isFullWidth: true),
+                  _buildStatBox(ComplianceUtils.isReviewMode ? "Total Credited" : "Total Received (₵)", ComplianceUtils.formatAmount((_user['stats']?['totalReceivedGHS'] ?? 0).toDouble()), theme, isDark, isFullWidth: true),
                   const SizedBox(height: 10),
-                  _buildStatBox(ComplianceUtils.isReviewMode ? "Asset Volume (\$)" : "Total Volume (\$)", "\$ ${(_user['stats']?['totalVolumeUSD'] ?? 0).toStringAsFixed(2)}", theme, isDark, isFullWidth: true, valueColor: const Color(0xFF2563EB)),
+                  _buildStatBox(ComplianceUtils.isReviewMode ? "Verification Volume" : "Total Volume (\$)", ComplianceUtils.isReviewMode ? "${(_user['stats']?['totalVolumeUSD'] ?? 0).toStringAsFixed(0)} Assets" : "\$ ${(_user['stats']?['totalVolumeUSD'] ?? 0).toStringAsFixed(2)}", theme, isDark, isFullWidth: true, valueColor: const Color(0xFF2563EB)),
                   
                   const SizedBox(height: 20),
                   SizedBox(

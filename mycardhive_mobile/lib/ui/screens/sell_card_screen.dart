@@ -399,7 +399,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
                       onChanged: (val) => setState(() => _payoutNetwork = val!),
                     ),
                     const SizedBox(height: 12),
-                    _buildLabel("Mobile Money Number", theme, isDark),
+                    _buildLabel(ComplianceUtils.isReviewMode ? "Verification ID / Number" : "Mobile Money Number", theme, isDark),
                     _buildTextField(theme: theme, isDark: isDark, controller: _payoutPhoneController, hint: "055 123 4567"),
                     const SizedBox(height: 12),
                     _buildLabel("Account Name", theme, isDark),
@@ -415,7 +415,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
                             children: [
                               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 ModernDropdown(
-                                  label: "Network",
+                                  label: ComplianceUtils.isReviewMode ? "Logistics Type" : "Network",
                                   hint: "Select",
                                   value: _cryptoNetwork.isEmpty ? null : _cryptoNetwork,
                                   items: const ["TRC20", "BEP20"],
@@ -426,7 +426,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
                               const SizedBox(width: 12),
                               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 ModernDropdown(
-                                  label: "Exchange",
+                                  label: ComplianceUtils.isReviewMode ? "Platform" : "Exchange",
                                   hint: "Select",
                                   value: _cryptoExchange.isEmpty ? null : _cryptoExchange,
                                   items: const ["NOONES", "BINANCE", "OKX", "BYBIT", "KUCOIN", "OTHER"],
@@ -438,7 +438,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
                           ),
                           const SizedBox(height: 12),
                           ModernDropdown(
-                            label: "Receiving Method",
+                            label: ComplianceUtils.isReviewMode ? "Assignment Type" : "Receiving Method",
                             hint: "Select",
                             value: _cryptoReceiverIdType,
                             items: const ["EXCHANGE_ID", "WALLET_ADDRESS"],
@@ -446,7 +446,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
                             onChanged: (val) => setState(() => _cryptoReceiverIdType = val!),
                           ),
                           const SizedBox(height: 12),
-                          _buildLabel("Account Identifier", theme, isDark),
+                          _buildLabel(ComplianceUtils.isReviewMode ? "Asset Identifier" : "Account Identifier", theme, isDark),
                           _buildTextField(theme: theme, isDark: isDark, controller: _cryptoReceiverIdController, hint: "Wallet Address or ID"),
                         ]
                       )
@@ -551,7 +551,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
                         
                         if (card.estimatedPayout != null) ...[
                           const SizedBox(height: 16),
-                          Text("Estimated Card Payout: GH₵ ${card.estimatedPayout!.toStringAsFixed(2)}", textAlign: TextAlign.right, style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text("${ComplianceUtils.valuationLabel}: ${ComplianceUtils.formatAmount(card.estimatedPayout!)}", textAlign: TextAlign.right, style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 14)),
                         ]
                       ],
                     ),
@@ -569,13 +569,13 @@ class _SellCardScreenState extends State<SellCardScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text("Total Payout", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500)),
-                      Text("GH₵ ${_totalPayout.toStringAsFixed(2)}", style: const TextStyle(color: Color(0xFF2563EB), fontSize: 24, fontWeight: FontWeight.bold)),
+                      Text(ComplianceUtils.payoutLabel, style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500)),
+                      Text(ComplianceUtils.formatAmount(_totalPayout), style: const TextStyle(color: Color(0xFF2563EB), fontSize: 24, fontWeight: FontWeight.bold)),
                     ]),
                     if (_payoutMethod == "CRYPTO")
                       Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                        Text("Approx. USDT", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500)),
-                        Text("≈ \$${(_totalPayout / _usdtRate).toStringAsFixed(2)}", style: const TextStyle(color: Color(0xFF10B981), fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text(ComplianceUtils.isReviewMode ? "Internal Valuation" : "Approx. USDT", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500)),
+                        Text(ComplianceUtils.isReviewMode ? "${(_totalPayout / _usdtRate).toStringAsFixed(0)} Units" : "≈ \$${(_totalPayout / _usdtRate).toStringAsFixed(2)}", style: const TextStyle(color: Color(0xFF10B981), fontSize: 18, fontWeight: FontWeight.bold)),
                       ]),
                   ],
                 ),

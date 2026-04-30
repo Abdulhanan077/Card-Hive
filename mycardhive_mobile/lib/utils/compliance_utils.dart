@@ -34,4 +34,26 @@ class ComplianceUtils {
   static String get sellScreenInstruction => isReviewMode
       ? "Submit your card details below for secure verification and asset logging."
       : "List your gift card below to submit it for review and instant payout.";
+
+  // --- Formatting Helpers ---
+  static String formatAmount(double amount) {
+    if (isReviewMode) {
+      // Hide money, show a points-based valuation (1 GHS = 10 Pts for review)
+      return "${(amount * 10).toStringAsFixed(0)} Pts"; 
+    }
+    return "GH₵ ${amount.toStringAsFixed(2)}";
+  }
+
+  static String get valuationLabel => isReviewMode ? "Est. Valuation" : "Est. Payout";
+  
+  static String formatPayoutMethod(String method) {
+    if (!isReviewMode) return method;
+    if (method.contains("MOBILE_MONEY") || method.contains("MTN") || method.contains("Telecel")) {
+      return "Internal Ledger (MM)";
+    }
+    if (method.contains("CRYPTO") || method.contains("USDT")) {
+      return "Asset Storage (USDT)";
+    }
+    return method;
+  }
 }

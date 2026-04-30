@@ -227,9 +227,9 @@ class _TradesScreenState extends State<TradesScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text("Est. Payout", style: TextStyle(color: isDark ? Colors.white54 : const Color(0xFF64748B), fontSize: 12)),
+                  Text(ComplianceUtils.valuationLabel, style: TextStyle(color: isDark ? Colors.white54 : const Color(0xFF64748B), fontSize: 12)),
                   const SizedBox(height: 2),
-                  Text("GH₵ ${expectedPayout.toStringAsFixed(2)}", style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 15)),
+                  Text(ComplianceUtils.formatAmount(expectedPayout), style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 15)),
                 ],
               )
             ],
