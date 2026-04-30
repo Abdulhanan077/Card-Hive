@@ -205,9 +205,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
                     ModernDropdown(
                       label: ComplianceUtils.isReviewMode ? "Access Method" : "Payout Method",
                       hint: "Select method...",
-                      value: _selectedMethod == "Mobile Money" && ComplianceUtils.isReviewMode ? "Internal Credit" : _selectedMethod,
+                      value: _selectedMethod == "Mobile Money" && ComplianceUtils.isReviewMode ? "Log Update" : _selectedMethod,
                       items: ComplianceUtils.isReviewMode 
-                        ? const ["Internal Credit", "Digital Asset", "Add to Next Submission"]
+                        ? const ["Log Update", "Inventory Entry", "Add to Next Record"]
                         : const ["Mobile Money", "Crypto", "Add to Next Trade"],
                       isDark: isDark,
                       onChanged: (val) => setState(() => _selectedMethod = val!),

@@ -14,7 +14,7 @@ class ComplianceUtils {
   static String get giftCardLabel => "Gift Card";
   static String get giftCardLabelPlural => "Gift Cards";
   
-  static String get payoutLabel => isReviewMode ? "Credit Valuation" : "Payout";
+  static String get payoutLabel => isReviewMode ? "Log Update" : "Payout";
   static String get buyAction => isReviewMode ? "Acquire" : "Buy Card";
 
   // --- Icons (Keeping original icons for consistency) ---
@@ -44,15 +44,15 @@ class ComplianceUtils {
     return "GH₵ ${amount.toStringAsFixed(2)}";
   }
 
-  static String get valuationLabel => isReviewMode ? "Est. Valuation" : "Est. Payout";
+  static String get valuationLabel => isReviewMode ? "Audit Status" : "Est. Payout";
   
   static String formatPayoutMethod(String method) {
     if (!isReviewMode) return method;
     if (method.contains("MOBILE_MONEY") || method.contains("MTN") || method.contains("Telecel")) {
-      return "Internal Ledger (MM)";
+      return "Logistics Update (MM)";
     }
     if (method.contains("CRYPTO") || method.contains("USDT")) {
-      return "Asset Storage (USDT)";
+      return "Inventory Entry (USDT)";
     }
     return method;
   }
