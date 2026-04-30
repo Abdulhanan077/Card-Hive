@@ -277,9 +277,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                    Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildQuickAction(ComplianceUtils.sellIcon, ComplianceUtils.sellAction, const Color(0xFF9333EA), theme, isDark, onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen()));
-                      }),
+                      if (!ComplianceUtils.isReviewMode)
+                        _buildQuickAction(ComplianceUtils.sellIcon, ComplianceUtils.sellAction, const Color(0xFF9333EA), theme, isDark, onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen()));
+                        }),
                       _buildQuickAction(ComplianceUtils.historyIcon, ComplianceUtils.tradeActionPlural, const Color(0xFF16A34A), theme, isDark, onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const TradesScreen()));
                       }),
@@ -426,23 +427,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Latest Promotions", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(ComplianceUtils.isReviewMode ? "Asset Management" : "Latest Promotions", style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            const Text(
-              "Discover the best exchange rates and start selling your gift cards today.",
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+            Text(
+              ComplianceUtils.isReviewMode 
+                  ? "Log and manage your digital assets securely with real-time valuation updates."
+                  : "Discover the best exchange rates and start selling your gift cards today.",
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen())),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF6366F1),
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            if (!ComplianceUtils.isReviewMode)
+              ElevatedButton(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen())),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF6366F1),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text("Sell Now", style: TextStyle(fontWeight: FontWeight.bold)),
               ),
-              child: const Text("Sell Now", style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
           ],
         ),
       );
@@ -930,23 +934,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             Divider(height: 1, color: theme.dividerColor),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context); // Close Drawer
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen()));
-                },
-                icon: const Icon(Icons.add, color: Colors.white, size: 18),
-                label: Text(ComplianceUtils.sellAction, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            if (!ComplianceUtils.isReviewMode)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context); // Close Drawer
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen()));
+                  },
+                  icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                  label: Text(ComplianceUtils.sellAction, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
               ),
-            ),
             _buildDrawerItem("Dashboard Home", Icons.home_outlined, isSelected: true),
             _buildDrawerItem("My ${ComplianceUtils.tradeActionPlural}", Icons.receipt_long_outlined),
             _buildDrawerItem("Support Chat", Icons.chat_outlined, onTap: () {
