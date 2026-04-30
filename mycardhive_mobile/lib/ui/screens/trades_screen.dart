@@ -17,7 +17,9 @@ class _TradesScreenState extends State<TradesScreen> {
   List<Map<String, dynamic>> _allTrades = [];
   String _selectedFilter = 'All';
 
-  final List<String> _filters = ['All', 'Pending', 'Paid (Action Required)', 'Completed', 'Rejected'];
+  List<String> get _filters => ComplianceUtils.isReviewMode 
+      ? ['All', 'Pending', 'In Progress', 'Completed', 'Rejected']
+      : ['All', 'Pending', 'Paid (Action Required)', 'Completed', 'Rejected'];
 
   @override
   void initState() {
@@ -46,7 +48,7 @@ class _TradesScreenState extends State<TradesScreen> {
       trades = _allTrades.where((trade) {
         final status = trade['status'] as String? ?? '';
         if (_selectedFilter == 'Pending') return status == 'PENDING';
-        if (_selectedFilter == 'Paid (Action Required)') return status == 'PAID';
+        if (_selectedFilter == 'Paid (Action Required)' || _selectedFilter == 'In Progress') return status == 'PAID';
         if (_selectedFilter == 'Completed') return status == 'COMPLETED';
         if (_selectedFilter == 'Rejected') return status == 'REJECTED';
         return true;
@@ -101,8 +103,10 @@ class _TradesScreenState extends State<TradesScreen> {
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-            child: Text(
-              "Track the status of all your submitted gift cards.",
+             child: Text(
+              ComplianceUtils.isReviewMode 
+                  ? "Track the status of all your submitted logistics logs."
+                  : "Track the status of all your submitted gift cards.",
               style: TextStyle(color: isDark ? Colors.white70 : const Color(0xFF64748B), fontSize: 14),
             ),
           ),
@@ -258,7 +262,7 @@ class _TradesScreenState extends State<TradesScreen> {
                     ),
                     child: const Text("Details", style: TextStyle(fontSize: 12)),
                   ),
-                  if (status == 'PAID') ...[
+                  if (status == 'PAID' && !ComplianceUtils.isReviewMode) ...[
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
