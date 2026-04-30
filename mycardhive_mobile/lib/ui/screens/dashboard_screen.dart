@@ -247,7 +247,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             // Top Content Row: Dashboard Grid (Wallet & Referrals)
             _buildColoredInfoCard(
-              title: "My Wallet (Reward Pts)",
+              title: ComplianceUtils.isReviewMode ? "Asset Credits" : "My Wallet (Reward Pts)",
               value: "${_user['rewardBalance'] ?? 0} pts",
               buttonText: "View Rewards",
               icon: Icons.account_balance_wallet_outlined,
@@ -256,7 +256,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 12),
             _buildColoredInfoCard(
-              title: "Referral Rewards",
+              title: ComplianceUtils.isReviewMode ? "Network Hub" : "Referral Rewards",
               value: "New!",
               buttonText: "Open Referrals Hub",
               icon: Icons.card_giftcard_outlined,

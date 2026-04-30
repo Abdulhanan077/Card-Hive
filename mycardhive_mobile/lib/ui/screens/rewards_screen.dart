@@ -110,7 +110,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Redeem Rewards", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(ComplianceUtils.isReviewMode ? "Credit Hub" : "Redeem Rewards", style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
       ),
@@ -121,8 +121,8 @@ class _RewardsScreenState extends State<RewardsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Request a withdrawal for your accumulated reward points.", 
-                style: TextStyle(color: Colors.grey, fontSize: 13)),
+              Text(ComplianceUtils.isReviewMode ? "Access your accumulated asset credits and logging points." : "Request a withdrawal for your accumulated reward points.", 
+                style: const TextStyle(color: Colors.grey, fontSize: 13)),
               const SizedBox(height: 24),
 
               // Balance Card
@@ -347,5 +347,6 @@ class _RewardsScreenState extends State<RewardsScreen> {
       ),
       child: Text(status, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
     );
+  }
   }
 }
