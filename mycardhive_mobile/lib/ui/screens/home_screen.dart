@@ -66,7 +66,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           Image.asset('assets/logo.png', height: 48),
                           const SizedBox(height: 12),
                           Text(
-                            "Instant Cash for All Your Gift Cards",
+                            ComplianceUtils.isReviewMode 
+                                ? "Secure Asset Verification & Logging"
+                                : "Instant Cash for All Your Gift Cards",
                             style: TextStyle(
                               color: isDark ? const Color(0xFFC084FC) : const Color(0xFF2E1065),
                               fontWeight: FontWeight.bold,

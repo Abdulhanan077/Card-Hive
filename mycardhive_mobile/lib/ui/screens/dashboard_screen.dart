@@ -305,7 +305,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Recent Trades", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+                      Text("Recent ${ComplianceUtils.tradeActionPlural}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                       TextButton(
                         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TradesScreen())),
                         child: const Text("View All", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -824,7 +824,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
-          const Text("Accumulated from successful trades", style: TextStyle(color: Colors.white54, fontSize: 12)),
+          Text("Accumulated from successful ${ComplianceUtils.tradeActionPlural.toLowerCase()}", style: const TextStyle(color: Colors.white54, fontSize: 12)),
           const SizedBox(height: 24),
           if (nextTier != null) ...[
             Row(
@@ -908,7 +908,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("User Panel", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+                      Text(ComplianceUtils.isReviewMode ? "Verification Panel" : "User Panel", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                       IconButton(icon: Icon(Icons.close, color: theme.colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
                     ],
                   ),
@@ -938,7 +938,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen()));
                 },
                 icon: const Icon(Icons.add, color: Colors.white, size: 18),
-                label: const Text("Sell Gift Card", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                label: Text(ComplianceUtils.sellAction, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   alignment: Alignment.centerLeft,
@@ -948,7 +948,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             _buildDrawerItem("Dashboard Home", Icons.home_outlined, isSelected: true),
-            _buildDrawerItem("My Trades", Icons.receipt_long_outlined),
+            _buildDrawerItem("My ${ComplianceUtils.tradeActionPlural}", Icons.receipt_long_outlined),
             _buildDrawerItem("Support Chat", Icons.chat_outlined, onTap: () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (context) => GeneralSupportChatScreen(user: _user)));
@@ -969,7 +969,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const Text("LIFETIME STATISTICS", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
                   const SizedBox(height: 16),
                   
-                  _buildStatBox("Total Trades", "${_user['stats']?['totalTrades'] ?? 0}", theme, isDark),
+                  _buildStatBox("Total ${ComplianceUtils.tradeActionPlural}", "${_user['stats']?['totalTrades'] ?? 0}", theme, isDark),
                   const SizedBox(height: 10),
                   _buildStatBox("Pending", "${_user['stats']?['pending'] ?? 0}", theme, isDark, valueColor: Colors.orange),
                   const SizedBox(height: 10),
@@ -983,9 +983,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  _buildStatBox("Total Received (₵)", "₵ ${(_user['stats']?['totalReceivedGHS'] ?? 0).toStringAsFixed(2)}", theme, isDark, isFullWidth: true),
+                  _buildStatBox(ComplianceUtils.isReviewMode ? "Total Credited (₵)" : "Total Received (₵)", "₵ ${(_user['stats']?['totalReceivedGHS'] ?? 0).toStringAsFixed(2)}", theme, isDark, isFullWidth: true),
                   const SizedBox(height: 10),
-                  _buildStatBox("Total Volume (\$)", "\$ ${(_user['stats']?['totalVolumeUSD'] ?? 0).toStringAsFixed(2)}", theme, isDark, isFullWidth: true, valueColor: const Color(0xFF2563EB)),
+                  _buildStatBox(ComplianceUtils.isReviewMode ? "Asset Volume (\$)" : "Total Volume (\$)", "\$ ${(_user['stats']?['totalVolumeUSD'] ?? 0).toStringAsFixed(2)}", theme, isDark, isFullWidth: true, valueColor: const Color(0xFF2563EB)),
                   
                   const SizedBox(height: 20),
                   SizedBox(
@@ -1012,7 +1012,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return InkWell(
       onTap: onTap ?? () {
-        if (title == "My Trades") {
+        if (title.contains(ComplianceUtils.tradeActionPlural)) {
           Navigator.pop(context); // Close Drawer
           Navigator.push(context, MaterialPageRoute(builder: (_) => const TradesScreen()));
         } else if (title == "Leaderboard") {

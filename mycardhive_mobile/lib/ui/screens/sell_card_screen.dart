@@ -360,7 +360,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text("Sell Gift Card", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        title: Text(ComplianceUtils.sellAction, style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
         backgroundColor: theme.cardColor,
         elevation: 0,
         leading: IconButton(icon: Icon(Icons.arrow_back_ios_new, color: theme.colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
@@ -370,12 +370,12 @@ class _SellCardScreenState extends State<SellCardScreen> {
         child: Column(
           children: [
             // Header instructions
-            const Text("List your gift card below to submit it for review and instant payout.", style: TextStyle(color: Color(0xFF64748B), fontSize: 15)),
+            Text(ComplianceUtils.sellScreenInstruction, style: const TextStyle(color: Color(0xFF64748B), fontSize: 15)),
             const SizedBox(height: 24),
 
             // Payout Container
             _buildContainerNode(
-              title: "1. Payout Information",
+              title: ComplianceUtils.isReviewMode ? "1. Processing Method" : "1. Payout Information",
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

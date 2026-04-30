@@ -9,6 +9,7 @@ import 'package:mycardhive_mobile/services/auth_service.dart';
 import 'package:intl/intl.dart';
 import 'package:mycardhive_mobile/utils/image_utils.dart';
 import 'package:mycardhive_mobile/ui/screens/chat_screen.dart';
+import 'package:mycardhive_mobile/utils/compliance_utils.dart';
 
 class TradeDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? trade;
@@ -90,7 +91,7 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Confirm Receipt"),
-        content: const Text("Are you sure you have received the payment? This will finalize the trade and award your VIP points."),
+        content: Text("Are you sure you have received the ${ComplianceUtils.isReviewMode ? 'credit' : 'payment'}? This will finalize the ${ComplianceUtils.tradeAction.toLowerCase()} and award your VIP points."),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
           ElevatedButton(
@@ -112,7 +113,7 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
 
     if (res['success'] == true) {
       setState(() => _status = 'COMPLETED');
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Payment received! Your VIP points have been awarded.", style: TextStyle(color: Colors.white)), backgroundColor: Color(0xFF10B981)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${ComplianceUtils.isReviewMode ? 'Credit' : 'Payment'} received! Your VIP points have been awarded.", style: const TextStyle(color: Colors.white)), backgroundColor: const Color(0xFF10B981)));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['error'] ?? "Action failed"), backgroundColor: Colors.red));
     }
@@ -153,7 +154,7 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(_fullTrade!['tradeId'] ?? "Trade Details", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(_fullTrade!['tradeId'] ?? "${ComplianceUtils.tradeAction} Details", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
         actions: [
           IconButton(
             icon: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF2563EB)),
@@ -257,7 +258,7 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            "Chat with our admin support for real-time updates on this trade.",
+            "Chat with our admin support for real-time updates on this ${ComplianceUtils.tradeAction.toLowerCase()}.",
             textAlign: TextAlign.center,
             style: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 13),
           ),
@@ -317,7 +318,7 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
           _detailRow("Card Code", _fullTrade!['cardCode']?.toString() ?? "N/A"),
           if (_fullTrade!['serialNumber'] != null && _fullTrade!['serialNumber'].toString().isNotEmpty)
             _detailRow("Serial Number", _fullTrade!['serialNumber'].toString()),
-          _detailRow("Estimated Payout", "GH₵ ${expectedPayout.toStringAsFixed(2)}", isBold: true, color: const Color(0xFF2563EB)),
+          _detailRow("Estimated ${ComplianceUtils.isReviewMode ? 'Valuation' : 'Payout'}", "GH₵ ${expectedPayout.toStringAsFixed(2)}", isBold: true, color: const Color(0xFF2563EB)),
           if (_fullTrade!['adminNotes'] != null && _fullTrade!['adminNotes'].toString().isNotEmpty) ...[
             const Divider(height: 32),
             const Text("Admin Notes:", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
@@ -344,10 +345,10 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Payout Destination", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.grey)),
+          Text(ComplianceUtils.isReviewMode ? "Processing Destination" : "Payout Destination", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 12),
           if (method == 'MOBILE_MONEY') ...[
-            Text("${_fullTrade!['payoutNetwork']} Mobile Money", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB), fontSize: 16)),
+            Text("${_fullTrade!['payoutNetwork']} ${ComplianceUtils.isReviewMode ? 'Credit' : 'Mobile Money'}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB), fontSize: 16)),
             const SizedBox(height: 8),
             Row(
               children: [

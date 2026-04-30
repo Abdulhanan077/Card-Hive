@@ -50,7 +50,7 @@ class TradeSuccessScreen extends StatelessWidget {
               
               // Title
               Text(
-                "Trade Submitted Successfully!",
+                "${ComplianceUtils.tradeAction} Submitted Successfully!",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24,
@@ -93,7 +93,7 @@ class TradeSuccessScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Trade Summary",
+                      "${ComplianceUtils.tradeAction} Summary",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -135,7 +135,7 @@ class TradeSuccessScreen extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: const Text(
-                    "View My Trades",
+                    "View My ${ComplianceUtils.tradeActionPlural}",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ),

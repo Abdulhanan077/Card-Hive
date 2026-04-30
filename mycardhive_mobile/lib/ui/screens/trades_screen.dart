@@ -87,7 +87,7 @@ class _TradesScreenState extends State<TradesScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text("My Trades", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        title: Text("My ${ComplianceUtils.tradeActionPlural}", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
         backgroundColor: theme.cardColor,
         elevation: 1,
         centerTitle: true,
