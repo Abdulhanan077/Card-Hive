@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
 import 'package:mycardhive_mobile/utils/error_utils.dart';
 import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
+import 'package:mycardhive_mobile/utils/compliance_utils.dart';
 
 
 class SettingsScreen extends StatefulWidget {

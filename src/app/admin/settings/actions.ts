@@ -14,6 +14,8 @@ export async function saveSettings(formData: FormData) {
         }
     });
 
+    // Handle Review Mode boolean
+    data.isReviewMode = formData.get("isReviewMode") === "on";
 
     const refBonusStr = formData.get("referralBonusPercentage") as string;
     const refBonus = refBonusStr ? parseFloat(refBonusStr) : undefined;

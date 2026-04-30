@@ -18,9 +18,9 @@ export default function TradingSafetyPage() {
   return (
     <>
       <Header />
-      <LegalLayout 
-        title="Trading Safety & Protection" 
-        lastUpdated="April 19, 2026" 
+      <LegalLayout
+        title="Trading Safety & Protection"
+        lastUpdated="April 19, 2026"
         toc={toc}
       >
         <section id="principles">

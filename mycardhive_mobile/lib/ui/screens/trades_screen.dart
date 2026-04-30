@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mycardhive_mobile/services/trade_service.dart';
 import 'package:mycardhive_mobile/ui/screens/trade_details_screen.dart';
+import 'package:mycardhive_mobile/utils/compliance_utils.dart';
 
 class TradesScreen extends StatefulWidget {
   const TradesScreen({super.key});

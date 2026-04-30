@@ -8,6 +8,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 export default function ClientSettingsForm({ settings }: { settings: any }) {
     const { showNotification } = useNotification();
     const [loading, setLoading] = useState(false);
+    const [isReviewMode, setIsReviewMode] = useState(settings?.isReviewMode || false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -28,6 +29,43 @@ export default function ClientSettingsForm({ settings }: { settings: any }) {
 
     return (
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <div className="card" style={{ padding: '1.5rem', border: '1px solid var(--border)', background: 'var(--card-bg)' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#2563eb' }}>
+                    <span>🛡️</span> Compliance & App Store Review
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                    Enable this during Apple/Google review to hide trading features and external links.
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: isReviewMode ? 'rgba(37, 99, 235, 0.08)' : 'rgba(0,0,0,0.02)', borderRadius: '8px', border: '1px solid', borderColor: isReviewMode ? '#2563eb' : 'transparent', transition: 'all 0.3s ease' }}>
+                    <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '50px', height: '26px' }}>
+                        <input 
+                            type="checkbox" 
+                            name="isReviewMode" 
+                            checked={isReviewMode}
+                            onChange={(e) => setIsReviewMode(e.target.checked)}
+                            style={{ opacity: 0, width: 0, height: 0 }}
+                        />
+                        <span className="slider round" style={{ 
+                            position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, 
+                            backgroundColor: isReviewMode ? '#2563eb' : '#cbd5e1', transition: '.4s', borderRadius: '34px' 
+                        }}>
+                            <span style={{
+                                position: 'absolute', content: '""', height: '18px', width: '18px', left: isReviewMode ? '28px' : '4px', bottom: '4px',
+                                backgroundColor: 'white', transition: '.4s', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}></span>
+                        </span>
+                    </label>
+                    <div onClick={() => setIsReviewMode(!isReviewMode)} style={{ cursor: 'pointer', flex: 1 }}>
+                        <span style={{ fontWeight: 'bold', display: 'block', fontSize: '0.95rem', color: isReviewMode ? '#2563eb' : 'var(--text)' }}>
+                            {isReviewMode ? "Review Mode Active" : "Review Mode Inactive"}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            Terminology: {isReviewMode ? "Verification & Assets" : "Standard Trading"}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
             <div className="card" style={{ padding: '1.5rem' }}>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span>🌓</span> Application Appearance

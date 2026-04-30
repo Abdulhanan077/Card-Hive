@@ -69,6 +69,12 @@ class CacheService {
     return json.decode(data);
   }
 
+  static bool isReviewMode() {
+    final settings = getCachedSiteSettings();
+    if (settings == null) return false;
+    return settings['isReviewMode'] == true;
+  }
+
   // --- Trade History ---
   static Future<void> cacheTrades(List<Map<String, dynamic>> data) async {
     final box = Hive.box(tradesBoxName);

@@ -92,7 +92,7 @@ export default async function Home() {
               </div>
               <h2>Take MyCardHive Everywhere.</h2>
               <p>
-                Download our official Android app for a faster trading experience, 
+                Download our official Android app for a faster trading experience,
                 instant push notifications, and biometric security.
               </p>
               <div className={styles.appActions}>
@@ -109,11 +109,11 @@ export default async function Home() {
               </div>
             </div>
             <div className={styles.appVisual}>
-               <div className={styles.phoneMockup}>
-                  <div className={styles.phoneScreen}>
-                     <img src="/logo.png" alt="App Preview" style={{ width: '100px', opacity: 0.2 }} />
-                  </div>
-               </div>
+              <div className={styles.phoneMockup}>
+                <div className={styles.phoneScreen}>
+                  <img src="/logo.png" alt="App Preview" style={{ width: '100px', opacity: 0.2 }} />
+                </div>
+              </div>
             </div>
           </div>
         </section>

@@ -28,6 +28,7 @@ import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:mycardhive_mobile/utils/vip_tiers.dart';
+import 'package:mycardhive_mobile/utils/compliance_utils.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -276,10 +277,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                    Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildQuickAction(Icons.credit_card, "Sell Card", const Color(0xFF9333EA), theme, isDark, onTap: () {
+                      _buildQuickAction(ComplianceUtils.sellIcon, ComplianceUtils.sellAction, const Color(0xFF9333EA), theme, isDark, onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen()));
                       }),
-                      _buildQuickAction(Icons.bar_chart, "History", const Color(0xFF16A34A), theme, isDark, onTap: () {
+                      _buildQuickAction(ComplianceUtils.historyIcon, ComplianceUtils.tradeActionPlural, const Color(0xFF16A34A), theme, isDark, onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const TradesScreen()));
                       }),
                       _buildQuickAction(Icons.settings, "Settings", const Color(0xFF0284C7), theme, isDark, onTap: () {
@@ -337,7 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Text("Top Rates Today", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                       TextButton(
                         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SellCardScreen())),
-                        child: const Text("Trade Now", style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(ComplianceUtils.isReviewMode ? "View Rates" : "Trade Now", style: const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -360,29 +361,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                    Text("Support", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                    const SizedBox(height: 16),
-                   _buildSupportButton(
-                     icon: Icons.chat_outlined,
-                     title: "WhatsApp Support",
-                     subtitle: _siteSettings['whatsappNumber'] ?? "+233 201548030",
-                     color: const Color(0xFF10B981),
-                     onTap: () => launchUrl(Uri.parse("https://wa.me/${(_siteSettings['whatsappNumber'] ?? '233201548030').replaceAll('+', '').replaceAll(' ', '')}")),
-                   ),
-                   const SizedBox(height: 12),
-                   _buildSupportButton(
-                     icon: Icons.mail_outline_rounded,
-                     title: "Email Support",
-                     subtitle: _siteSettings['contactEmail'] ?? "support@mycardhive.com",
-                     color: const Color(0xFF2563EB),
-                     onTap: () => launchUrl(Uri.parse("mailto:${_siteSettings['contactEmail'] ?? 'support@mycardhive.com'}")),
-                   ),
-                   const SizedBox(height: 12),
-                   _buildSupportButton(
-                     icon: Icons.public_rounded,
-                     title: "Website Support",
-                     subtitle: "Visit our contact page",
-                     color: const Color(0xFF6366F1),
-                     onTap: () => launchUrl(Uri.parse("${AppConfig.baseUrl.replaceFirst('/api', '')}/contact")),
-                   ),
+                    if (!ComplianceUtils.isReviewMode) ...[
+                      _buildSupportButton(
+                        icon: Icons.chat_outlined,
+                        title: "WhatsApp Support",
+                        subtitle: _siteSettings['whatsappNumber'] ?? "+233 201548030",
+                        color: const Color(0xFF10B981),
+                        onTap: () => launchUrl(Uri.parse("https://wa.me/${(_siteSettings['whatsappNumber'] ?? '233201548030').replaceAll('+', '').replaceAll(' ', '')}")),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildSupportButton(
+                        icon: Icons.mail_outline_rounded,
+                        title: "Email Support",
+                        subtitle: _siteSettings['contactEmail'] ?? "support@mycardhive.com",
+                        color: const Color(0xFF2563EB),
+                        onTap: () => launchUrl(Uri.parse("mailto:${_siteSettings['contactEmail'] ?? 'support@mycardhive.com'}")),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildSupportButton(
+                        icon: Icons.public_rounded,
+                        title: "Website Support",
+                        subtitle: "Visit our contact page",
+                        color: const Color(0xFF6366F1),
+                        onTap: () => launchUrl(Uri.parse("${AppConfig.baseUrl.replaceFirst('/api', '')}/contact")),
+                      ),
+                    ] else ...[
+                      _buildSupportButton(
+                        icon: Icons.support_agent_rounded,
+                        title: "In-App Support",
+                        subtitle: "Chat with our agents",
+                        color: const Color(0xFF2563EB),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => GeneralSupportChatScreen(user: _user))),
+                      ),
+                    ],
                 ],
               ),
             ),

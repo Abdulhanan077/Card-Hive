@@ -104,6 +104,7 @@ export async function POST(request: Request) {
                 referralBonusPercentage: true,
                 rewardPointsToGhs: true,
                 usdtExchangeRate: true,
+                isReviewMode: true,
             }
         });
 
@@ -125,6 +126,7 @@ export async function POST(request: Request) {
                 referralBonusPercentage: 1.5,
                 rewardPointsToGhs: 100.0,
                 usdtExchangeRate: 15.0,
+                isReviewMode: false,
             }
         }, { status: 200 });
 

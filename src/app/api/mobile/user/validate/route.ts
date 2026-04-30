@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
     try {
         const session = await getServerSession(authOptions);
-        
+
         if (!session?.user) {
             return new NextResponse(
                 JSON.stringify({ error: "Unauthorized" }),
@@ -68,6 +68,7 @@ export async function GET() {
                 referralBonusPercentage: true,
                 rewardPointsToGhs: true,
                 usdtExchangeRate: true,
+                isReviewMode: true,
             }
         });
 
@@ -90,6 +91,7 @@ export async function GET() {
                 referralBonusPercentage: 1.5,
                 rewardPointsToGhs: 100.0,
                 usdtExchangeRate: 15.0,
+                isReviewMode: false,
             }
         });
 

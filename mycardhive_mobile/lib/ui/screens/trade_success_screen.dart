@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/ui/screens/trades_screen.dart';
+import 'package:mycardhive_mobile/utils/compliance_utils.dart';
 
 class TradeSuccessScreen extends StatelessWidget {
   final String tradeId;

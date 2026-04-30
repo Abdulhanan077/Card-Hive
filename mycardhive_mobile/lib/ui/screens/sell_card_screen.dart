@@ -12,6 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:mycardhive_mobile/utils/permission_helper.dart';
 import 'package:mycardhive_mobile/ui/screens/trade_success_screen.dart';
 import 'package:mycardhive_mobile/ui/widgets/modern_dropdown.dart';
+import 'package:mycardhive_mobile/utils/compliance_utils.dart';
 
 class CardEntry {
   final String id;

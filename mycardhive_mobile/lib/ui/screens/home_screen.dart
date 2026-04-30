@@ -8,6 +8,7 @@ import 'package:mycardhive_mobile/ui/screens/signup_screen.dart';
 import 'package:mycardhive_mobile/models/rate.dart';
 import 'package:mycardhive_mobile/utils/error_utils.dart';
 import 'package:mycardhive_mobile/ui/screens/general_support_chat_screen.dart';
+import 'package:mycardhive_mobile/utils/compliance_utils.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -86,21 +87,24 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Divider(color: theme.dividerColor, thickness: 1, indent: 20, endIndent: 20),
               const SizedBox(height: 10),
-              _buildDrawerItem(context, 'Rates', () => _scrollTo(_ratesKey)),
-              _buildDrawerItem(context, 'How It Works', () => _scrollTo(_howItWorksKey)),
-              _buildDrawerItem(context, 'FAQ', () => _scrollTo(_howItWorksKey)), // Scopes to How it works for now
-              _buildDrawerItem(context, 'Check Balance', () {
-                Navigator.pop(context);
-                launchUrl(Uri.parse("https://mycardhive.com/check-balance"));
-              }),
+              if (!ComplianceUtils.isReviewMode) ...[
+                _buildDrawerItem(context, 'Rates', () => _scrollTo(_ratesKey)),
+                _buildDrawerItem(context, 'How It Works', () => _scrollTo(_howItWorksKey)),
+                _buildDrawerItem(context, 'FAQ', () => _scrollTo(_howItWorksKey)),
+                _buildDrawerItem(context, 'Check Balance', () {
+                  Navigator.pop(context);
+                  launchUrl(Uri.parse("https://mycardhive.com/check-balance"));
+                }),
+              ],
               _buildDrawerItem(context, 'Support Chat', () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const GeneralSupportChatScreen()));
               }),
-              _buildDrawerItem(context, 'Website Support', () {
-                Navigator.pop(context);
-                launchUrl(Uri.parse("https://mycardhive.com/contact"));
-              }),
+              if (!ComplianceUtils.isReviewMode)
+                _buildDrawerItem(context, 'Website Support', () {
+                  Navigator.pop(context);
+                  launchUrl(Uri.parse("https://mycardhive.com/contact"));
+                }),
               _buildDrawerItem(context, 'Login', () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));

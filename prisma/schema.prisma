@@ -157,6 +157,7 @@ model Settings {
   rewardPointsToGhs       Float  @default(100.0) // How much 100 Reward Points is worth in GHS
   usdtExchangeRate        Float  @default(15.0) // How much GHS is 1 USDT currently
   cryptoServiceFee        Float  @default(5.0) // Percentage fee for crypto payouts
+  isReviewMode            Boolean @default(false)
 }
 
 model CardRate {

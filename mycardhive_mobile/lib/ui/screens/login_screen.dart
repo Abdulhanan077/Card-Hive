@@ -8,6 +8,7 @@ import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/forgot_password_screen.dart';
 import 'package:mycardhive_mobile/services/biometric_service.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_home.dart';
+import 'package:mycardhive_mobile/utils/compliance_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
