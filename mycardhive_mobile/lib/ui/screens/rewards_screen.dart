@@ -348,5 +348,4 @@ class _RewardsScreenState extends State<RewardsScreen> {
       child: Text(status, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
     );
   }
-  }
 }
