@@ -45,7 +45,12 @@ export default function Footer() {
                             <li><Link href="/register" className="footer-link-item">Create Account</Link></li>
                             <li style={{ marginTop: '0.5rem' }}>
                                 <a href="https://pub-8f7cbf9bd50641448937a36053e003af.r2.dev/card-hive.apk" download className="footer-link-item" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
-                                    <span className="footer-icon-box">📲</span> Download App
+                                    <span className="footer-icon-box">🤖</span> Download Android
+                                </a>
+                            </li>
+                            <li style={{ marginTop: '0.5rem' }}>
+                                <a href="https://apps.apple.com/us/app/mycardhive/id6764374592" target="_blank" rel="noopener noreferrer" className="footer-link-item" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                                    <span className="footer-icon-box">🍏</span> Download iOS
                                 </a>
                             </li>
                         </ul>

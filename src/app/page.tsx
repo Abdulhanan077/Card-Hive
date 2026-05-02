@@ -92,20 +92,24 @@ export default async function Home() {
               </div>
               <h2>Take MyCardHive Everywhere.</h2>
               <p>
-                Download our official Android app for a faster trading experience,
+                Download our official mobile app for iOS or Android for a faster trading experience,
                 instant push notifications, and biometric security.
               </p>
-              <div className={styles.appActions}>
-                <a href="https://pub-8f7cbf9bd50641448937a36053e003af.r2.dev/card-hive.apk" download className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+              <div className={styles.appActions} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+                <a href="https://apps.apple.com/us/app/mycardhive/id6764374592" target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', minWidth: '180px' }}>
+                  <span style={{ fontSize: '1.4rem' }}>🍏</span>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.7rem', opacity: 0.8, lineHeight: 1 }}>Download on the</div>
+                    <div style={{ fontWeight: 'bold' }}>App Store</div>
+                  </div>
+                </a>
+                <a href="https://pub-8f7cbf9bd50641448937a36053e003af.r2.dev/card-hive.apk" download className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', minWidth: '180px', backgroundColor: 'var(--surface)', color: 'var(--foreground)' }}>
                   <span style={{ fontSize: '1.4rem' }}>🤖</span>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '0.7rem', opacity: 0.8, lineHeight: 1 }}>Download for</div>
                     <div style={{ fontWeight: 'bold' }}>Android APK</div>
                   </div>
                 </a>
-                <div style={{ marginTop: '1rem', fontSize: '0.85rem', opacity: 0.7 }}>
-                  * Version 1.0.0 (Latest Release)
-                </div>
               </div>
             </div>
             <div className={styles.appVisual}>

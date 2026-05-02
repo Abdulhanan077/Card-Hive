@@ -33,7 +33,10 @@ export default function Header() {
                         Check Balance
                     </Link>
                     <a href="https://pub-8f7cbf9bd50641448937a36053e003af.r2.dev/card-hive.apk" download className="nav-link" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
-                        App 🤖
+                        Android 🤖
+                    </a>
+                    <a href="https://apps.apple.com/us/app/mycardhive/id6764374592" target="_blank" rel="noopener noreferrer" className="nav-link" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                        iOS 🍏
                     </a>
                     {session ? (
                         <>
