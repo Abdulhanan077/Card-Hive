@@ -42,7 +42,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <label htmlFor="sidebar-toggle" className="sidebar-overlay"></label>
 
             <aside className="sidebar">
-                <div className="sidebar-header" style={{ borderBottom: '1px solid var(--border)', padding: '2rem 1.5rem' }}>
+                <div className="sidebar-header" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 900 }}>A</div>
@@ -51,21 +51,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                         <label htmlFor="sidebar-toggle" className="mobile-menu-btn" style={{ marginRight: 0, padding: 0 }} aria-label="Close menu">✕</label>
                     </div>
                 </div>
-                <nav className="sidebar-nav" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem' }}>
-                    <Link href="/admin" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                <nav className="sidebar-nav" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0.5rem 0' }}>
+                    <Link href="/admin" className="sidebar-link">
                         <HiOutlineHome size={20} />
                         Dashboard Home
                     </Link>
-                    <Link href="/admin/trades" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/trades" className="sidebar-link">
                         <HiOutlineClipboardList size={20} />
                         <span style={{ flex: 1 }}>Manage Trades</span>
                         <TradesCounter />
                     </Link>
-                    <Link href="/admin/users" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/users" className="sidebar-link">
                         <HiOutlineUsers size={20} />
                         Registered Users
                     </Link>
-                    <Link href="/admin/rewards" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/rewards" className="sidebar-link">
                         <HiOutlineGift size={20} />
                         <span style={{ flex: 1 }}>Reward Redemptions</span>
                         <RewardsCounter />
@@ -75,36 +75,36 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                         Settings & Tools
                     </div>
                     
-                    <Link href="/admin/rates" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/rates" className="sidebar-link">
                         <HiOutlineTrendingUp size={20} />
                         Manage Rates
                     </Link>
-                    <Link href="/admin/status-updates" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/status-updates" className="sidebar-link">
                         <HiOutlineRefresh size={20} />
                         Status Updates
                     </Link>
-                    <Link href="/admin/leaderboard" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/leaderboard" className="sidebar-link">
                         <FaTrophy size={18} />
                         Leaderboard
                     </Link>
-                    <Link href="/admin/support" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/support" className="sidebar-link">
                         <HiOutlineSupport size={20} />
                         <span style={{ flex: 1 }}>Live Support</span>
                         <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#ef4444' }}></div>
                     </Link>
-                    <Link href="/admin/settings" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/settings" className="sidebar-link">
                         <HiOutlineCog size={20} />
                         Site Settings
                     </Link>
-                    <Link href="/admin/logins" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/logins" className="sidebar-link">
                         <HiOutlineShieldCheck size={20} />
                         Security Logs
                     </Link>
-                    <Link href="/admin/balance-checkers" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/balance-checkers" className="sidebar-link">
                         <HiOutlineCurrencyDollar size={20} />
                         Balance Checkers
                     </Link>
-                    <Link href="/admin/visitors" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                    <Link href="/admin/visitors" className="sidebar-link">
                         <HiOutlineEye size={20} />
                         Visitor Analytics
                     </Link>
