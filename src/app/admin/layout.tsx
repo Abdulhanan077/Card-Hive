@@ -22,7 +22,8 @@ import {
     HiOutlineSupport, 
     HiOutlineCog, 
     HiOutlineShieldCheck,
-    HiOutlineCurrencyDollar 
+    HiOutlineCurrencyDollar,
+    HiOutlineEye
 } from "react-icons/hi";
 import { FaTrophy } from "react-icons/fa";
 
@@ -102,6 +103,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     <Link href="/admin/balance-checkers" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
                         <HiOutlineCurrencyDollar size={20} />
                         Balance Checkers
+                    </Link>
+                    <Link href="/admin/visitors" className="sidebar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px' }}>
+                        <HiOutlineEye size={20} />
+                        Visitor Analytics
                     </Link>
 
                     <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)', marginBottom: '1rem' }}>

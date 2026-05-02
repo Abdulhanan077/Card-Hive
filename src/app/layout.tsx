@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import SupportChat from "@/components/SupportChat";
+import VisitorTracker from "@/components/VisitorTracker";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,6 +35,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <Providers>
+          <VisitorTracker />
           {children}
           <SupportChat />
         </Providers>
