@@ -38,18 +38,19 @@ export async function trackVisitor(path: string) {
     else if (/android/i.test(userAgent)) os = "Android";
     else if (/ios|iphone|ipad/i.test(userAgent)) os = "iOS";
 
-    // Optional: avoid duplicate tracking for the same IP + Path within a short timeframe (e.g. 5 minutes)
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    // Only track 1 visit per IP address per day
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    
     const existing = await prisma.visitorLog.findFirst({
         where: {
             ipAddress,
-            path,
-            createdAt: { gte: fiveMinutesAgo }
+            createdAt: { gte: todayStart }
         }
     });
 
     if (existing) {
-        return { success: true, message: "Already tracked recently" };
+        return { success: true, message: "Already tracked today" };
     }
 
     await prisma.visitorLog.create({
