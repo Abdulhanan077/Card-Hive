@@ -11,7 +11,7 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.mycardhive.trading
-      flutter: stable
+      flutter: 3.22.0
       xcode: latest
     scripts:
       - name: Get Flutter packages
