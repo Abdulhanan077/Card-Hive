@@ -7,7 +7,6 @@ workflows:
     max_build_duration: 120
     environment:
       groups:
-        - firebase
         - shorebird
       ios_signing:
         distribution_type: app_store
