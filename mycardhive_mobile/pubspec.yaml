@@ -14,7 +14,7 @@ dependencies:
 
   # --- Necessary Plugins for MyCardHive ---
   cupertino_icons: ^1.0.8
-  google_fonts: ^7.0.0
+  google_fonts: ^6.2.0
   http: ^1.2.1
   dio: ^5.4.3
   provider: ^6.1.2
