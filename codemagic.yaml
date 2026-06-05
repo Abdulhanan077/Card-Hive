@@ -11,7 +11,7 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.mycardhive.trading
-      flutter: 3.22.0
+      flutter: 3.22.2
       xcode: latest
     scripts:
       - name: Get Flutter packages
@@ -35,7 +35,7 @@ workflows:
           export PATH="$HOME/.shorebird/bin:$PATH"
           
           cd mycardhive_mobile
-          shorebird release ios --export-options-plist=/Users/builder/export_options.plist --flutter-version=3.22.0
+          shorebird release ios --export-options-plist=/Users/builder/export_options.plist --flutter-version=3.22.2
     artifacts:
       - mycardhive_mobile/build/ios/ipa/*.ipa
     publishing:
