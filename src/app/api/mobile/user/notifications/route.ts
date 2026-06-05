@@ -79,14 +79,17 @@ export async function GET(request: Request) {
                 time: m.createdAt,
                 data: { tradeId: m.trade.id.toString() }
             })),
-            ...statusUpdates.map(s => ({
-                id: `status-${s.id}-${s.status}`,
-                type: 'STATUS',
-                title: `Trade ${s.status}`,
-                body: `Your ${s.cardBrand} trade (${s.tradeId}) is now ${s.status}.`,
-                time: s.updatedAt,
-                data: { tradeId: s.id.toString() }
-            }))
+            ...statusUpdates.map(s => {
+                const displayStatus = s.status === 'UNDER_REVIEW' ? 'Processing...' : s.status.replaceAll('_', ' ');
+                return ({
+                    id: `status-${s.id}-${s.status}`,
+                    type: 'STATUS',
+                    title: `Trade ${displayStatus}`,
+                    body: `Your ${s.cardBrand} trade (${s.tradeId}) is now ${displayStatus}.`,
+                    time: s.updatedAt,
+                    data: { tradeId: s.id.toString() }
+                });
+            })
         ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
         return NextResponse.json({ 

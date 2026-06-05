@@ -150,8 +150,9 @@ export async function updateBatchStatusAction(formData: FormData, pageTradeId: s
             const distinctUsers = Array.from(new Set(tradesToUpdate.map(t => t.user)));
             for (const user of distinctUsers) {
                 if (user.fcmToken) {
-                    const title = `Trade ${status.replaceAll('_', ' ')}`;
-                    const body = `Your trade (${firstTrade.tradeId}${tradesToUpdate.length > 1 ? ' and others' : ''}) is now ${status.replaceAll('_', ' ')}.`;
+                    const displayStatus = status === 'UNDER_REVIEW' ? 'Processing...' : status.replaceAll('_', ' ');
+                    const title = `Trade ${displayStatus}`;
+                    const body = `Your trade (${firstTrade.tradeId}${tradesToUpdate.length > 1 ? ' and others' : ''}) is now ${displayStatus}.`;
                     await sendFcmNotification(user.fcmToken, title, body, {
                         type: 'STATUS_UPDATE',
                         tradeId: firstTrade.id.toString(),

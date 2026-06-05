@@ -31,11 +31,16 @@ class StatusPollingService {
           );
 
           if (oldTrade.isNotEmpty && oldTrade['status'] != trade['status']) {
-            // Status changed!
+            // Status changed! Show a friendly display label
+            final rawStatus = trade['status'] as String? ?? '';
+            final displayStatus = rawStatus == 'UNDER_REVIEW'
+                ? 'Processing...'
+                : rawStatus.replaceAll('_', ' ');
+
             NotificationService.showNotification(
               id: trade['id'] ?? DateTime.now().millisecondsSinceEpoch % 10000,
-              title: "Trade Update",
-              body: "Trade ${trade['tradeId']} is now ${trade['status']}.",
+              title: "Trade $displayStatus",
+              body: "Your ${trade['cardBrand'] ?? ''} trade (${trade['tradeId']}) is now $displayStatus.",
             );
           }
         }

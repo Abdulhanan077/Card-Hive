@@ -97,21 +97,39 @@ class CategoryUtils {
       
       final activeKeywords = keywords.isNotEmpty ? keywords : rawKeywords;
 
-      final synonymMap = {
+      // Currency code → expanded name (used to enrich the fullString so that
+      // "canada", "australian" etc. match directly without relying on synonyms alone)
+      const currencyExpansions = <String, String>{
+        'usd': 'us dollars united states america',
+        'gbp': 'british pounds uk united kingdom england',
+        'eur': 'euros europe',
+        'aud': 'australian dollars australia',
+        'cad': 'canadian dollars canada',
+        'chf': 'swiss francs switzerland',
+      };
+
+      final synonymMap = <String, List<String>>{
         'us': ['usd', 'us dollars', 'united states', 'america'],
         'usa': ['usd', 'us dollars', 'united states', 'america'],
         'america': ['usd', 'us dollars', 'united states', 'america'],
+        'usd': ['usd', 'us dollars', 'united states'],
         'aus': ['aud', 'australian dollars', 'australia'],
         'australia': ['aud', 'australian dollars', 'australia'],
+        'australian': ['aud', 'australian dollars', 'australia'],
+        'aud': ['aud', 'australian dollars', 'australia'],
         'can': ['cad', 'canadian dollars', 'canada'],
         'canada': ['cad', 'canadian dollars', 'canada'],
+        'canadian': ['cad', 'canadian dollars', 'canada'],
+        'cad': ['cad', 'canadian dollars', 'canada'],
         'uk': ['gbp', 'british pounds', 'pound', 'pounds', 'british', 'england'],
         'gb': ['gbp', 'british pounds', 'pound', 'pounds', 'british', 'england'],
         'england': ['gbp', 'british pounds', 'pound', 'pounds', 'british', 'england'],
+        'british': ['gbp', 'british pounds'],
         'pound': ['gbp', 'british pounds'],
         'pounds': ['gbp', 'british pounds'],
+        'gbp': ['gbp', 'british pounds'],
         'eu': ['eur', 'euros', 'euro', 'europe', 'germany', 'france', 'austria', 'italy', 'spain'],
-        'eur': ['eur', 'euros', 'euro', 'europe', 'germany', 'france', 'austria', 'italy', 'spain'],
+        'eur': ['eur', 'euros', 'euro', 'europe'],
         'euro': ['eur', 'euros', 'europe'],
         'euros': ['eur', 'euros', 'europe'],
         'europe': ['eur', 'euros', 'europe'],
@@ -122,15 +140,23 @@ class CategoryUtils {
         'switzerland': ['chf', 'swiss francs', 'switzerland'],
         'franc': ['chf', 'swiss francs'],
         'francs': ['chf', 'swiss francs'],
+        'chf': ['chf', 'swiss francs'],
       };
 
       final scoredItems = result.map((r) {
         double score = 0;
+        int matchedKeywords = 0;
         final brand = (r['cardBrand'] ?? "").toString().toLowerCase();
         final country = (r['cardCountry'] ?? "").toString().toLowerCase();
         final type = (r['cardType'] ?? "Physical").toString().toLowerCase();
 
-        final fullString = "$brand $type $country";
+        // Enrich fullString with expanded currency names so "canada", "australian"
+        // etc. match directly. e.g. "CAD ($50)" → adds "canadian dollars canada"
+        final currencyCode = country.split(' ').first;
+        final expansion = currencyExpansions[currencyCode] ?? '';
+
+        // Full string: "apple/itunes physical cad ($50) canadian dollars canada"
+        final fullString = "$brand $type $country $expansion";
 
         for (final kw in activeKeywords) {
           var matchesKw = false;
@@ -151,13 +177,16 @@ class CategoryUtils {
 
           if (matchesKw) {
             score += 1.0;
+            matchedKeywords += 1;
           }
         }
 
-        return _ScoredItem(r, score);
+        return _ScoredItem(r, score, matchedKeywords);
       }).toList();
 
-      scoredItems.retainWhere((item) => item.score > 0);
+      // Only keep items that match ALL keywords (strict AND logic)
+      // This ensures "apple canada" shows only Apple CAD, not Apple USD/EUR etc.
+      scoredItems.retainWhere((item) => item.matchedKeywords >= activeKeywords.length);
       scoredItems.sort((a, b) {
         if (b.score != a.score) {
           return b.score.compareTo(a.score);
@@ -209,5 +238,6 @@ class CategoryUtils {
 class _ScoredItem {
   final dynamic rate;
   final double score;
-  _ScoredItem(this.rate, this.score);
+  final int matchedKeywords;
+  _ScoredItem(this.rate, this.score, this.matchedKeywords);
 }

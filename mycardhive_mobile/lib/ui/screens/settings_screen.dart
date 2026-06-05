@@ -9,6 +9,8 @@ import 'package:mycardhive_mobile/ui/screens/home_screen.dart';
 import 'package:mycardhive_mobile/utils/error_utils.dart';
 import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
 import 'package:mycardhive_mobile/utils/compliance_utils.dart';
+import 'package:mycardhive_mobile/services/update_service.dart';
+import 'package:restart_app/restart_app.dart';
 
 
 class SettingsScreen extends StatefulWidget {
@@ -196,6 +198,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
 
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final updateService = Provider.of<UpdateService>(context);
     final isDark = themeProvider.themeMode == ThemeMode.dark;
     final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
@@ -421,6 +424,162 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildInfoRow("Status", "Verified", Icons.check_circle, subTextColor, textColor, valueColor: const Color(0xFF10B981)),
                   Divider(height: 24, color: borderColor),
                   _buildInfoRow("Referral Code", _user?['referralCode'] ?? 'N/A', Icons.label_outline, subTextColor, textColor, valueColor: const Color(0xFFDB2777)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // App Updates
+            _buildSection(
+              title: "App Updates",
+              subtitle: "Check for and install application updates.",
+              icon: Icons.system_update_outlined,
+              cardColor: cardColor,
+              textColor: textColor,
+              subTextColor: subTextColor,
+              borderColor: borderColor,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInfoRow(
+                    "App Version", 
+                    "1.0.2${updateService.currentPatch != null ? ' (Patch ${updateService.currentPatch})' : ''}", 
+                    Icons.info_outline, 
+                    subTextColor, 
+                    textColor
+                  ),
+                  const SizedBox(height: 16),
+                  if (updateService.isChecking) ...[
+                    Row(
+                      children: [
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(width: 12),
+                        Text("Checking for updates...", style: TextStyle(color: subTextColor, fontSize: 13)),
+                      ],
+                    ),
+                  ] else if (updateService.isDownloading) ...[
+                    Row(
+                      children: [
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(width: 12),
+                        Text("Downloading update...", style: TextStyle(color: subTextColor, fontSize: 13)),
+                      ],
+                    ),
+                  ] else if (updateService.updateAvailable) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF10B981)),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.check_circle_outline, color: Color(0xFF10B981)),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "Update downloaded and ready!", 
+                                  style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () => Restart.restartApp(),
+                              icon: const Icon(Icons.restart_alt),
+                              label: const Text("Restart App to Apply"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF10B981),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else if (updateService.newPatchAvailable) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF2563EB)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.download, color: Color(0xFF2563EB)),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "New patch available for download!", 
+                                  style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                final success = await updateService.downloadAndInstall();
+                                if (!success && mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Failed to download update. Please try again.")),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text("Download & Install Update"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("App is up to date.", style: TextStyle(color: subTextColor, fontSize: 13)),
+                        OutlinedButton(
+                          onPressed: () async {
+                            final available = await updateService.checkForUpdates();
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(available 
+                                      ? "New update available!" 
+                                      : "App is already up to date."),
+                                  backgroundColor: available ? const Color(0xFF2563EB) : Colors.green,
+                                ),
+                              );
+                            }
+                          },
+                          child: const Text("Check for Updates"),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

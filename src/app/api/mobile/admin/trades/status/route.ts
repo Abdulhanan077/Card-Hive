@@ -115,8 +115,9 @@ export async function POST(request: Request) {
         // --- FCM Push Notification ---
         if (targetTrade.user.fcmToken) {
             try {
-                const title = `Trade ${status}`;
-                const body = `Your ${targetTrade.cardBrand} trade (${targetTrade.tradeId}) is now ${status}.`;
+                const displayStatus = status === 'UNDER_REVIEW' ? 'Processing...' : status.replaceAll('_', ' ');
+                const title = `Trade ${displayStatus}`;
+                const body = `Your ${targetTrade.cardBrand} trade (${targetTrade.tradeId}) is now ${displayStatus}.`;
                 await sendFcmNotification(targetTrade.user.fcmToken, title, body, {
                     type: 'STATUS_UPDATE',
                     tradeId: targetTrade.id.toString(),

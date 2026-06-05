@@ -218,22 +218,39 @@ export function searchAndSortRates<T extends {
         // If all keywords were filler words, fall back to using the raw keywords
         const activeKeywords = keywords.length > 0 ? keywords : rawKeywords;
 
+        // Currency code → expanded name mapping (used to enrich fullString)
+        const currencyExpansions: Record<string, string> = {
+            usd: "us dollars united states america",
+            gbp: "british pounds uk united kingdom england",
+            eur: "euros europe",
+            aud: "australian dollars australia",
+            cad: "canadian dollars canada",
+            chf: "swiss francs switzerland",
+        };
+
         // Currency synonyms mapping
         const synonymMap: Record<string, string[]> = {
             us: ["usd", "us dollars", "united states", "america"],
             usa: ["usd", "us dollars", "united states", "america"],
             america: ["usd", "us dollars", "united states", "america"],
+            usd: ["usd", "us dollars", "united states"],
             aus: ["aud", "australian dollars", "australia"],
             australia: ["aud", "australian dollars", "australia"],
+            australian: ["aud", "australian dollars", "australia"],
+            aud: ["aud", "australian dollars", "australia"],
             can: ["cad", "canadian dollars", "canada"],
             canada: ["cad", "canadian dollars", "canada"],
+            canadian: ["cad", "canadian dollars", "canada"],
+            cad: ["cad", "canadian dollars", "canada"],
             uk: ["gbp", "british pounds", "pound", "pounds", "british", "england"],
             gb: ["gbp", "british pounds", "pound", "pounds", "british", "england"],
             england: ["gbp", "british pounds", "pound", "pounds", "british", "england"],
+            british: ["gbp", "british pounds"],
             pound: ["gbp", "british pounds"],
             pounds: ["gbp", "british pounds"],
+            gbp: ["gbp", "british pounds"],
             eu: ["eur", "euros", "euro", "europe", "germany", "france", "austria", "italy", "spain"],
-            eur: ["eur", "euros", "euro", "europe", "germany", "france", "austria", "italy", "spain"],
+            eur: ["eur", "euros", "euro", "europe"],
             euro: ["eur", "euros", "europe"],
             euros: ["eur", "euros", "europe"],
             europe: ["eur", "euros", "europe"],
@@ -244,17 +261,24 @@ export function searchAndSortRates<T extends {
             switzerland: ["chf", "swiss francs", "switzerland"],
             franc: ["chf", "swiss francs"],
             francs: ["chf", "swiss francs"],
+            chf: ["chf", "swiss francs"],
         };
 
         const scoredItems = result.map(r => {
             let score = 0;
+            let matchedKeywords = 0;
             const brand = r.cardBrand.toLowerCase();
             const country = r.cardCountry.toLowerCase();
             const type = (r.cardType || "Physical").toLowerCase();
 
-            // Format full string of rate for keyword checking
-            // e.g. "apple/itunes physical us dollars ($100)"
-            const fullString = `${brand} ${type} ${country}`;
+            // Enrich the search string with expanded currency names so that
+            // "canada", "australian", etc. match directly without synonym lookup.
+            // e.g. "CAD ($50)" → adds "canadian dollars canada" to fullString
+            const currencyCode = country.split(' ')[0];
+            const expansion = currencyExpansions[currencyCode] || "";
+
+            // Full string: "apple/itunes physical cad ($50) canadian dollars canada"
+            const fullString = `${brand} ${type} ${country} ${expansion}`;
 
             for (const kw of activeKeywords) {
                 let matchesKw = false;
@@ -278,15 +302,17 @@ export function searchAndSortRates<T extends {
 
                 if (matchesKw) {
                     score += 1;
+                    matchedKeywords += 1;
                 }
             }
 
-            return { rate: r, score };
+            return { rate: r, score, matchedKeywords };
         });
 
-        // Filter out items that match absolutely nothing and sort by score
+        // Only show items that match ALL keywords (strict AND logic)
+        // This ensures "apple us" shows only Apple USD, not Apple EUR/GBP etc.
         result = scoredItems
-            .filter(item => item.score > 0)
+            .filter(item => item.matchedKeywords >= activeKeywords.length)
             .sort((a, b) => {
                 if (b.score !== a.score) {
                     return b.score - a.score;
