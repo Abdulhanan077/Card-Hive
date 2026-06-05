@@ -162,7 +162,7 @@ export default async function UserTradesPage(props: {
                                     </td>
                                     <td>
                                         <span className={`badge badge-${trade.status.toLowerCase()}`}>
-                                            {trade.status.replace("_", " ")}
+                                            {trade.status === "UNDER_REVIEW" ? "Processing..." : trade.status.replace("_", " ")}
                                         </span>
                                     </td>
                                     <td>

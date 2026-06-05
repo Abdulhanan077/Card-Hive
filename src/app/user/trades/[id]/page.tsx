@@ -129,7 +129,7 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
                     
                     <div className={`status-banner banner-${trade.status.toLowerCase()}`}>
                         <div className="status-dot"></div>
-                        {trade.status.replace("_", " ")}
+                        {trade.status === "UNDER_REVIEW" ? "Processing..." : trade.status.replace("_", " ")}
                     </div>
                 </div>
             </div>
@@ -157,7 +157,7 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
                                     <div className="item-meta-top">
                                         <span className="item-index-tag">Item #{idx + 1}</span>
                                         <span className={`status-pill status-${t.status.toLowerCase()}`}>
-                                            {t.status.replace("_", " ")}
+                                            {t.status === "UNDER_REVIEW" ? "Processing..." : t.status.replace("_", " ")}
                                         </span>
                                     </div>
                                     

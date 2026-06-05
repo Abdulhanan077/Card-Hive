@@ -13,7 +13,7 @@ export default function TradeFilterModern() {
     const statusOptions = [
         { value: "ALL", label: "All Statuses" },
         { value: "PENDING", label: "Pending" },
-        { value: "UNDER_REVIEW", label: "Under Review" },
+        { value: "UNDER_REVIEW", label: "Processing..." },
         { value: "PAID", label: "Paid" },
         { value: "COMPLETED", label: "Completed" },
         { value: "REJECTED", label: "Rejected" }

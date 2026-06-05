@@ -112,7 +112,7 @@ class _AdminTradesScreenState extends State<AdminTradesScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
-              label: Text(filter.replaceAll('_', ' ')),
+              label: Text(filter == 'UNDER_REVIEW' ? 'Processing...' : filter.replaceAll('_', ' ')),
               selected: isSelected,
               onSelected: (selected) {
                 if (selected) {
@@ -266,7 +266,7 @@ class _AdminTradesScreenState extends State<AdminTradesScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        status.replaceAll('_', ' '),
+        status == 'UNDER_REVIEW' ? 'Processing...' : status.replaceAll('_', ' '),
         style: GoogleFonts.outfit(color: color, fontSize: 11, fontWeight: FontWeight.bold),
       ),
     );

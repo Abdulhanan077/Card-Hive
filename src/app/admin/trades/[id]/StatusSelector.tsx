@@ -9,7 +9,7 @@ interface StatusSelectorProps {
 
 const statusOptions = [
     { value: "PENDING", label: "Pending (Initial)" },
-    { value: "UNDER_REVIEW", label: "Under Review" },
+    { value: "UNDER_REVIEW", label: "Processing..." },
     { value: "PAID", label: "Mark Accepted Cards as PAID" },
     { value: "REJECTED", label: "Reject ENTIRE Batch (Careful!)" }
 ];

@@ -243,7 +243,7 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Status: ${_currentStatus.replaceAll('_', ' ')}",
+                  "Status: ${_currentStatus == 'UNDER_REVIEW' ? 'Processing...' : _currentStatus.replaceAll('_', ' ')}",
                   style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: const Color(0xFF2563EB)),
                 ),
                 Text(
@@ -580,7 +580,7 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _actionButton(
-                  "UNDER REVIEW", 
+                  "PROCESSING...", 
                   Colors.orange, 
                   () => _updateStatus("UNDER_REVIEW"),
                 ),

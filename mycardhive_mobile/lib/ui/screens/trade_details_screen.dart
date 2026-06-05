@@ -544,6 +544,8 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
       return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(12)), child: const Text("PAID", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)));
     } else if (status == "PENDING") {
       return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: const Color(0xFFF59E0B), borderRadius: BorderRadius.circular(12)), child: const Text("PENDING", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)));
+    } else if (status == "UNDER_REVIEW") {
+      return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: const Color(0xFF3B82F6), borderRadius: BorderRadius.circular(12)), child: const Text("Processing...", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)));
     }
     return Text(status, style: const TextStyle(color: const Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.bold));
   }

@@ -215,7 +215,7 @@ export default async function AdminTradesList(props: {
                                         </td>
                                         <td>
                                             <span className={`badge badge-${trade.status.toLowerCase()}`} style={{ fontWeight: 800, letterSpacing: '0.02em', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
-                                                {trade.status.replace("_", " ")}
+                                                {trade.status === "UNDER_REVIEW" ? "Processing..." : trade.status.replace("_", " ")}
                                             </span>
                                         </td>
                                         <td style={{ textAlign: 'right', paddingRight: '1.5rem' }}>
