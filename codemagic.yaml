@@ -8,6 +8,7 @@ workflows:
     environment:
       groups:
         - firebase
+        - shorebird
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.mycardhive.trading
