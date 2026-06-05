@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import SearchableCategorySelect from "@/components/SearchableCategorySelect";
+import { formatCategoryWithFlag, searchAndSortRates } from "@/lib/categoryUtils";
 import { 
     addOrUpdateRateAction, 
     deleteRateAction, 
@@ -23,7 +24,22 @@ const BRAND_OPTIONS = [
 ];
 
 const CURRENCIES = ["Global", "USD", "GBP", "EUR", "AUD", "CAD", "CHF"];
-const CURRENCY_OPTIONS = CURRENCIES.map(c => ({ value: c, label: c }));
+
+const CURRENCY_MAP: Record<string, string> = {
+    Global: "Global",
+    USD: "US Dollars",
+    GBP: "British Pounds",
+    EUR: "Euros",
+    AUD: "Australian Dollars",
+    CAD: "Canadian Dollars",
+    CHF: "Swiss Francs",
+};
+
+const CURRENCY_OPTIONS = CURRENCIES.map(c => ({
+    value: c,
+    label: CURRENCY_MAP[c] || c,
+    display: formatCategoryWithFlag(c)
+}));
 
 const PRICE_TAGS = [
     "Any Amount", "10-49", "50", "51-99", "100", "101-149", "150", "151-199", "200", 
@@ -63,6 +79,8 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
     const [publicRateMultiplier, setPublicRateMultiplier] = useState("");
     const [isPublicSame, setIsPublicSame] = useState(true);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [typeFilter, setTypeFilter] = useState<"All" | "Physical" | "E-code">("All");
+    const [sortBy, setSortBy] = useState<"Default" | "Type" | "Brand">("Default");
 
     // Bulk states
     const [bulkCurrency, setBulkCurrency] = useState("USD");
@@ -203,13 +221,8 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
     };
 
     const filteredRates = useMemo(() => {
-        if (!searchQuery.trim()) return rates;
-        const q = searchQuery.toLowerCase();
-        return rates.filter(r => 
-            r.cardBrand.toLowerCase().includes(q) || 
-            r.cardCountry.toLowerCase().includes(q)
-        );
-    }, [rates, searchQuery]);
+        return searchAndSortRates(rates, searchQuery, typeFilter, sortBy);
+    }, [rates, searchQuery, typeFilter, sortBy]);
 
     const handleEdit = (rate: Rate) => {
         setEditingId(rate.id);
@@ -552,7 +565,7 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                         </div>
                         <input
                             type="text"
-                            placeholder="Search by Brand or Category..."
+                            placeholder="Search brand, country (e.g. apple us, steam eur)..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="form-input"
@@ -564,6 +577,59 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                                 backgroundColor: 'var(--bg-alt)' 
                             }}
                         />
+
+                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+                            {/* Type filter buttons */}
+                            <div style={{ display: 'flex', gap: '0.25rem', backgroundColor: 'var(--bg-alt)', padding: '0.25rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                {(["All", "Physical", "E-code"] as const).map(type => (
+                                    <button
+                                        key={type}
+                                        type="button"
+                                        onClick={() => setTypeFilter(type)}
+                                        style={{
+                                            padding: '0.4rem 1rem',
+                                            borderRadius: '6px',
+                                            border: 'none',
+                                            fontSize: '0.85rem',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            background: typeFilter === type ? 'var(--primary)' : 'transparent',
+                                            color: typeFilter === type ? 'white' : 'var(--text-muted)',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        {type}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Sort buttons */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Sort by:</span>
+                                <div style={{ display: 'flex', gap: '0.25rem', backgroundColor: 'var(--bg-alt)', padding: '0.25rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                    {(["Default", "Type", "Brand"] as const).map(sortOpt => (
+                                        <button
+                                            key={sortOpt}
+                                            type="button"
+                                            onClick={() => setSortBy(sortOpt)}
+                                            style={{
+                                                padding: '0.4rem 0.8rem',
+                                                borderRadius: '6px',
+                                                border: 'none',
+                                                fontSize: '0.85rem',
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                background: sortBy === sortOpt ? 'var(--primary)' : 'transparent',
+                                                color: sortBy === sortOpt ? 'white' : 'var(--text-muted)',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            {sortOpt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="table-container">
@@ -589,7 +655,7 @@ export default function ClientRatesManager({ initialRates }: { initialRates: Rat
                                             </span>
                                         </td>
                                         <td>
-                                            {rate.cardCountry}
+                                            {formatCategoryWithFlag(rate.cardCountry)}
                                         </td>
                                         <td>
                                             <span className="rate-badge" style={{ color: 'var(--info)' }}>{rate.rate}x</span>

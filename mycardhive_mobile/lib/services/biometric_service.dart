@@ -18,8 +18,10 @@ class BiometricService {
       return await _auth.authenticate(
         localizedReason: 'Please authenticate to access your MyCardHive account',
         authMessages: const [],
-        persistAcrossBackgrounding: true,
-        biometricOnly: true,
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
       );
     } catch (e) {
       debugPrint("Biometric Authentication Error: $e");

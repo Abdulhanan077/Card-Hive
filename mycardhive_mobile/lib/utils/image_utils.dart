@@ -14,11 +14,11 @@ class ImageUtils {
       // On older versions, we check for storage.
       status = await Permission.photos.request();
       
-      if (!status.isGranted) {
+      if (!status.isGranted && !status.isLimited) {
         status = await Permission.storage.request();
       }
 
-      if (!status.isGranted) {
+      if (!status.isGranted && !status.isLimited) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

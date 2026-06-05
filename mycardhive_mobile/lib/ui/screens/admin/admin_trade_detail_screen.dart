@@ -12,7 +12,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:mycardhive_mobile/utils/permission_helper.dart';
 import 'package:mycardhive_mobile/utils/image_utils.dart';
+import 'package:mycardhive_mobile/utils/ui_utils.dart';
 
 class AdminTradeDetailScreen extends StatefulWidget {
   final Map<String, dynamic>? trade;
@@ -306,6 +308,14 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
       child: Column(
         children: [
           _dataRow("Card Brand", trade['cardBrand'] ?? "N/A"),
+          _dataRow(
+            "Category", 
+            trade['cardCountry'] ?? "N/A", 
+            customValueWidget: buildCategoryWithFlag(
+              trade['cardCountry'] ?? "N/A", 
+              GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+          ),
           _dataRow("Card Type", trade['cardType'] ?? "N/A"),
           _dataRow("Face Value", "\$${trade['faceValue']}"),
           _dataRow("Currency", trade['currency'] ?? "USD"),
@@ -415,7 +425,7 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
     );
   }
 
-  Widget _dataRow(String label, String value, {bool isHighlight = false, bool isCopyable = false}) {
+  Widget _dataRow(String label, String value, {bool isHighlight = false, bool isCopyable = false, Widget? customValueWidget}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -427,20 +437,23 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Flexible(
-                  child: AutoSizeText(
-                    value,
-                    style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.bold, 
-                      fontSize: 15, 
-                      color: isHighlight ? const Color(0xFF10B981) : null,
+                if (customValueWidget != null)
+                  Flexible(child: customValueWidget)
+                else
+                  Flexible(
+                    child: AutoSizeText(
+                      value,
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold, 
+                        fontSize: 15, 
+                        color: isHighlight ? const Color(0xFF10B981) : null,
+                      ),
+                      maxLines: 1,
+                      minFontSize: 8,
+                      textAlign: TextAlign.end,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    minFontSize: 8,
-                    textAlign: TextAlign.end,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
                 if (isCopyable) ...[
                   const SizedBox(width: 4),
                   InkWell(
@@ -542,28 +555,8 @@ class _AdminTradeDetailScreenState extends State<AdminTradeDetailScreen> {
                 ],
                 TextButton.icon(
                   onPressed: () async {
-                    final status = await Permission.photos.request();
-                    if (status.isDenied || status.isPermanentlyDenied) {
-                      if (!mounted) return;
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text("Permission Required"),
-                          content: const Text("We need gallery access to upload payment receipts. Please enable it in settings."),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                openAppSettings();
-                              },
-                              child: const Text("Open Settings"),
-                            ),
-                          ],
-                        ),
-                      );
-                      return;
-                    }
+                    final hasPermission = await PermissionHelper.requestPhotos(context);
+                    if (!hasPermission) return;
 
                     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
                     if (image != null) setState(() => _receiptFile = File(image.path));

@@ -3,7 +3,7 @@ import 'package:shorebird_code_push/shorebird_code_push.dart';
 import 'dart:async';
 
 class UpdateService extends ChangeNotifier {
-  final _updater = ShorebirdUpdater();
+  final _shorebirdCodePush = ShorebirdCodePush();
   bool _isChecking = false;
   bool _updateAvailable = false;
   int? _currentPatch;
@@ -25,11 +25,7 @@ class UpdateService extends ChangeNotifier {
     }
 
     try {
-      // Shorebird legacy patch number check if needed
-      // Note: version 2.0 uses different ways to track patches, but we can still try to get patch number
-      // For now, let's focus on the update flow.
-      
-      // Initial check
+      _currentPatch = await _shorebirdCodePush.currentPatchNumber();
       await checkForUpdates();
     } catch (e) {
       debugPrint("UpdateService Error: $e");
@@ -44,14 +40,12 @@ class UpdateService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final status = await _updater.checkForUpdate();
-      debugPrint("UpdateService: Status: $status");
+      final isUpdateAvailable = await _shorebirdCodePush.isNewPatchAvailableForDownload();
+      debugPrint("UpdateService: New patch available: $isUpdateAvailable");
 
-      if (status == UpdateStatus.outdated) {
-        debugPrint("UpdateService: New patch available! Downloading...");
-        // Automatically download and install (apply for next restart)
-        await _updater.update();
-        
+      if (isUpdateAvailable) {
+        debugPrint("UpdateService: Downloading patch...");
+        await _shorebirdCodePush.downloadUpdateIfAvailable();
         _updateAvailable = true;
         notifyListeners();
       }

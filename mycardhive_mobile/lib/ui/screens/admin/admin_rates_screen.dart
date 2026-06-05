@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/services/admin_service.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mycardhive_mobile/services/category_utils.dart';
+import 'package:mycardhive_mobile/utils/ui_utils.dart';
 
 class AdminRatesScreen extends StatefulWidget {
   const AdminRatesScreen({super.key});
@@ -14,6 +16,8 @@ class _AdminRatesScreenState extends State<AdminRatesScreen> {
   List<Map<String, dynamic>> _rates = [];
   bool _isLoading = true;
   String _searchQuery = "";
+  String _typeFilter = "All";
+  String _sortBy = "Default";
 
   @override
   void initState() {
@@ -59,12 +63,13 @@ class _AdminRatesScreenState extends State<AdminRatesScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    final filteredRates = _rates.where((r) {
-      final query = _searchQuery.toLowerCase();
-      return r['cardBrand'].toString().toLowerCase().contains(query) ||
-             r['cardCountry'].toString().toLowerCase().contains(query);
-    }).toList();
+    
+    final filteredRates = CategoryUtils.searchAndSortRates(
+      _rates,
+      _searchQuery,
+      _typeFilter,
+      _sortBy,
+    ).cast<Map<String, dynamic>>();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -88,6 +93,81 @@ class _AdminRatesScreenState extends State<AdminRatesScreen> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: ["All", "Physical", "E-code"].map((type) {
+                      final isSelected = _typeFilter == type;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(type),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() => _typeFilter = type);
+                            }
+                          },
+                          selectedColor: const Color(0xFF2563EB),
+                          backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                          labelStyle: TextStyle(
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          "Sort by:",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white54 : Colors.black54,
+                          ),
+                        ),
+                      ),
+                      ...["Default", "Type", "Brand"].map((sort) {
+                        final isSelected = _sortBy == sort;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(sort),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() => _sortBy = sort);
+                              }
+                            },
+                            selectedColor: const Color(0xFF10B981),
+                            backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                            labelStyle: TextStyle(
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -140,7 +220,16 @@ class _AdminRatesScreenState extends State<AdminRatesScreen> {
                           _typeBadge(isEcode),
                         ],
                       ),
-                      Text(rate['cardCountry'], style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: buildCategoryWithFlag(
+                              rate['cardCountry'],
+                              const TextStyle(fontSize: 13, color: Colors.grey),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -515,11 +604,23 @@ class _RateEditorSheetState extends State<_RateEditorSheet> {
                             final isSelected = item == value;
                             return ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-                              title: Text(item, style: GoogleFonts.outfit(
-                                fontSize: 16, 
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                color: isSelected ? const Color(0xFF2563EB) : null,
-                              )),
+                              title: label == "Currency"
+                                  ? buildCategoryWithFlag(
+                                      item,
+                                      GoogleFonts.outfit(
+                                        fontSize: 16,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: isSelected ? const Color(0xFF2563EB) : null,
+                                      ),
+                                    )
+                                  : Text(
+                                      item,
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 16,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: isSelected ? const Color(0xFF2563EB) : null,
+                                      ),
+                                    ),
                               trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: Color(0xFF2563EB), size: 20) : null,
                               onTap: () {
                                 Navigator.pop(context);
@@ -545,11 +646,16 @@ class _RateEditorSheetState extends State<_RateEditorSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    value ?? "Select $label", 
-                    style: GoogleFonts.outfit(fontSize: 14, color: value == null ? Colors.grey : null),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: value != null && label == "Currency"
+                      ? buildCategoryWithFlag(
+                          value,
+                          GoogleFonts.outfit(fontSize: 14),
+                        )
+                      : Text(
+                          value ?? "Select $label",
+                          style: GoogleFonts.outfit(fontSize: 14, color: value == null ? Colors.grey : null),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                 ),
                 const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey, size: 20),
               ],

@@ -29,10 +29,10 @@ class RatesService {
       // Critical fallback: Static mock data if cache is also empty
       return RatesResponse(
         rates: [
-          Rate(id: 1, cardBrand: "iTunes", cardCountry: "USA (10-500)", cardType: "Physical", rate: 12.5),
-          Rate(id: 2, cardBrand: "iTunes", cardCountry: "USA (10-500)", cardType: "E-code", rate: 11.0),
-          Rate(id: 3, cardBrand: "Amazon", cardCountry: "Germany (10-200)", cardType: "Physical", rate: 14.2),
-          Rate(id: 4, cardBrand: "Steam", cardCountry: "UK (£10-£100)", cardType: "Physical", rate: 15.5),
+          Rate(id: 1, cardBrand: "iTunes", cardCountry: "USD (10-500)", cardType: "Physical", rate: 12.5),
+          Rate(id: 2, cardBrand: "iTunes", cardCountry: "USD (10-500)", cardType: "E-code", rate: 11.0),
+          Rate(id: 3, cardBrand: "Amazon", cardCountry: "EUR (10-200)", cardType: "Physical", rate: 14.2),
+          Rate(id: 4, cardBrand: "Steam", cardCountry: "GBP (£10-£100)", cardType: "Physical", rate: 15.5),
         ],
         usdtExchangeRate: 15.2,
       );

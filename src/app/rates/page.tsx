@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RatesCalculator from "@/components/RatesCalculator";
 import { FaSearch, FaFilter, FaSyncAlt, FaArrowRight, FaInfoCircle } from "react-icons/fa";
 import Link from "next/link";
+import { formatCategoryWithFlag, searchAndSortRates } from "@/lib/categoryUtils";
 
 type Rate = {
     id: number;
@@ -40,14 +41,14 @@ export default function PublicRatesPage() {
 
     const brands = ["All Brands", ...Array.from(new Set(rates.map(r => r.cardBrand))).sort()];
 
-    const filteredRates = rates.filter(rate => {
-        const matchesSearch =
-            rate.cardBrand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            rate.cardCountry.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesBrand = selectedBrand === "All Brands" || rate.cardBrand === selectedBrand;
-        const matchesType = selectedType === "All Types" || (rate.cardType || "Physical") === selectedType;
-        return matchesSearch && matchesBrand && matchesType;
-    });
+    const filteredRates = useMemo(() => {
+        let list = rates;
+        if (selectedBrand !== "All Brands") {
+            list = list.filter(r => r.cardBrand === selectedBrand);
+        }
+        const typeFilter = selectedType === "All Types" ? "All" : (selectedType === "E-code" ? "E-code" : "Physical");
+        return searchAndSortRates(list, searchTerm, typeFilter, "Default");
+    }, [rates, searchTerm, selectedBrand, selectedType]);
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -156,7 +157,7 @@ export default function PublicRatesPage() {
                                                         <td style={{ padding: '1.25rem 1.5rem', fontWeight: 600 }}>{rate.cardBrand}</td>
                                                         <td style={{ padding: '1.25rem 1.5rem' }}>
                                                             <span style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700 }}>
-                                                                {rate.cardCountry}
+                                                                {formatCategoryWithFlag(rate.cardCountry)}
                                                             </span>
                                                         </td>
                                                         <td style={{ padding: '1.25rem 1.5rem' }}>

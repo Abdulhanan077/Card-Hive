@@ -32,7 +32,7 @@ class NotificationService {
       iOS: initializationSettingsIOS,
     );
 
-    await _notificationsPlugin.initialize(settings: initializationSettings);
+    await _notificationsPlugin.initialize(initializationSettings);
     
     // 0. Request iOS FCM Permissions
     final messaging = FirebaseMessaging.instance;
@@ -53,7 +53,7 @@ class NotificationService {
     // Initialize timezone data
     tz.initializeTimeZones();
     try {
-      final String currentTimeZone = (await FlutterTimezone.getLocalTimezone()).identifier;
+      final String currentTimeZone = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(currentTimeZone));
       debugPrint("NotificationService: Timezone set to $currentTimeZone");
     } catch (e) {
@@ -285,10 +285,10 @@ class NotificationService {
     );
     
     await _notificationsPlugin.show(
-      id: id,
-      title: title,
-      body: body,
-      notificationDetails: platformDetails,
+      id,
+      title,
+      body,
+      platformDetails,
     );
   }
 
@@ -322,13 +322,12 @@ class NotificationService {
 
       const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
 
-      // Schedule it to repeat daily
       await _notificationsPlugin.zonedSchedule(
-        id: 888,
-        title: 'Time to Trade!',
-        body: 'Don\'t let your gift cards go to waste. Check today\'s best rates and trade them for instant cash!',
-        scheduledDate: _nextInstanceOfTime(hour, minute),
-        notificationDetails: NotificationDetails(
+        888,
+        'Time to Trade!',
+        'Don\'t let your gift cards go to waste. Check today\'s best rates and trade them for instant cash!',
+        _nextInstanceOfTime(hour, minute),
+        NotificationDetails(
           android: androidDetails,
           iOS: const DarwinNotificationDetails(
             presentAlert: true,

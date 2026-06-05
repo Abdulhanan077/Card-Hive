@@ -89,7 +89,7 @@ void main() async {
       "com.cardhive.notification_job_unique", 
       kBackgroundNotificationTask,
       frequency: const Duration(minutes: 15),
-      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+      existingWorkPolicy: ExistingWorkPolicy.keep,
       constraints: Constraints(
         networkType: NetworkType.connected,
       ),

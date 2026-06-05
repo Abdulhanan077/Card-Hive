@@ -14,7 +14,7 @@ dependencies:
 
   # --- Necessary Plugins for MyCardHive ---
   cupertino_icons: ^1.0.8
-  google_fonts: ^8.0.2
+  google_fonts: ^6.2.0
   http: ^1.2.1
   dio: ^5.4.3
   provider: ^6.1.2
@@ -22,38 +22,38 @@ dependencies:
   shared_preferences: ^2.2.3
   url_launcher: ^6.2.6
   image_picker: ^1.1.2
-  intl: ^0.20.2
+  intl: ^0.19.0
   shimmer: ^3.0.0
   flutter_svg: ^2.0.10+1
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   connectivity_plus: ^7.1.1
-  local_auth: ^3.0.0
-  flutter_local_notifications: ^21.0.0
-  workmanager: ^0.9.0
+  local_auth: ^2.3.0
+  flutter_local_notifications: ^19.5.0
+  workmanager: ^0.7.0
   path_provider: ^2.1.2
   path: ^1.9.0
-  device_info_plus: ^12.4.0
-  flutter_slidable: ^4.0.3
-  smooth_page_indicator: ^2.0.1
-  fl_chart: ^1.2.0
+  device_info_plus: ^10.1.0
+  flutter_slidable: ^3.0.0
+  smooth_page_indicator: ^1.1.0
+  fl_chart: ^0.69.0
   photo_view: ^0.15.0
   auto_size_text: ^3.0.0
-  permission_handler: ^12.0.1
+  permission_handler: ^11.3.1
   firebase_core: ^4.7.0
   firebase_messaging: ^16.2.0
   gal: ^2.3.2
   uuid: ^4.5.3
-  pusher_channels_flutter: ^2.4.0
-  shorebird_code_push: ^2.0.5
-  flutter_timezone: ^5.0.2
-  timezone: ^0.11.0
+  pusher_channels_flutter: ^2.2.1
+  shorebird_code_push: ^1.1.2
+  flutter_timezone: ^1.0.8
+  timezone: ^0.10.0
   restart_app: ^1.7.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  flutter_lints: ^3.0.0
   change_app_package_name: ^1.5.0
   flutter_launcher_icons: ^0.14.4
 

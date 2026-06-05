@@ -11,7 +11,7 @@ class PermissionHelper {
   }) async {
     final status = await permission.request();
 
-    if (status.isGranted) {
+    if (status.isGranted || status.isLimited) {
       return true;
     }
 
@@ -57,12 +57,10 @@ class PermissionHelper {
 
   /// Specialized helper for Photos
   static Future<bool> requestPhotos(BuildContext context) async {
-    return await requestPermission(
-      context: context,
-      permission: Permission.photos,
-      title: "Gallery Permission",
-      message: "We need access to your photo gallery to upload gift card images and payment receipts. Please enable it in Settings.",
-    );
+    // Modern ImagePicker on Android and iOS uses out-of-process system photo pickers 
+    // which do not require declaring or requesting storage/photos permissions.
+    // Manual checks here cause conflicts and failures on Android 14/15.
+    return true;
   }
 
   /// Specialized helper for Camera

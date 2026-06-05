@@ -13,6 +13,7 @@ import 'package:mycardhive_mobile/utils/permission_helper.dart';
 import 'package:mycardhive_mobile/ui/screens/trade_success_screen.dart';
 import 'package:mycardhive_mobile/ui/widgets/modern_dropdown.dart';
 import 'package:mycardhive_mobile/utils/compliance_utils.dart';
+import 'package:mycardhive_mobile/utils/ui_utils.dart';
 
 class CardEntry {
   final String id;
@@ -177,7 +178,20 @@ class _SellCardScreenState extends State<SellCardScreen> {
     if (!hasPermission) return;
 
     try {
-      final List<XFile> images = await _picker.pickMultiImage();
+      List<XFile> images = [];
+      try {
+        images = await _picker.pickMultiImage();
+      } catch (e) {
+        debugPrint("pickMultiImage failed: $e. Falling back to single pickImage.");
+      }
+
+      if (images.isEmpty) {
+        final XFile? singleImage = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+        if (singleImage != null) {
+          images = [singleImage];
+        }
+      }
+
       if (images.isNotEmpty) {
         setState(() {
           _imagePaths.addAll(images.map((e) => e.path));
@@ -519,6 +533,7 @@ class _SellCardScreenState extends State<SellCardScreen> {
                           value: card.cardCategory.isEmpty ? null : card.cardCategory,
                           items: availableCategories,
                           isDark: isDark,
+                          itemBuilder: (val, style) => buildCategoryWithFlag(val, style),
                           onChanged: (val) {
                             setState(() {
                               card.cardCategory = val!;

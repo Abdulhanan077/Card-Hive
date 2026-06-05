@@ -7,6 +7,7 @@ import ReferralLinkCopy from "@/components/ReferralLinkCopy";
 import { FaApple, FaSteam, FaXbox, FaGooglePlay, FaAmazon } from 'react-icons/fa';
 import { SiRazer } from 'react-icons/si';
 import StatusUpdatesCarousel from "@/components/StatusUpdatesCarousel";
+import { formatCategoryWithFlag } from "@/lib/categoryUtils";
 
 // Helper function to map brand names to icons
 const getBrandIcon = (brandName: string) => {
@@ -289,7 +290,7 @@ export default async function UserDashboardHome() {
                                             <div style={{ backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                                                 {getBrandIcon(rate.cardBrand)}
                                             </div>
-                                            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{rate.cardBrand} <span style={{ fontSize: '0.75rem', color: 'gray', fontWeight: 'normal' }}>({rate.cardCountry})</span></div>
+                                            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{rate.cardBrand} <span style={{ fontSize: '0.75rem', color: 'gray', fontWeight: 'normal' }}>({formatCategoryWithFlag(rate.cardCountry)})</span></div>
                                         </div>
                                         <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
                                             {rate.rate} <span style={{ fontSize: '0.7rem', color: 'gray' }}>GHS/$</span>

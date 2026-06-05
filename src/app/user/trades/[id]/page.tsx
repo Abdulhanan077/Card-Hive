@@ -8,6 +8,7 @@ import "./trade-details.css";
 import SafeImage from "@/app/components/SafeImage";
 import ConfirmReceiptButton from "@/app/components/ConfirmReceiptButton";
 import CopyButton from "@/app/components/CopyButton";
+import { formatCategoryWithFlag } from "@/lib/categoryUtils";
 
 export default async function UserTradeDetailView(props: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
@@ -169,7 +170,7 @@ export default async function UserTradeDetailView(props: { params: Promise<{ id:
                                             </div>
                                             <div className="brand-info">
                                                 <h4>{t.cardBrand}</h4>
-                                                <span>{t.cardType} • {t.cardCountry}</span>
+                                                <span>{t.cardType} • {t.cardCountry ? formatCategoryWithFlag(t.cardCountry) : ""}</span>
                                             </div>
                                         </div>
                                         

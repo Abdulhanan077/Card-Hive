@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mycardhive_mobile/models/rate.dart';
 import 'package:mycardhive_mobile/services/category_utils.dart';
 import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
+import 'package:mycardhive_mobile/utils/ui_utils.dart';
 
 class RatesCalculator extends StatefulWidget {
   final List<Rate> rates;
@@ -155,6 +156,7 @@ class _RatesCalculatorState extends State<RatesCalculator> {
             disabled: selectedBrand == null,
             theme: theme,
             isDark: isDark,
+            itemBuilder: (val, style) => buildCategoryWithFlag(val, style),
             onChanged: (val) {
               setState(() {
                 selectedCategory = val;
@@ -225,6 +227,7 @@ class _RatesCalculatorState extends State<RatesCalculator> {
     required ThemeData theme,
     required bool isDark,
     required void Function(String?) onChanged,
+    Widget Function(String, TextStyle)? itemBuilder,
   }) {
     return InkWell(
       onTap: disabled ? null : () {
@@ -233,7 +236,8 @@ class _RatesCalculatorState extends State<RatesCalculator> {
           title: hint ?? "Select Option", 
           theme: theme,
           isDark: isDark,
-          onSelected: onChanged
+          onSelected: onChanged,
+          itemBuilder: itemBuilder,
         );
       },
       borderRadius: BorderRadius.circular(12),
@@ -250,15 +254,27 @@ class _RatesCalculatorState extends State<RatesCalculator> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: Text(
-                value ?? hint ?? "",
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: value == null ? FontWeight.normal : FontWeight.w600,
-                  color: value == null ? theme.colorScheme.onSurface.withOpacity(0.5) : theme.colorScheme.onSurface,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: value == null
+                ? Text(
+                    hint ?? "",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.normal,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : itemBuilder != null
+                  ? itemBuilder(value, TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface))
+                  : Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
             ),
             Icon(Icons.keyboard_arrow_down_rounded, color: theme.colorScheme.onSurface.withOpacity(0.5)),
           ],
@@ -273,6 +289,7 @@ class _RatesCalculatorState extends State<RatesCalculator> {
     required ThemeData theme,
     required bool isDark,
     required void Function(String?) onSelected,
+    Widget Function(String, TextStyle)? itemBuilder,
   }) {
     showModalBottomSheet(
       context: context,
@@ -289,6 +306,7 @@ class _RatesCalculatorState extends State<RatesCalculator> {
             onSelected(val);
             Navigator.pop(context);
           },
+          itemBuilder: itemBuilder,
         );
       },
     );
@@ -392,11 +410,13 @@ class _BottomSheetPickerContent extends StatefulWidget {
   final List<String> items;
   final String title;
   final void Function(String) onSelected;
+  final Widget Function(String, TextStyle)? itemBuilder;
 
   const _BottomSheetPickerContent({
     required this.items,
     required this.title,
     required this.onSelected,
+    this.itemBuilder,
   });
 
   @override
@@ -463,7 +483,9 @@ class _BottomSheetPickerContentState extends State<_BottomSheetPickerContent> {
               itemBuilder: (context, index) {
                 final item = filtered[index];
                 return ListTile(
-                  title: Text(item, style: TextStyle(fontWeight: FontWeight.w500, color: theme.colorScheme.onSurface)),
+                  title: widget.itemBuilder != null
+                      ? widget.itemBuilder!(item, TextStyle(fontWeight: FontWeight.w500, color: theme.colorScheme.onSurface))
+                      : Text(item, style: TextStyle(fontWeight: FontWeight.w500, color: theme.colorScheme.onSurface)),
                   onTap: () => widget.onSelected(item),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

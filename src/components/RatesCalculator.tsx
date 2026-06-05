@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { FaCalculator, FaArrowRight, FaSyncAlt } from "react-icons/fa";
 import Link from "next/link";
-import { sortCategories, validateCategoryAmount, getExactCategoryAmount } from "@/lib/categoryUtils";
+import { sortCategories, validateCategoryAmount, getExactCategoryAmount, formatCategoryWithFlag } from "@/lib/categoryUtils";
 import SearchableCategorySelect from "@/components/SearchableCategorySelect";
 
 type Rate = {
@@ -314,7 +314,11 @@ export default function RatesCalculator() {
                             }
                         }}
                         disabled={!selectedBrand}
-                        categories={categories}
+                        categories={categories.map(cat => ({
+                            value: cat,
+                            label: cat,
+                            display: formatCategoryWithFlag(cat)
+                        }))}
                         placeholder={selectedBrand ? `Choose Category for ${selectedType}...` : "Select Brand First"}
                         searchPlaceholder="Type amount to filter..."
                     />

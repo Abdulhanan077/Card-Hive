@@ -7,6 +7,7 @@ class ModernDropdown extends StatelessWidget {
   final String label;
   final ValueChanged<String?> onChanged;
   final bool isDark;
+  final Widget Function(String, TextStyle)? itemBuilder;
 
   const ModernDropdown({
     super.key,
@@ -16,6 +17,7 @@ class ModernDropdown extends StatelessWidget {
     required this.label,
     required this.onChanged,
     required this.isDark,
+    this.itemBuilder,
   });
 
   @override
@@ -84,13 +86,18 @@ class ModernDropdown extends StatelessWidget {
                               final item = items[index];
                               final isSelected = value == item;
                               return ListTile(
-                                title: Text(
-                                  item,
-                                  style: TextStyle(
-                                    color: isSelected ? const Color(0xFF2563EB) : theme.colorScheme.onSurface,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  ),
-                                ),
+                                title: itemBuilder != null
+                                    ? itemBuilder!(item, TextStyle(
+                                        color: isSelected ? const Color(0xFF2563EB) : theme.colorScheme.onSurface,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      ))
+                                    : Text(
+                                        item,
+                                        style: TextStyle(
+                                          color: isSelected ? const Color(0xFF2563EB) : theme.colorScheme.onSurface,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                      ),
                                 trailing: isSelected
                                     ? const Icon(Icons.check_circle, color: Color(0xFF2563EB))
                                     : null,
@@ -120,16 +127,25 @@ class ModernDropdown extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    value ?? hint,
-                    style: TextStyle(
-                      color: value == null
-                          ? (isDark ? Colors.white24 : const Color(0xFF94A3B8))
-                          : theme.colorScheme.onSurface,
-                      fontSize: 14,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: value == null
+                      ? Text(
+                          hint,
+                          style: TextStyle(
+                            color: isDark ? Colors.white24 : const Color(0xFF94A3B8),
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      : itemBuilder != null
+                          ? itemBuilder!(value!, TextStyle(color: theme.colorScheme.onSurface, fontSize: 14))
+                          : Text(
+                              value!,
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface,
+                                fontSize: 14,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                 ),
                 Icon(
                   Icons.keyboard_arrow_down,

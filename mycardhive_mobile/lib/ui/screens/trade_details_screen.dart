@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:mycardhive_mobile/utils/image_utils.dart';
 import 'package:mycardhive_mobile/ui/screens/chat_screen.dart';
 import 'package:mycardhive_mobile/utils/compliance_utils.dart';
+import 'package:mycardhive_mobile/utils/ui_utils.dart';
 
 class TradeDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? trade;
@@ -312,7 +313,17 @@ class _TradeDetailsScreenState extends State<TradeDetailsScreen> {
             ],
           ),
           const SizedBox(height: 4),
-          Text("${_fullTrade!['cardCountry']} - $cardType", style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Row(
+            children: [
+              Expanded(
+                child: buildCategoryWithFlag(
+                  "${_fullTrade!['cardCountry']}",
+                  const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+              ),
+              Text(" - $cardType", style: const TextStyle(color: Colors.grey, fontSize: 13)),
+            ],
+          ),
           const Divider(height: 32),
           _detailRow(ComplianceUtils.isReviewMode ? "Asset Units" : "Face Value", "${ComplianceUtils.isReviewMode ? '' : currency} $faceValue"),
           _detailRow("Card Code", _fullTrade!['cardCode']?.toString() ?? "N/A"),

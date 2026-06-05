@@ -2,9 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 
+import type { ReactNode } from "react";
+
 export interface CategoryOption {
   value: string;
   label: string;
+  display?: ReactNode;
 }
 
 interface Props {
@@ -106,8 +109,8 @@ export default function SearchableCategorySelect({
             }
         }}
       >
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {selectedOption ? selectedOption.label : (placeholder || "Select Option...")}
+        <span style={{ overflow: 'hidden', display: 'inline-flex', alignItems: 'center', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {selectedOption ? (selectedOption.display || selectedOption.label) : (placeholder || "Select Option...")}
         </span>
         <span style={{ fontSize: '0.8em', opacity: 0.5, marginLeft: '8px', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
       </div>
@@ -183,7 +186,7 @@ export default function SearchableCategorySelect({
                         if (value !== opt.value) e.currentTarget.style.background = 'transparent';
                     }}
                   >
-                    {opt.label}
+                    {opt.display || opt.label}
                   </div>
                 ))
             )}

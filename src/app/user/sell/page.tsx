@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./sell.module.css";
 import { useNotification } from "@/context/NotificationContext";
-import { sortCategories, validateCategoryAmount, getExactCategoryAmount } from "@/lib/categoryUtils";
+import { sortCategories, validateCategoryAmount, getExactCategoryAmount, formatCategoryWithFlag } from "@/lib/categoryUtils";
 import SearchableCategorySelect from "@/components/SearchableCategorySelect";
 
 interface CardEntry {
@@ -448,7 +448,11 @@ export default function SellGiftCardPage() {
                                                     required={true}
                                                     value={card.cardCategory}
                                                     onChange={(val) => updateCard(card.id, { cardCategory: val })}
-                                                    categories={card.cardBrand === "Other" ? [...availableCategories, "Manual Entry"] : availableCategories}
+                                                    categories={(card.cardBrand === "Other" ? [...availableCategories, "Manual Entry"] : availableCategories).map(cat => ({
+                                                        value: cat,
+                                                        label: cat,
+                                                        display: formatCategoryWithFlag(cat)
+                                                    }))}
                                                     placeholder="Select Category..."
                                                     disabled={!card.cardBrand}
                                                     searchPlaceholder="Type amount to filter..."

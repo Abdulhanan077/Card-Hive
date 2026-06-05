@@ -29,6 +29,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:mycardhive_mobile/utils/vip_tiers.dart';
 import 'package:mycardhive_mobile/utils/compliance_utils.dart';
+import 'package:mycardhive_mobile/utils/ui_utils.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -688,7 +689,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("${rate['cardBrand'] ?? "Card"} (${rate['cardCountry'] ?? ""})", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: theme.colorScheme.onSurface)),
+                  Row(
+                    children: [
+                      Text("${rate['cardBrand'] ?? "Card"} - ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: theme.colorScheme.onSurface)),
+                      Expanded(
+                        child: buildCategoryWithFlag(rate['cardCountry'] ?? "", TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: theme.colorScheme.onSurface)),
+                      ),
+                    ],
+                  ),
                   Text(rate['cardType'] ?? "Physical", style: const TextStyle(color: Colors.grey, fontSize: 10)),
                 ],
               ),
