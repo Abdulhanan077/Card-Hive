@@ -10,6 +10,7 @@ import 'package:mycardhive_mobile/ui/screens/admin/admin_support_sessions_screen
 import 'package:mycardhive_mobile/ui/screens/admin/admin_rewards_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/admin/admin_status_updates_screen.dart';
 import 'package:mycardhive_mobile/ui/screens/login_screen.dart';
+import 'package:mycardhive_mobile/ui/screens/app_updates_screen.dart';
 
 class AdminMoreTab extends StatelessWidget {
   final dynamic user;
@@ -100,6 +101,16 @@ class AdminMoreTab extends StatelessWidget {
               isDark: isDark,
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AdminSiteSettingsScreen()));
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildActionItem(
+              title: "App Updates",
+              icon: Icons.system_update_outlined,
+              color: Colors.indigo,
+              isDark: isDark,
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AppUpdatesScreen()));
               },
             ),
             const SizedBox(height: 32),

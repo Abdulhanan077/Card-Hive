@@ -757,7 +757,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: isRejected ? Colors.red : (isPaid ? Colors.green : Colors.orange),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(status.replaceAll("_", " "), style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                  child: Text(status == 'UNDER_REVIEW' ? 'Processing...' : status.replaceAll("_", " "), style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
