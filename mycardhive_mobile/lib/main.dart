@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mycardhive_mobile/models/rate.dart';
@@ -187,6 +188,12 @@ class _MyCardHiveAppState extends State<MyCardHiveApp> {
           surface: Colors.white,
           onSurface: const Color(0xFF0F172A),
         ),
+        pageTransitionsTheme: PageTransitionsTheme(
+          builders: <TargetPlatform, PageTransitionsBuilder>{
+            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
@@ -201,6 +208,12 @@ class _MyCardHiveAppState extends State<MyCardHiveApp> {
           surface: const Color(0xFF1E293B),
           onSurface: Colors.white,
           brightness: Brightness.dark,
+        ),
+        pageTransitionsTheme: PageTransitionsTheme(
+          builders: <TargetPlatform, PageTransitionsBuilder>{
+            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
         ),
       ),
       home: Stack(
