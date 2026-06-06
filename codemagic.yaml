@@ -1,4 +1,42 @@
 workflows:
+  ios-patch-workflow:
+    name: Card-Hive Shorebird Patch iOS
+    integrations:
+      app_store_connect: Codemagic API Key
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      groups:
+        - shorebird
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.mycardhive.trading
+      flutter: 3.22.2
+      xcode: latest
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          cd mycardhive_mobile
+          flutter precache --ios
+          flutter clean
+          flutter pub get
+      - name: Install CocoaPods
+        script: |
+          cd mycardhive_mobile/ios
+          rm -rf Pods Podfile.lock
+          pod install --repo-update
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+      - name: Build and Publish Shorebird iOS Patch
+        script: |
+          # Install Shorebird CLI
+          curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/shorebirdtech/install/main/install.sh | bash
+          export PATH="$HOME/.shorebird/bin:$PATH"
+          
+          cd mycardhive_mobile
+          shorebird patch ios --release-version=1.0.2+5 --no-codesign
+
   distribution-workflow:
     name: Card-Hive App Store Production
     integrations:
@@ -42,41 +80,3 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
-
-  ios-patch-workflow:
-    name: Card-Hive Shorebird Patch iOS
-    integrations:
-      app_store_connect: Codemagic API Key
-    instance_type: mac_mini_m2
-    max_build_duration: 60
-    environment:
-      groups:
-        - shorebird
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.mycardhive.trading
-      flutter: 3.22.2
-      xcode: latest
-    scripts:
-      - name: Get Flutter packages
-        script: |
-          cd mycardhive_mobile
-          flutter precache --ios
-          flutter clean
-          flutter pub get
-      - name: Install CocoaPods
-        script: |
-          cd mycardhive_mobile/ios
-          rm -rf Pods Podfile.lock
-          pod install --repo-update
-      - name: Set up code signing
-        script: |
-          xcode-project use-profiles
-      - name: Build and Publish Shorebird iOS Patch
-        script: |
-          # Install Shorebird CLI
-          curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/shorebirdtech/install/main/install.sh | bash
-          export PATH="$HOME/.shorebird/bin:$PATH"
-          
-          cd mycardhive_mobile
-          shorebird patch ios --release-version=1.0.2+5 --no-codesign
